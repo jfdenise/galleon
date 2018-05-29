@@ -19,15 +19,14 @@ package org.jboss.galleon.xml;
 import java.util.Arrays;
 import java.util.Map;
 
-import org.jboss.galleon.ArtifactCoords;
 import org.jboss.galleon.config.ConfigCustomizations;
 import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.config.ConfigModel;
 import org.jboss.galleon.config.FeaturePackConfig;
 import org.jboss.galleon.config.PackageConfig;
 import org.jboss.galleon.config.ProvisioningConfig;
-import org.jboss.galleon.xml.ProvisioningXmlParser10.Attribute;
-import org.jboss.galleon.xml.ProvisioningXmlParser10.Element;
+import org.jboss.galleon.xml.ProvisioningXmlParser20.Attribute;
+import org.jboss.galleon.xml.ProvisioningXmlParser20.Element;
 import org.jboss.galleon.xml.util.ElementNode;
 import org.jboss.galleon.xml.util.TextNode;
 
@@ -55,7 +54,7 @@ public class ProvisioningXmlWriter extends BaseXmlWriter<ProvisioningConfig> {
         if (provisioningConfig.hasFeaturePackDeps()) {
             for(FeaturePackConfig fp : provisioningConfig.getFeaturePackDeps()) {
                 final ElementNode fpElement = addElement(install, Element.FEATURE_PACK);
-                writeFeaturePackConfig(fpElement, fpElement.getNamespace(), fp, provisioningConfig.originOf(fp.getGav().toGa()));
+                writeFeaturePackConfig(fpElement, fpElement.getNamespace(), fp, provisioningConfig.originOf(fp.getLocation().getChannel()));
             }
         }
 
@@ -65,7 +64,7 @@ public class ProvisioningXmlWriter extends BaseXmlWriter<ProvisioningConfig> {
     }
 
     static void writeFeaturePackConfig(ElementNode fp, String ns, FeaturePackConfig featurePack, String origin) {
-        addGav(fp, featurePack.getGav());
+        addAttribute(fp, Attribute.LOCATION, featurePack.getLocation().toString());
         if(origin != null) {
             addElement(fp, Element.ORIGIN.getLocalName(), ns).addChild(new TextNode(origin));
         }
@@ -167,14 +166,6 @@ public class ProvisioningXmlWriter extends BaseXmlWriter<ProvisioningConfig> {
             for (ConfigModel config : configCustoms.getDefinedConfigs()) {
                 parent.addChild(ConfigXmlWriter.getInstance().toElement(config, ns));
             }
-        }
-    }
-
-    static void addGav(final ElementNode fp, final ArtifactCoords.Gav fpGav) {
-        addAttribute(fp, Attribute.GROUP_ID, fpGav.getGroupId());
-        addAttribute(fp, Attribute.ARTIFACT_ID, fpGav.getArtifactId());
-        if (fpGav.getVersion() != null) {
-            addAttribute(fp, Attribute.VERSION, fpGav.getVersion());
         }
     }
 }

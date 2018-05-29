@@ -26,7 +26,6 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.jboss.galleon.ArtifactCoords.Gav;
 import org.jboss.galleon.config.FeatureConfig;
 import org.jboss.galleon.runtime.ResolvedFeature;
 import org.jboss.galleon.runtime.ResolvedFeatureId;
@@ -105,7 +104,7 @@ public interface Errors {
         return p + " has to be empty or contain a provisioned installation to be used by the tool";
     }
 
-    static String fpVersionCheckFailed(Collection<ArtifactCoords.Ga> missingVersions, Collection<Set<ArtifactCoords.Gav>> versionConflicts) throws ProvisioningException {
+    static String fpVersionCheckFailed(Collection<FeaturePackLocation.Channel> missingVersions, Collection<Set<FeaturePackLocation.FPID>> versionConflicts) throws ProvisioningException {
         final StringWriter strWriter = new StringWriter();
         try(BufferedWriter writer = new BufferedWriter(strWriter)) {
             writer.write("Feature-pack versions check failed with the following errors:");
@@ -119,7 +118,7 @@ public interface Errors {
             }
 
             if(!versionConflicts.isEmpty()) {
-                for (Collection<ArtifactCoords.Gav> entry : versionConflicts) {
+                for (Collection<FeaturePackLocation.FPID> entry : versionConflicts) {
                     writer.write(" * ");
                     writer.write(Errors.featurePackVersionConflict(entry));
                     writer.write(';');
@@ -132,13 +131,13 @@ public interface Errors {
         return strWriter.toString();
     }
 
-    static String failedToResolveReleaseVersions(Collection<ArtifactCoords.Ga> gas) {
-        final StringBuilder buf = new StringBuilder("Missing release version");
-        if(gas.size() > 1) {
+    static String failedToResolveReleaseVersions(Collection<FeaturePackLocation.Channel> channels) {
+        final StringBuilder buf = new StringBuilder("Missing build number");
+        if(channels.size() > 1) {
             buf.append('s');
         }
-        buf.append(" of ");
-        StringUtils.append(buf, gas);
+        buf.append(" for ");
+        StringUtils.append(buf, channels);
         return buf.toString();
     }
 
@@ -146,64 +145,64 @@ public interface Errors {
         return "Failed to copy package " + packageName + " content";
     }
 
-    static String packageNotFound(ArtifactCoords.Gav fp, String packageName) {
-        return "Failed to resolve package " + packageName + " in " + fp;
+    static String packageNotFound(FeaturePackLocation.FPID fpid, String packageName) {
+        return "Failed to resolve package " + packageName + " in " + fpid;
     }
 
-    static String unknownPackage(ArtifactCoords.Gav gav, String pkgName) {
-        return "Package " + pkgName + " is not found in " + gav;
+    static String unknownPackage(FeaturePackLocation.FPID fpid, String pkgName) {
+        return "Package " + pkgName + " is not found in " + fpid;
     }
 
-    static String unknownFeaturePack(ArtifactCoords.Gav gav) {
-        return "Feature-pack " + gav + " is not found";
+    static String unknownFeaturePack(FeaturePackLocation.FPID fpid) {
+        return "Feature-pack " + fpid + " is not found";
     }
 
-    static String unsatisfiedFeaturePackDep(ArtifactCoords.Gav gav) {
-        return "Feature-pack " + gav + " is required dependency";
+    static String unsatisfiedFeaturePackDep(FeaturePackLocation.Channel channel) {
+        return "Feature-pack " + channel + " is required dependency";
     }
 
-    static String unknownFeaturePackDependency(ArtifactCoords.Ga ga) {
-        return ga + " is not found among the feature-pack dependencies";
+    static String unknownFeaturePackDependency(FeaturePackLocation.Channel channel) {
+        return channel + " is not found among the feature-pack dependencies";
     }
 
-    static String featurePackVersionConflict(ArtifactCoords.Gav gav, ArtifactCoords.Gav gav2) {
-        final Set<Gav> gavs = new LinkedHashSet<>(2);
-        gavs.add(gav);
-        gavs.add(gav2);
-        return featurePackVersionConflict(gavs);
+    static String featurePackVersionConflict(FeaturePackLocation.FPID fpid1, FeaturePackLocation.FPID fpid2) {
+        final Set<FeaturePackLocation.FPID> fpids = new LinkedHashSet<>(2);
+        fpids.add(fpid1);
+        fpids.add(fpid2);
+        return featurePackVersionConflict(fpids);
     }
 
-    static String featurePackVersionConflict(Collection<ArtifactCoords.Gav> gavs) {
-        final Iterator<Gav> i = gavs.iterator();
-        Gav gav = i.next();
-        final StringBuilder buf = new StringBuilder("Please pick the desired version of ")
-                .append(gav.toGa())
+    static String featurePackVersionConflict(Collection<FeaturePackLocation.FPID> fpids) {
+        final Iterator<FeaturePackLocation.FPID> i = fpids.iterator();
+        FeaturePackLocation.FPID fpid = i.next();
+        final StringBuilder buf = new StringBuilder("Please pick the desired build number for ")
+                .append(fpid.getChannel())
                 .append(" explicitly in the provisioning config. Current configuration references the following versions ")
-                .append(gav.getVersion());
+                .append(fpid.getBuild());
         while(i.hasNext()) {
-            gav = i.next();
-            buf.append(", ").append(gav.getVersion());
+            fpid = i.next();
+            buf.append(", ").append(fpid.getBuild());
         }
         return buf.toString();
     }
 
-    static String unsatisfiedPackageDependencies(ArtifactCoords.Gav fpGav, String packageName, Collection<String> unsatisfiedDeps) {
+    static String unsatisfiedPackageDependencies(FeaturePackLocation.FPID fpid, String packageName, Collection<String> unsatisfiedDeps) {
         final StringBuilder buf = new StringBuilder();
-        buf.append("Feature-pack ").append(fpGav).append(" package ").append(packageName).append(" has unsatisfied dependencies on packages: ");
+        buf.append("Feature-pack ").append(fpid).append(" package ").append(packageName).append(" has unsatisfied dependencies on packages: ");
         StringUtils.append(buf, unsatisfiedDeps);
         return buf.toString();
     }
 
-    static String unsatisfiedPackageDependency(ArtifactCoords.Gav fpGav, String targetPackage) {
-        return "Unsatisfied dependency on feature-pack " + fpGav + " package " + targetPackage;
+    static String unsatisfiedPackageDependency(FeaturePackLocation.FPID fpid, String targetPackage) {
+        return "Unsatisfied dependency on feature-pack " + fpid + " package " + targetPackage;
     }
 
-    static String unsatisfiedExternalPackageDependency(ArtifactCoords.Gav srcGav, String srcPackage, ArtifactCoords.Gav targetGav, String targetPackage) {
-        return "Feature-pack " + srcGav + " package " + srcPackage + " has unsatisfied dependency on feature-pack " + targetGav + " package " + targetPackage;
+    static String unsatisfiedExternalPackageDependency(FeaturePackLocation.FPID srcFpid, String srcPackage, FeaturePackLocation.FPID targetFpid, String targetPackage) {
+        return "Feature-pack " + srcFpid + " package " + srcPackage + " has unsatisfied dependency on feature-pack " + targetFpid + " package " + targetPackage;
     }
 
-    static String resolvePackage(ArtifactCoords.Gav fpGav, String packageName) {
-        return "Failed to resolve feature-pack " + fpGav + " package " + packageName;
+    static String resolvePackage(FeaturePackLocation.FPID fpid, String packageName) {
+        return "Failed to resolve feature-pack " + fpid + " package " + packageName;
     }
 
     static String packageExcludeInclude(String packageName) {
@@ -214,24 +213,24 @@ public interface Errors {
         return "Dependency with name " + name + " already exists";
     }
 
-    static String unknownFeaturePackDependencyName(Gav gav, String depName) {
-        return "Dependency " + depName + " not found in " + gav + " feature-pack description";
+    static String unknownFeaturePackDependencyName(FeaturePackLocation.FPID fpid, String depName) {
+        return "Dependency " + depName + " not found in " + fpid + " feature-pack description";
     }
 
     static String unknownFeaturePackDependencyName(String depName) {
         return depName + " was not found among the feature-pack dependencies";
     }
 
-    static String featurePackAlreadyInstalled(Gav gav) {
-        return "Feature-pack " + gav + " is already installed";
+    static String featurePackAlreadyInstalled(FeaturePackLocation.FPID fpid) {
+        return "Feature-pack " + fpid + " is already installed";
     }
 
-    static String unknownFeaturePackDependencyName(ArtifactCoords.Gav fpGav, String pkgName, String depName) {
-        return fpGav + " package " + pkgName + " references unknown feature-pack dependency " + depName;
+    static String unknownFeaturePackDependencyName(FeaturePackLocation.FPID fpid, String pkgName, String depName) {
+        return fpid + " package " + pkgName + " references unknown feature-pack dependency " + depName;
     }
 
-    static String packageAlreadyExists(Gav gav, String name) {
-        return "Package " + name + " already exists in feature-pack " + gav;
+    static String packageAlreadyExists(FeaturePackLocation.FPID fpid, String name) {
+        return "Package " + name + " already exists in feature-pack " + fpid;
     }
 
     static String noCapabilityProvider(String capability) {
@@ -353,11 +352,11 @@ public interface Errors {
         return "Non-nillable parameter " + paramName + " of " + featureId + " has not been initialized";
     }
 
-    static String featureNotInScope(ResolvedFeatureId id, String groupName, ArtifactCoords.Gav fpGav) {
+    static String featureNotInScope(ResolvedFeatureId id, String groupName, FeaturePackLocation.FPID fpid) {
         final StringBuilder buf = new StringBuilder();
         buf.append(id).append(" cannot be included into group ").append(groupName);
-        if(fpGav != null) {
-            buf.append(" from ").append(fpGav);
+        if(fpid != null) {
+            buf.append(" from ").append(fpid);
         }
         buf.append(" as it's not in the scope of the group");
         return buf.toString();
@@ -381,15 +380,15 @@ public interface Errors {
         return buf.toString();
     }
 
-    static String failedToProcess(ArtifactCoords.Gav fpGav, FeatureConfig feature) {
+    static String failedToProcess(FeaturePackLocation.FPID fpid, FeatureConfig feature) {
         final StringBuilder buf = new StringBuilder();
-        buf.append("Failed to process feature-pack ").append(fpGav).append(" feature ").append(feature);
+        buf.append("Failed to process feature-pack ").append(fpid).append(" feature ").append(feature);
         return buf.toString();
     }
 
-    static String failedToProcess(ArtifactCoords.Gav fpGav, String groupName) {
+    static String failedToProcess(FeaturePackLocation.FPID fpid, String groupName) {
         final StringBuilder buf = new StringBuilder();
-        buf.append("Failed to process feature-pack ").append(fpGav).append(" group ").append(groupName);
+        buf.append("Failed to process feature-pack ").append(fpid).append(" group ").append(groupName);
         return buf.toString();
     }
 

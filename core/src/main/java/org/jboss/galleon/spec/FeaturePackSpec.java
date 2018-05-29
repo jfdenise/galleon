@@ -19,7 +19,7 @@ package org.jboss.galleon.spec;
 import java.util.Collections;
 import java.util.Set;
 
-import org.jboss.galleon.ArtifactCoords;
+import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.config.FeaturePackDepsConfig;
 import org.jboss.galleon.config.FeaturePackDepsConfigBuilder;
@@ -33,26 +33,21 @@ import org.jboss.galleon.util.StringUtils;
  */
 public class FeaturePackSpec extends FeaturePackDepsConfig {
 
-    public static class Builder extends FeaturePackDepsConfigBuilder<Builder>{
+    public static class Builder extends FeaturePackDepsConfigBuilder<Builder> {
 
-        private ArtifactCoords.Gav gav;
+        private FeaturePackLocation.FPID fpid;
         private Set<String> defPackages = Collections.emptySet();
 
         protected Builder() {
-            this(null);
         }
 
-        protected Builder(ArtifactCoords.Gav gav) {
-            this.gav = gav;
-        }
-
-        public Builder setGav(ArtifactCoords.Gav gav) {
-            this.gav = gav;
+        public Builder setFPID(FeaturePackLocation.FPID fpid) {
+            this.fpid = fpid;
             return this;
         }
 
-        public ArtifactCoords.Gav getGav() {
-            return gav;
+        public FeaturePackLocation.FPID getFPID() {
+            return fpid;
         }
 
         public Builder addDefaultPackage(String packageName) {
@@ -67,24 +62,24 @@ public class FeaturePackSpec extends FeaturePackDepsConfig {
     }
 
     public static Builder builder() {
-        return builder(null);
+        return new Builder();
     }
 
-    public static Builder builder(ArtifactCoords.Gav gav) {
-        return new Builder(gav);
+    public static Builder builder(FeaturePackLocation.FPID fpid) {
+        return new Builder().setFPID(fpid);
     }
 
-    private final ArtifactCoords.Gav gav;
+    private final FeaturePackLocation.FPID fpid;
     private final Set<String> defPackages;
 
     protected FeaturePackSpec(Builder builder) {
         super(builder);
-        this.gav = builder.gav;
+        this.fpid = builder.fpid;
         this.defPackages = CollectionUtils.unmodifiable(builder.defPackages);
     }
 
-    public ArtifactCoords.Gav getGav() {
-        return gav;
+    public FeaturePackLocation.FPID getFPID() {
+        return fpid;
     }
 
     public boolean hasDefaultPackages() {
@@ -104,7 +99,7 @@ public class FeaturePackSpec extends FeaturePackDepsConfig {
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result + ((defPackages == null) ? 0 : defPackages.hashCode());
-        result = prime * result + ((gav == null) ? 0 : gav.hashCode());
+        result = prime * result + ((fpid == null) ? 0 : fpid.hashCode());
         return result;
     }
 
@@ -122,10 +117,10 @@ public class FeaturePackSpec extends FeaturePackDepsConfig {
                 return false;
         } else if (!defPackages.equals(other.defPackages))
             return false;
-        if (gav == null) {
-            if (other.gav != null)
+        if (fpid == null) {
+            if (other.fpid != null)
                 return false;
-        } else if (!gav.equals(other.gav))
+        } else if (!fpid.equals(other.fpid))
             return false;
         return true;
     }
@@ -133,7 +128,7 @@ public class FeaturePackSpec extends FeaturePackDepsConfig {
     @Override
     public String toString() {
         final StringBuilder buf = new StringBuilder();
-        buf.append("[gav=").append(gav);
+        buf.append('[').append(fpid);
         if(!fpDeps.isEmpty()) {
             buf.append("; dependencies: ");
             StringUtils.append(buf, fpDeps.keySet());

@@ -19,9 +19,9 @@ package org.jboss.galleon.util;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.jboss.galleon.ArtifactCoords;
 import org.jboss.galleon.Constants;
 import org.jboss.galleon.Errors;
+import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
 
 /**
@@ -30,12 +30,12 @@ import org.jboss.galleon.ProvisioningDescriptionException;
  */
 public class LayoutUtils {
 
-    public static Path getFeaturePackDir(Path fpLayoutDir, ArtifactCoords.Gav gav) throws ProvisioningDescriptionException {
-        return getFeaturePackDir(fpLayoutDir, gav, true);
+    public static Path getFeaturePackDir(Path fpLayoutDir, FeaturePackLocation.FPID fpid) throws ProvisioningDescriptionException {
+        return getFeaturePackDir(fpLayoutDir, fpid, true);
     }
 
-    public static Path getFeaturePackDir(Path fpLayoutDir, ArtifactCoords.Gav gav, boolean existing) throws ProvisioningDescriptionException {
-        final Path fpPath = fpLayoutDir.resolve(gav.getGroupId()).resolve(gav.getArtifactId()).resolve(gav.getVersion());
+    public static Path getFeaturePackDir(Path fpLayoutDir, FeaturePackLocation.FPID fpid, boolean existing) throws ProvisioningDescriptionException {
+        final Path fpPath = fpLayoutDir.resolve(fpid.getUniverse()).resolve(fpid.getProducer()).resolve(fpid.getChannelName()).resolve(fpid.getBuild());
         if(existing && !Files.exists(fpPath)) {
             throw new ProvisioningDescriptionException(Errors.pathDoesNotExist(fpPath));
         }

@@ -17,37 +17,291 @@
 package org.jboss.galleon.xml;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
+import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
-import org.jboss.galleon.ArtifactCoords;
 import org.jboss.galleon.Errors;
+import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.runtime.ResolvedFeatureId;
 import org.jboss.galleon.runtime.ResolvedSpecId;
 import org.jboss.galleon.state.ProvisionedConfig;
+import org.jboss.galleon.state.ProvisionedFeaturePack;
+import org.jboss.galleon.state.ProvisionedPackage;
+import org.jboss.galleon.state.ProvisionedState;
 import org.jboss.galleon.util.ParsingUtils;
-import org.jboss.galleon.xml.ProvisionedStateXmlParser10.Attribute;
-import org.jboss.galleon.xml.ProvisionedStateXmlParser10.Element;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
 
 /**
  *
  * @author Alexey Loubyansky
  */
-public class ProvisionedConfigXmlUtil {
+class ProvisionedStateXmlParser20 implements PlugableXmlParser<ProvisionedState.Builder> {
 
-    private static final ProvisionedConfigXmlUtil INSTANCE = new ProvisionedConfigXmlUtil();
+    public static final String NAMESPACE_2_0 = "urn:jboss:galleon:provisioned-state:2.0";
+    public static final QName ROOT_2_0 = new QName(NAMESPACE_2_0, Element.INSTALLATION.getLocalName());
 
-    public static ProvisionedConfigXmlUtil getInstance() {
-        return INSTANCE;
+    enum Element implements XmlNameProvider {
+
+        CONFIG("config"),
+        FEATURE("feature"),
+        FEATURE_PACK("feature-pack"),
+        INSTALLATION("installation"),
+        PACKAGE("package"),
+        PACKAGES("packages"),
+        PARAM("param"),
+        PROP("prop"),
+        PROPS("props"),
+        SPEC("spec"),
+
+        // default unknown element
+        UNKNOWN(null);
+
+
+        private static final Map<QName, Element> elements;
+
+        static {
+            elements = new HashMap<>(11);
+            elements.put(new QName(NAMESPACE_2_0, CONFIG.name), CONFIG);
+            elements.put(new QName(NAMESPACE_2_0, FEATURE.name), FEATURE);
+            elements.put(new QName(NAMESPACE_2_0, FEATURE_PACK.name), FEATURE_PACK);
+            elements.put(new QName(NAMESPACE_2_0, INSTALLATION.name), INSTALLATION);
+            elements.put(new QName(NAMESPACE_2_0, PACKAGE.name), PACKAGE);
+            elements.put(new QName(NAMESPACE_2_0, PACKAGES.name), PACKAGES);
+            elements.put(new QName(NAMESPACE_2_0, PARAM.name), PARAM);
+            elements.put(new QName(NAMESPACE_2_0, PROP.name), PROP);
+            elements.put(new QName(NAMESPACE_2_0, PROPS.name), PROPS);
+            elements.put(new QName(NAMESPACE_2_0, SPEC.name), SPEC);
+            elements.put(null, UNKNOWN);
+        }
+
+        static Element of(QName qName) {
+            QName name;
+            if (qName.getNamespaceURI().equals("")) {
+                name = new QName(NAMESPACE_2_0, qName.getLocalPart());
+            } else {
+                name = qName;
+            }
+            final Element element = elements.get(name);
+            return element == null ? UNKNOWN : element;
+        }
+
+        private final String name;
+        private final String namespace = NAMESPACE_2_0;
+
+        Element(final String name) {
+            this.name = name;
+        }
+
+        /**
+         * Get the local name of this element.
+         *
+         * @return the local name
+         */
+        @Override
+        public String getLocalName() {
+            return name;
+        }
+
+        @Override
+        public String getNamespace() {
+            return namespace;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
     }
 
-    public ProvisionedConfigXmlUtil() {
-        super();
+    enum Attribute implements XmlNameProvider {
+
+        ID("id"),
+        LOCATION("location"),
+        MODEL("model"),
+        NAME("name"),
+        VALUE("value"),
+
+        // default unknown attribute
+        UNKNOWN(null);
+
+        private static final Map<QName, Attribute> attributes;
+
+        static {
+            attributes = new HashMap<>(6);
+            attributes.put(new QName(ID.name), ID);
+            attributes.put(new QName(LOCATION.name), LOCATION);
+            attributes.put(new QName(MODEL.name), MODEL);
+            attributes.put(new QName(NAME.name), NAME);
+            attributes.put(new QName(VALUE.name), VALUE);
+            attributes.put(null, UNKNOWN);
+        }
+
+        static Attribute of(QName qName) {
+            final Attribute attribute = attributes.get(qName);
+            return attribute == null ? UNKNOWN : attribute;
+        }
+
+        private final String name;
+
+        Attribute(final String name) {
+            this.name = name;
+        }
+
+        /**
+         * Get the local name of this element.
+         *
+         * @return the local name
+         */
+        @Override
+        public String getLocalName() {
+            return name;
+        }
+
+        @Override
+        public String getNamespace() {
+            return null;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+
+    }
+
+    @Override
+    public QName getRoot() {
+        return ROOT_2_0;
+    }
+
+    @Override
+    public void readElement(XMLExtendedStreamReader reader, ProvisionedState.Builder builder) throws XMLStreamException {
+        ParsingUtils.parseNoAttributes(reader);
+        while (reader.hasNext()) {
+            switch (reader.nextTag()) {
+                case XMLStreamConstants.END_ELEMENT: {
+                    return;
+                }
+                case XMLStreamConstants.START_ELEMENT: {
+                    final Element element = Element.of(reader.getName());
+                    switch (element) {
+                        case FEATURE_PACK:
+                            builder.addFeaturePack(readFeaturePack(reader));
+                            break;
+                        case CONFIG:
+                            builder.addConfig(readConfig(reader));
+                            break;
+                        default:
+                            throw ParsingUtils.unexpectedContent(reader);
+                    }
+                    break;
+                }
+                default: {
+                    throw ParsingUtils.unexpectedContent(reader);
+                }
+            }
+        }
+        throw ParsingUtils.endOfDocument(reader.getLocation());
+    }
+
+    private ProvisionedFeaturePack readFeaturePack(XMLExtendedStreamReader reader) throws XMLStreamException {
+        final int count = reader.getAttributeCount();
+        FeaturePackLocation fpl = null;
+        for (int i = 0; i < count; i++) {
+            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            switch (attribute) {
+                case LOCATION:
+                    try {
+                        fpl = FeaturePackLocation.fromString(reader.getAttributeValue(i));
+                    } catch (ProvisioningDescriptionException e) {
+                        throw new XMLStreamException("Failed to parse feature-pack location", e);
+                    }
+                    break;
+                default:
+                    throw ParsingUtils.unexpectedContent(reader);
+            }
+        }
+        if (fpl == null) {
+            throw ParsingUtils.missingAttributes(reader.getLocation(), Collections.singleton(Attribute.LOCATION));
+        }
+
+        final ProvisionedFeaturePack.Builder fpBuilder = ProvisionedFeaturePack.builder(fpl.getFPID());
+
+        while (reader.hasNext()) {
+            switch (reader.nextTag()) {
+                case XMLStreamConstants.END_ELEMENT: {
+                    return fpBuilder.build();
+                }
+                case XMLStreamConstants.START_ELEMENT: {
+                    final Element element = Element.of(reader.getName());
+                    switch (element) {
+                        case PACKAGES:
+                            readPackageList(reader, fpBuilder);
+                            break;
+                        default:
+                            throw ParsingUtils.unexpectedContent(reader);
+                    }
+                    break;
+                }
+                default: {
+                    throw ParsingUtils.unexpectedContent(reader);
+                }
+            }
+        }
+        throw ParsingUtils.endOfDocument(reader.getLocation());
+    }
+
+    private void readPackageList(XMLExtendedStreamReader reader, ProvisionedFeaturePack.Builder builder) throws XMLStreamException {
+        ParsingUtils.parseNoAttributes(reader);
+        while (reader.hasNext()) {
+            switch (reader.nextTag()) {
+                case XMLStreamConstants.END_ELEMENT: {
+                    return;
+                }
+                case XMLStreamConstants.START_ELEMENT: {
+                    final Element element = Element.of(reader.getName());
+                    switch (element) {
+                        case PACKAGE:
+                            builder.addPackage(readPackage(reader));
+                            break;
+                        default:
+                            throw ParsingUtils.unexpectedContent(reader);
+                    }
+                    break;
+                }
+                default: {
+                    throw ParsingUtils.unexpectedContent(reader);
+                }
+            }
+        }
+        throw ParsingUtils.endOfDocument(reader.getLocation());
+    }
+
+    private ProvisionedPackage readPackage(XMLExtendedStreamReader reader) throws XMLStreamException {
+        String name = null;
+        for (int i = 0; i < reader.getAttributeCount(); i++) {
+            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            switch (attribute) {
+                case NAME:
+                    name = reader.getAttributeValue(i);
+                    break;
+                default:
+                    throw ParsingUtils.unexpectedContent(reader);
+            }
+        }
+        if (name == null) {
+            throw ParsingUtils.missingAttributes(reader.getLocation(), Collections.singleton(Attribute.NAME));
+        }
+
+        ParsingUtils.parseNoContent(reader);
+        return ProvisionedPackage.newInstance(name);
     }
 
     public static ProvisionedConfig readConfig(XMLExtendedStreamReader reader) throws XMLStreamException {
@@ -152,47 +406,25 @@ public class ProvisionedConfigXmlUtil {
     }
 
     private static void readFeaturePack(XMLExtendedStreamReader reader, ProvisionedConfigBuilder config) throws XMLStreamException {
-        String group = null;
-        String artifact = null;
-        String version = null;
+        FeaturePackLocation location = null;
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i++) {
             final Attribute attribute = Attribute.of(reader.getAttributeName(i));
             switch (attribute) {
-                case GROUP_ID:
-                    group = reader.getAttributeValue(i);
-                    break;
-                case ARTIFACT_ID:
-                    artifact = reader.getAttributeValue(i);
-                    break;
-                case VERSION:
-                    version = reader.getAttributeValue(i);
+                case LOCATION:
+                    try {
+                        location = FeaturePackLocation.fromString(reader.getAttributeValue(i));
+                    } catch (ProvisioningDescriptionException e) {
+                        throw new XMLStreamException("Failed to parse feature-pack location", e);
+                    }
                     break;
                 default:
                     throw ParsingUtils.unexpectedContent(reader);
             }
         }
-        Set<Attribute> missingAttrs = null;
-        if (group == null) {
-            missingAttrs = new HashSet<Attribute>();
-            missingAttrs.add(Attribute.GROUP_ID);
+        if (location == null) {
+            throw ParsingUtils.missingAttributes(reader.getLocation(), Collections.singleton(Attribute.LOCATION));
         }
-        if (artifact == null) {
-            if (missingAttrs == null) {
-                missingAttrs = new HashSet<Attribute>();
-            }
-            missingAttrs.add(Attribute.ARTIFACT_ID);
-        }
-        if (version == null) {
-            if (missingAttrs == null) {
-                missingAttrs = new HashSet<Attribute>();
-            }
-            missingAttrs.add(Attribute.VERSION);
-        }
-        if (missingAttrs != null) {
-            throw ParsingUtils.missingAttributes(reader.getLocation(), missingAttrs);
-        }
-        final ArtifactCoords.Gav gav = ArtifactCoords.newGav(group, artifact, version);
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
@@ -202,7 +434,7 @@ public class ProvisionedConfigXmlUtil {
                     final Element element = Element.of(reader.getName());
                     switch (element) {
                         case SPEC:
-                            readSpec(reader, gav, config);
+                            readSpec(reader, location.getChannel(), config);
                             break;
                         default:
                             throw ParsingUtils.unexpectedContent(reader);
@@ -217,7 +449,7 @@ public class ProvisionedConfigXmlUtil {
         throw ParsingUtils.endOfDocument(reader.getLocation());
    }
 
-    private static void readSpec(XMLExtendedStreamReader reader, ArtifactCoords.Gav fpGav, ProvisionedConfigBuilder config) throws XMLStreamException {
+    private static void readSpec(XMLExtendedStreamReader reader, FeaturePackLocation.Channel channel, ProvisionedConfigBuilder config) throws XMLStreamException {
         String name = null;
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i++) {
@@ -233,7 +465,7 @@ public class ProvisionedConfigXmlUtil {
         if (name == null) {
             throw ParsingUtils.missingAttributes(reader.getLocation(), Collections.singleton(Attribute.NAME));
         }
-        final ResolvedSpecId specId = new ResolvedSpecId(fpGav, name);
+        final ResolvedSpecId specId = new ResolvedSpecId(channel, name);
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {

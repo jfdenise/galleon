@@ -18,9 +18,9 @@ package org.jboss.galleon.cli;
 
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.option.Argument;
-import org.jboss.galleon.ArtifactCoords;
+import org.jboss.galleon.FeaturePackLocation;
+import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.ProvisioningManager;
 import org.jboss.galleon.cli.cmd.state.NoStateCommandActivator;
 
 /**
@@ -35,20 +35,21 @@ public class UninstallCommand extends ProvisioningCommand {
 
     @Override
     protected void runCommand(PmCommandInvocation session) throws CommandExecutionException {
-        final ProvisioningManager manager = getManager(session);
         try {
-            manager.uninstall(getGav(session.getPmSession()));
+            getManager(session).uninstall(getFPID(session.getPmSession()));
         } catch (ProvisioningException e) {
             throw new CommandExecutionException("Provisioning failed", e);
         }
     }
 
-    private ArtifactCoords.Gav getGav(PmSession session) throws CommandExecutionException {
+    private FeaturePackLocation.FPID getFPID(PmSession session) throws CommandExecutionException {
         if (streamName == null) {
             throw new CommandExecutionException("No feature-pack provided");
         }
-        // Would require to retrieve the gav from the stream name.
-        // For now we have the gave, so just re-use that.
-        return ArtifactCoords.newGav(streamName);
+        try {
+            return FeaturePackLocation.fromString(streamName).getFPID();
+        } catch (ProvisioningDescriptionException e) {
+            throw new CommandExecutionException("Failed to parse " + streamName, e);
+        }
     }
 }

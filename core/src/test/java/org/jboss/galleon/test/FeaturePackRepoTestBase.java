@@ -21,9 +21,12 @@ import java.nio.file.Path;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningManager;
 import org.jboss.galleon.config.ProvisioningConfig;
+import org.jboss.galleon.creator.FeaturePackCreator;
 import org.jboss.galleon.repomanager.FeaturePackRepositoryManager;
 import org.jboss.galleon.state.ProvisionedState;
 import org.jboss.galleon.test.util.TestUtils;
+import org.jboss.galleon.universe.UniverseResolver;
+import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
 import org.jboss.galleon.util.IoUtils;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -38,10 +41,15 @@ import org.junit.BeforeClass;
 public class FeaturePackRepoTestBase {
 
     protected static Path repoHome;
+    protected static UniverseResolver universeResolver;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
         repoHome = TestUtils.mkRandomTmpDir();
+        universeResolver = UniverseResolver.builder()
+                .addUniverse(LegacyGalleon1Universe.NAME,
+                        new LegacyGalleon1Universe(FeaturePackRepositoryManager.newInstance(repoHome)))
+                .build();
         doBeforeClass();
     }
 
@@ -57,11 +65,8 @@ public class FeaturePackRepoTestBase {
     protected static void doAfterClass() throws Exception {
     }
 
-    protected static FeaturePackRepositoryManager getRepoManager() {
-        return FeaturePackRepositoryManager.newInstance(repoHome);
-    }
-
     protected Path installHome;
+    protected FeaturePackCreator creator;
 
     @Before
     public void before() throws Exception {
@@ -81,9 +86,13 @@ public class FeaturePackRepoTestBase {
     protected void doAfter() throws Exception {
     }
 
-    protected ProvisioningManager getPm() {
+    protected FeaturePackCreator initCreator() throws ProvisioningException {
+        return FeaturePackCreator.getInstance().setPrimaryUniverseResolver(universeResolver);
+    }
+
+    protected ProvisioningManager getPm() throws ProvisioningException {
         return ProvisioningManager.builder()
-                .setArtifactResolver(getRepoManager())
+                .setPrimaryUniverseResolver(universeResolver)
                 .setInstallationHome(installHome)
                 .build();
     }

@@ -20,10 +20,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-import org.jboss.galleon.ArtifactCoords;
 import org.jboss.galleon.Errors;
+import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
-import org.jboss.galleon.ArtifactCoords.Gav;
 import org.jboss.galleon.config.FeaturePackConfig;
 import org.jboss.galleon.spec.FeaturePackSpec;
 import org.jboss.galleon.spec.PackageDependencySpec;
@@ -40,22 +39,22 @@ public class ProvisioningLayout {
 
     public static class Builder {
 
-        private Map<ArtifactCoords.Ga, FeaturePackLayout> featurePacks = Collections.emptyMap();
+        private Map<FeaturePackLocation.Channel, FeaturePackLayout> featurePacks = Collections.emptyMap();
 
         private Builder() {
         }
 
         public Builder addFeaturePack(FeaturePackLayout fp) throws ProvisioningDescriptionException {
             assert fp != null : "fp is null";
-            final ArtifactCoords.Ga fpGa = fp.getGav().toGa();
-            if(featurePacks.containsKey(fpGa)) {
-                final Gav existingGav = featurePacks.get(fpGa).getGav();
-                if(existingGav.getVersion().equals(fp.getGav().getVersion())) {
+            final FeaturePackLocation.Channel channel = fp.getFPID().getChannel();
+            if(featurePacks.containsKey(channel)) {
+                final FeaturePackLocation.FPID existingId = featurePacks.get(channel).getFPID();
+                if(existingId.getBuild().equals(fp.getFPID().getBuild())) {
                     return this;
                 }
-                throw new ProvisioningDescriptionException(Errors.featurePackVersionConflict(fp.getGav(), existingGav));
+                throw new ProvisioningDescriptionException(Errors.featurePackVersionConflict(fp.getFPID(), existingId));
             }
-            featurePacks = CollectionUtils.put(featurePacks, fpGa, fp);
+            featurePacks = CollectionUtils.put(featurePacks, channel, fp);
             return this;
         }
 
@@ -73,21 +72,21 @@ public class ProvisioningLayout {
                             try {
                                 fpDepConfig = fpSpec.getFeaturePackDep(origin);
                             } catch (ProvisioningDescriptionException e) {
-                                throw new ProvisioningDescriptionException(Errors.unknownFeaturePackDependencyName(fpSpec.getGav(), pkg.getName(), origin), e);
+                                throw new ProvisioningDescriptionException(Errors.unknownFeaturePackDependencyName(fpSpec.getFPID(), pkg.getName(), origin), e);
                             }
-                            final FeaturePackLayout fpDepLayout = featurePacks.get(fpDepConfig.getGav().toGa());
+                            final FeaturePackLayout fpDepLayout = featurePacks.get(fpDepConfig.getLocation().getChannel());
                             if (fpDepLayout == null) {
-                                throw new ProvisioningDescriptionException(Errors.unknownFeaturePack(fpDepConfig.getGav()));
+                                throw new ProvisioningDescriptionException(Errors.unknownFeaturePack(fpDepConfig.getLocation().getFPID()));
                             }
                             for (PackageDependencySpec pkgDep : pkg.getExternalPackageDeps(origin)) {
                                 final String pkgDepName = pkgDep.getName();
                                 if (!fpDepLayout.hasPackage(pkgDepName)) {
                                     throw new ProvisioningDescriptionException(Errors.unsatisfiedExternalPackageDependency(
-                                            fpSpec.getGav(), pkg.getName(), fpDepConfig.getGav(), pkgDep.getName()));
+                                            fpSpec.getFPID(), pkg.getName(), fpDepConfig.getLocation().getFPID(), pkgDep.getName()));
                                 }
                                 if (fpDepConfig.isPackageExcluded(pkgDepName) && !pkgDep.isOptional()) {
                                     throw new ProvisioningDescriptionException(Errors.unsatisfiedExternalPackageDependency(
-                                            fpSpec.getGav(), pkg.getName(), fpDepConfig.getGav(), pkgDep.getName()));
+                                            fpSpec.getFPID(), pkg.getName(), fpDepConfig.getLocation().getFPID(), pkgDep.getName()));
                                 }
                             }
                         }
@@ -104,7 +103,7 @@ public class ProvisioningLayout {
         return new Builder();
     }
 
-    private final Map<ArtifactCoords.Ga, FeaturePackLayout> featurePacks;
+    private final Map<FeaturePackLocation.Channel, FeaturePackLayout> featurePacks;
 
     private ProvisioningLayout(Builder builder) {
         featurePacks = CollectionUtils.unmodifiable(builder.featurePacks);
@@ -114,12 +113,12 @@ public class ProvisioningLayout {
         return !featurePacks.isEmpty();
     }
 
-    public boolean contains(ArtifactCoords.Gav fpGav) {
-        return featurePacks.containsKey(fpGav.toGa());
+    public boolean contains(FeaturePackLocation.Channel channel) {
+        return featurePacks.containsKey(channel);
     }
 
-    public FeaturePackLayout getFeaturePack(ArtifactCoords.Gav fpGav) {
-        return featurePacks.get(fpGav.toGa());
+    public FeaturePackLayout getFeaturePack(FeaturePackLocation.Channel channel) {
+        return featurePacks.get(channel);
     }
 
     public Collection<FeaturePackLayout> getFeaturePacks() {

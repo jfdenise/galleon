@@ -19,6 +19,7 @@ package org.jboss.galleon.cli.model;
 import java.util.Objects;
 
 import org.jboss.galleon.ArtifactCoords.Gav;
+import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.cli.path.PathParser;
 
 /**
@@ -39,6 +40,10 @@ public class Identity implements Comparable<Identity> {
         return new Identity(origin.getGroupId() + ":" + origin.getArtifactId(), name);
     }
 
+    public static Identity fromChannel(FeaturePackLocation.Channel origin, String name) {
+        return new Identity(origin.getUniverse() + ":" + origin.getProducer(), name);
+    }
+
     public static Identity fromString(String origin, String name) {
         return new Identity(origin, name);
     }
@@ -47,8 +52,8 @@ public class Identity implements Comparable<Identity> {
         return new Identity(EMPTY, name);
     }
 
-    public static String buildOrigin(Gav gav) {
-        return gav.getGroupId() + ":" + gav.getArtifactId();
+    public static String buildOrigin(FeaturePackLocation.Channel channel) {
+        return channel.getUniverse() + ":" + channel.getProducer();
     }
 
     @Override

@@ -32,6 +32,9 @@ import org.jboss.galleon.config.ConfigModel;
 import org.jboss.galleon.config.FeaturePackConfig;
 import org.jboss.galleon.config.FeaturePackDepsConfigBuilder;
 import org.jboss.galleon.config.ProvisioningConfig;
+import org.jboss.galleon.config.UniverseConfig;
+import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
+import org.jboss.galleon.universe.galleon1.LegacyGalleon1UniverseFactory;
 import org.jboss.galleon.util.ParsingUtils;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
 
@@ -184,6 +187,11 @@ public class ProvisioningXmlParser10 implements PlugableXmlParser<ProvisioningCo
                     if (!hasFp) {
                         throw ParsingUtils.expectedAtLeastOneChild(reader, Element.INSTALLATION, Element.FEATURE_PACK);
                     }
+                    try {
+                        builder.addUniverse(new UniverseConfig(LegacyGalleon1Universe.NAME, LegacyGalleon1UniverseFactory.ID, null));
+                    } catch (ProvisioningDescriptionException e) {
+                        throw ParsingUtils.error("Failed to add galleon1 universe config", reader.getLocation(), e);
+                    }
                     return;
                 }
                 case XMLStreamConstants.START_ELEMENT: {
@@ -245,7 +253,7 @@ public class ProvisioningXmlParser10 implements PlugableXmlParser<ProvisioningCo
             throw ParsingUtils.missingAttributes(reader.getLocation(), required);
         }
         String origin = null;
-        final FeaturePackConfig.Builder depBuilder = FeaturePackConfig.builder(ArtifactCoords.newGav(groupId, artifactId, version));
+        final FeaturePackConfig.Builder depBuilder = FeaturePackConfig.builder(LegacyGalleon1Universe.toFpl(ArtifactCoords.newGav(groupId, artifactId, version)));
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {

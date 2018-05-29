@@ -28,9 +28,9 @@ import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
 
-import org.jboss.galleon.ArtifactCoords;
 import org.jboss.galleon.Constants;
 import org.jboss.galleon.Errors;
+import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.config.FeatureGroup;
@@ -50,7 +50,7 @@ import org.jboss.galleon.xml.PackageXmlParser;
  */
 class FeaturePackRuntimeBuilder {
 
-    final ArtifactCoords.Gav gav;
+    final FeaturePackLocation.FPID fpid;
     final Path dir;
     final FeaturePackSpec spec;
     boolean ordered;
@@ -63,7 +63,7 @@ class FeaturePackRuntimeBuilder {
     private ParameterTypeProvider featureParamTypeProvider = BuiltInParameterTypeProvider.getInstance();
 
     FeaturePackRuntimeBuilder(FeaturePackSpec spec, Path dir) {
-        this.gav = spec.getGav();
+        this.fpid = spec.getFPID();
         this.dir = dir;
         this.spec = spec;
     }
@@ -95,7 +95,7 @@ class FeaturePackRuntimeBuilder {
             try {
                 rt.processPackageDeps(pkgBuilder.spec);
             } catch(ProvisioningException e) {
-                throw new ProvisioningDescriptionException(Errors.resolvePackage(gav, pkgName), e);
+                throw new ProvisioningDescriptionException(Errors.resolvePackage(fpid, pkgName), e);
             } finally {
                 rt.setOrigin(currentOrigin);
             }
@@ -143,7 +143,7 @@ class FeaturePackRuntimeBuilder {
             try (BufferedReader reader = Files.newBufferedReader(specXml)) {
                 final FeatureSpec xmlSpec = FeatureSpecXmlParser.getInstance().parse(reader);
                 final ResolvedFeatureSpec resolvedSpec = new ResolvedFeatureSpec(
-                        new ResolvedSpecId(gav, xmlSpec.getName()), featureParamTypeProvider, xmlSpec);
+                        new ResolvedSpecId(fpid.getChannel(), xmlSpec.getName()), featureParamTypeProvider, xmlSpec);
                 if(featureSpecs == null) {
                     featureSpecs = new HashMap<>();
                 }

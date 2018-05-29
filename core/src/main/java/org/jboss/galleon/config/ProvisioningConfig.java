@@ -16,7 +16,7 @@
  */
 package org.jboss.galleon.config;
 
-import org.jboss.galleon.ArtifactCoords;
+import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.util.StringUtils;
 
@@ -33,13 +33,19 @@ public class ProvisioningConfig extends FeaturePackDepsConfig {
         }
 
         private Builder(ProvisioningConfig provisioningConfig) throws ProvisioningDescriptionException {
+            if(provisioningConfig.defaultUniverse != null) {
+                addUniverse(provisioningConfig.defaultUniverse);
+            }
+            for(UniverseConfig universe : provisioningConfig.universeConfigs.values()) {
+                addUniverse(universe);
+            }
             for(FeaturePackConfig fp : provisioningConfig.getFeaturePackDeps()) {
-                addFeaturePackDep(provisioningConfig.originOf(fp.getGav().toGa()), fp);
+                addFeaturePackDep(provisioningConfig.originOf(fp.getLocation().getChannel()), fp);
             }
         }
 
-        public Builder addFeaturePackDep(ArtifactCoords.Gav fpGav) throws ProvisioningDescriptionException {
-            return addFeaturePackDep(FeaturePackConfig.forGav(fpGav));
+        public Builder addFeaturePackDep(FeaturePackLocation fpl) throws ProvisioningDescriptionException {
+            return addFeaturePackDep(FeaturePackConfig.forLocation(fpl));
         }
 
         public ProvisioningConfig build() {

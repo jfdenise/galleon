@@ -34,12 +34,14 @@ import org.aesh.utils.Config;
 import org.eclipse.aether.RepositoryEvent;
 import org.eclipse.aether.RepositoryListener;
 import org.eclipse.aether.transfer.ArtifactNotFoundException;
-import org.jboss.galleon.ArtifactCoords;
-import org.jboss.galleon.ArtifactException;
 import org.jboss.galleon.ArtifactRepositoryManager;
+import org.jboss.galleon.FeaturePackLocation;
+import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.cli.config.Configuration;
 import org.jboss.galleon.cli.model.FeatureContainer;
 import org.jboss.galleon.cli.model.state.State;
+import org.jboss.galleon.universe.UniverseResolver;
+import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
 
 /**
  *
@@ -182,6 +184,7 @@ public class PmSession implements CommandInvocationProvider<PmCommandInvocation>
     private FeatureContainer exploredContainer;
     private String currentPath;
     private final MavenArtifactRepositoryManager maven;
+    private final UniverseResolver universeResolver;
     private final MavenListener mavenListener;
 
     public PmSession(Configuration config) throws Exception {
@@ -189,6 +192,11 @@ public class PmSession implements CommandInvocationProvider<PmCommandInvocation>
         this.mavenListener = new MavenListener();
         this.maven = new MavenArtifactRepositoryManager(config.getMavenConfig(),
                 mavenListener);
+
+        universeResolver = UniverseResolver.builder()
+                .addUniverse(LegacyGalleon1Universe.NAME, new LegacyGalleon1Universe(maven))
+                .build();
+
         //Build the universes
         this.universes = Universes.buildUniverses(config, maven);
     }
@@ -266,6 +274,10 @@ public class PmSession implements CommandInvocationProvider<PmCommandInvocation>
         return maven;
     }
 
+    public UniverseResolver getUniverseResolver() {
+        return universeResolver;
+    }
+
     // TO REMOVE when we have an universe for sure.
     public boolean hasPopulatedUniverse() {
         for (Universe u : universes.getUniverses()) {
@@ -324,16 +336,19 @@ public class PmSession implements CommandInvocationProvider<PmCommandInvocation>
         return oa;
     }
 
-    public boolean existsInLocalRepository(ArtifactCoords.Gav gav) {
+    public boolean existsInLocalRepository(FeaturePackLocation.FPID fpid) {
+        if(!fpid.getUniverse().equals(LegacyGalleon1Universe.NAME)) {
+            throw new IllegalStateException("Non Galleon-1 feature-packs are not supported by this method");
+        }
         Path local = getPmConfiguration().getMavenConfig().getLocalRepository();
-        String grp = gav.getGroupId().replaceAll("\\.", "/");
-        String art = gav.getArtifactId().replaceAll("\\.", "/");
-        String vers = gav.getVersion();
+        String grp = fpid.getProducer().replaceAll("\\.", "/");
+        String art = fpid.getChannelName().replaceAll("\\.", "/");
+        String vers = fpid.getBuild();
         return Files.exists(Paths.get(local.toString(), grp, art, vers));
     }
 
-    public void downloadFp(ArtifactCoords.Gav gav) throws ArtifactException {
-        getArtifactResolver().resolve(gav.toArtifactCoords());
+    public void downloadFp(FeaturePackLocation.FPID fpid) throws ProvisioningException {
+        getUniverseResolver().resolve(fpid.getLocation());
     }
 
     public void enableMavenTrace(boolean b) {

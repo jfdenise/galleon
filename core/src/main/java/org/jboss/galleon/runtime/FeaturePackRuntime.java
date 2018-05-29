@@ -27,9 +27,9 @@ import java.util.Set;
 
 import org.jboss.galleon.Constants;
 import org.jboss.galleon.Errors;
+import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.ArtifactCoords.Gav;
 import org.jboss.galleon.spec.FeaturePackSpec;
 import org.jboss.galleon.spec.FeatureSpec;
 import org.jboss.galleon.state.FeaturePack;
@@ -75,8 +75,8 @@ public class FeaturePackRuntime implements FeaturePack<PackageRuntime> {
     }
 
     @Override
-    public Gav getGav() {
-        return spec.getGav();
+    public FeaturePackLocation.FPID getFPID() {
+        return spec.getFPID();
     }
 
     @Override

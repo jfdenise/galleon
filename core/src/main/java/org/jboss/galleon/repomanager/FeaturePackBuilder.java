@@ -42,6 +42,7 @@ import org.jboss.galleon.repomanager.fs.FsTaskList;
 import org.jboss.galleon.spec.FeaturePackSpec;
 import org.jboss.galleon.spec.FeatureSpec;
 import org.jboss.galleon.spec.PackageSpec;
+import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
 import org.jboss.galleon.util.IoUtils;
 import org.jboss.galleon.util.CollectionUtils;
 import org.jboss.galleon.util.ZipUtils;
@@ -65,6 +66,7 @@ public class FeaturePackBuilder {
 
     private final FeaturePackInstaller installer;
     private final FeaturePackSpec.Builder fpBuilder = FeaturePackSpec.builder();
+    private ArtifactCoords.Gav fpGav;
     private List<PackageBuilder> pkgs = Collections.emptyList();
     private Set<Class<?>> classes = Collections.emptySet();
     private Map<String, Set<String>> services = Collections.emptyMap();
@@ -84,7 +86,8 @@ public class FeaturePackBuilder {
     }
 
     public FeaturePackBuilder setGav(ArtifactCoords.Gav gav) {
-        fpBuilder.setGav(gav);
+        this.fpGav = gav;
+        fpBuilder.setFPID(LegacyGalleon1Universe.toFpl(gav).getFPID());
         return this;
     }
 
@@ -98,11 +101,11 @@ public class FeaturePackBuilder {
     }
 
     public FeaturePackBuilder addDependency(ArtifactCoords.Gav gav) throws ProvisioningDescriptionException {
-        return addDependency(FeaturePackConfig.forGav(gav));
+        return addDependency(FeaturePackConfig.forLocation(LegacyGalleon1Universe.toFpl(gav)));
     }
 
     public FeaturePackBuilder addDependency(String origin, ArtifactCoords.Gav gav) throws ProvisioningDescriptionException {
-        return addDependency(origin, FeaturePackConfig.forGav(gav));
+        return addDependency(origin, FeaturePackConfig.forLocation(LegacyGalleon1Universe.toFpl(gav)));
     }
 
     public FeaturePackBuilder addPackage(PackageBuilder pkg) {
@@ -128,7 +131,7 @@ public class FeaturePackBuilder {
             specs = Collections.singletonMap(spec.getName(), spec);
         } else {
             if(specs.containsKey(spec.getName())) {
-                throw new ProvisioningDescriptionException("Duplicate spec name " + spec.getName() + " for " + fpBuilder.getGav());
+                throw new ProvisioningDescriptionException("Duplicate spec name " + spec.getName() + " for " + fpBuilder.getFPID());
             }
             if(specs.size() == 1) {
                 specs = new HashMap<>(specs);
@@ -143,7 +146,7 @@ public class FeaturePackBuilder {
             featureGroups = Collections.singletonMap(featureGroup.getName(), featureGroup);
         } else {
             if(featureGroups.containsKey(featureGroup.getName())) {
-                throw new ProvisioningDescriptionException("Duplicate feature-group name " + featureGroup.getName() + " for " + fpBuilder.getGav());
+                throw new ProvisioningDescriptionException("Duplicate feature-group name " + featureGroup.getName() + " for " + fpBuilder.getFPID());
             }
             if(featureGroups.size() == 1) {
                 featureGroups = new HashMap<>(featureGroups);
@@ -167,15 +170,7 @@ public class FeaturePackBuilder {
         if(classes.contains(cls)) {
             return this;
         }
-        switch(classes.size()) {
-            case 0:
-                classes = Collections.singleton(cls);
-                break;
-            case 1:
-                classes = new HashSet<>(classes);
-            default:
-                classes.add(cls);
-        }
+        classes = CollectionUtils.add(classes, cls);
         return this;
     }
 
@@ -195,15 +190,7 @@ public class FeaturePackBuilder {
         final String serviceName = serviceInterface.getName();
         Set<String> implSet = services.get(serviceName);
         if(implSet == null) {
-            switch(services.size()) {
-                case 0:
-                    services = Collections.singletonMap(serviceName, Collections.singleton(serviceImpl.getName()));
-                    break;
-                case 1:
-                    services = new HashMap<>(services);
-                default:
-                    services.put(serviceName, Collections.singleton(serviceImpl.getName()));
-            }
+            services = CollectionUtils.put(services, serviceName, Collections.singleton(serviceImpl.getName()));
         } else {
             if(implSet.contains(serviceImpl.getName())) {
                 return this;
@@ -272,7 +259,7 @@ public class FeaturePackBuilder {
             if(tasks != null && !tasks.isEmpty()) {
                 tasks.execute(FsTaskContext.builder().setTargetRoot(fpWorkDir.resolve(Constants.RESOURCES)).build());
             }
-            manager.install(fpSpec.getGav().toArtifactCoords(), fpWorkDir);
+            manager.install(fpGav.toArtifactCoords(), fpWorkDir);
             return fpSpec;
         } catch(ProvisioningDescriptionException e) {
             throw e;

@@ -21,8 +21,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-import org.jboss.galleon.ArtifactCoords;
 import org.jboss.galleon.Errors;
+import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.util.CollectionUtils;
 
@@ -35,17 +35,17 @@ public class FeaturePackConfig extends ConfigCustomizations {
 
     public static class Builder extends ConfigCustomizationsBuilder<Builder> {
 
-        protected final ArtifactCoords.Gav gav;
+        protected final FeaturePackLocation fpl;
         protected boolean inheritPackages = true;
         protected Set<String> excludedPackages = Collections.emptySet();
         protected Map<String, PackageConfig> includedPackages = Collections.emptyMap();
 
-        protected Builder(ArtifactCoords.Gav gav) {
-            this(gav, true);
+        protected Builder(FeaturePackLocation fpl) {
+            this(fpl, true);
         }
 
-        protected Builder(ArtifactCoords.Gav gav, boolean inheritPackages) {
-            this.gav = gav;
+        protected Builder(FeaturePackLocation fpl, boolean inheritPackages) {
+            this.fpl = fpl;
             this.inheritPackages = inheritPackages;
         }
 
@@ -109,27 +109,23 @@ public class FeaturePackConfig extends ConfigCustomizations {
         }
     }
 
-    public static Builder builder(ArtifactCoords.Ga ga) {
-        return new Builder(ga.toGav());
+    public static Builder builder(FeaturePackLocation fpl) {
+        return new Builder(fpl);
     }
 
-    public static Builder builder(ArtifactCoords.Gav gav) {
-        return new Builder(gav);
+    public static Builder builder(FeaturePackLocation fpl, boolean inheritPackageSet) {
+        return new Builder(fpl, inheritPackageSet);
     }
 
-    public static Builder builder(ArtifactCoords.Gav gav, boolean inheritPackageSet) {
-        return new Builder(gav, inheritPackageSet);
+    public static FeaturePackConfig forLocation(FeaturePackLocation fpl) {
+        return new Builder(fpl).build();
     }
 
-    public static FeaturePackConfig forGav(ArtifactCoords.Gav gav) {
-        return new Builder(gav).build();
+    public static String getDefaultOriginName(FeaturePackLocation location) {
+        return location.getChannel().toString();
     }
 
-    public static String getDefaultOriginName(ArtifactCoords.Gav gav) {
-        return gav.toGa().toString();
-    }
-
-    private final ArtifactCoords.Gav gav;
+    private final FeaturePackLocation fpl;
     protected final boolean inheritPackages;
     protected final Set<String> excludedPackages;
     protected final Map<String, PackageConfig> includedPackages;
@@ -137,8 +133,8 @@ public class FeaturePackConfig extends ConfigCustomizations {
 
     protected FeaturePackConfig(Builder builder) {
         super(builder);
-        assert builder.gav != null : "gav is null";
-        this.gav = builder.gav;
+        assert builder.fpl != null : "location is null";
+        this.fpl = builder.fpl;
         this.inheritPackages = builder.inheritPackages;
         this.excludedPackages = CollectionUtils.unmodifiable(builder.excludedPackages);
         this.includedPackages = CollectionUtils.unmodifiable(builder.includedPackages);
@@ -149,8 +145,8 @@ public class FeaturePackConfig extends ConfigCustomizations {
         return builder;
     }
 
-    public ArtifactCoords.Gav getGav() {
-        return gav;
+    public FeaturePackLocation getLocation() {
+        return fpl;
     }
 
     public boolean isInheritPackages() {
@@ -186,7 +182,7 @@ public class FeaturePackConfig extends ConfigCustomizations {
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result + ((excludedPackages == null) ? 0 : excludedPackages.hashCode());
-        result = prime * result + ((gav == null) ? 0 : gav.hashCode());
+        result = prime * result + ((fpl == null) ? 0 : fpl.hashCode());
         result = prime * result + ((includedPackages == null) ? 0 : includedPackages.hashCode());
         result = prime * result + (inheritPackages ? 1231 : 1237);
         return result;
@@ -206,10 +202,10 @@ public class FeaturePackConfig extends ConfigCustomizations {
                 return false;
         } else if (!excludedPackages.equals(other.excludedPackages))
             return false;
-        if (gav == null) {
-            if (other.gav != null)
+        if (fpl == null) {
+            if (other.fpl != null)
                 return false;
-        } else if (!gav.equals(other.gav))
+        } else if (!fpl.equals(other.fpl))
             return false;
         if (includedPackages == null) {
             if (other.includedPackages != null)
@@ -224,7 +220,7 @@ public class FeaturePackConfig extends ConfigCustomizations {
     @Override
     public String toString() {
         final StringBuilder builder = new StringBuilder();
-        builder.append("[").append(gav.toString());
+        builder.append("[").append(fpl.toString());
         append(builder);
         return builder.append("]").toString();
     }
