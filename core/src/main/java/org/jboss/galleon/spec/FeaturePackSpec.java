@@ -19,10 +19,13 @@ package org.jboss.galleon.spec;
 import java.util.Collections;
 import java.util.Set;
 
+import org.jboss.galleon.ArtifactCoords;
 import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
+import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.config.FeaturePackDepsConfig;
 import org.jboss.galleon.config.FeaturePackDepsConfigBuilder;
+import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
 import org.jboss.galleon.util.CollectionUtils;
 import org.jboss.galleon.util.StringUtils;
 
@@ -65,6 +68,13 @@ public class FeaturePackSpec extends FeaturePackDepsConfig {
         return new Builder();
     }
 
+    /**
+     * @deprecated
+     */
+    public static Builder builder(ArtifactCoords.Gav gav) {
+        return new Builder().setFPID(LegacyGalleon1Universe.toFpl(gav).getFPID());
+    }
+
     public static Builder builder(FeaturePackLocation.FPID fpid) {
         return new Builder().setFPID(fpid);
     }
@@ -72,10 +82,26 @@ public class FeaturePackSpec extends FeaturePackDepsConfig {
     private final FeaturePackLocation.FPID fpid;
     private final Set<String> defPackages;
 
+    private ArtifactCoords.Gav legacyGav;
+
     protected FeaturePackSpec(Builder builder) {
         super(builder);
         this.fpid = builder.fpid;
         this.defPackages = CollectionUtils.unmodifiable(builder.defPackages);
+    }
+
+    /**
+     * @deprecated
+     */
+    public ArtifactCoords.Gav getGav() {
+        if(legacyGav == null) {
+            try {
+                legacyGav = LegacyGalleon1Universe.toArtifactCoords(fpid.getLocation()).toGav();
+            } catch (ProvisioningException e) {
+                throw new IllegalStateException("Failed to translate fpl to gav", e);
+            }
+        }
+        return legacyGav;
     }
 
     public FeaturePackLocation.FPID getFPID() {

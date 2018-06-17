@@ -21,9 +21,12 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import org.jboss.galleon.ArtifactCoords;
 import org.jboss.galleon.Errors;
 import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
+import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
 import org.jboss.galleon.util.CollectionUtils;
 
 /**
@@ -109,6 +112,13 @@ public class FeaturePackConfig extends ConfigCustomizations {
         }
     }
 
+    /**
+     * @deprecated
+     */
+    public static Builder builder(ArtifactCoords.Gav gav) {
+        return new Builder(LegacyGalleon1Universe.toFpl(gav));
+    }
+
     public static Builder builder(FeaturePackLocation fpl) {
         return new Builder(fpl);
     }
@@ -131,6 +141,8 @@ public class FeaturePackConfig extends ConfigCustomizations {
     protected final Map<String, PackageConfig> includedPackages;
     private final Builder builder;
 
+    private ArtifactCoords.Gav legacyGav;
+
     protected FeaturePackConfig(Builder builder) {
         super(builder);
         assert builder.fpl != null : "location is null";
@@ -143,6 +155,20 @@ public class FeaturePackConfig extends ConfigCustomizations {
 
     public Builder getBuilder() {
         return builder;
+    }
+
+    /**
+     * @deprecated
+     */
+    public ArtifactCoords.Gav getGav() {
+        if(legacyGav == null) {
+            try {
+                legacyGav = LegacyGalleon1Universe.toArtifactCoords(fpl).toGav();
+            } catch (ProvisioningException e) {
+                throw new IllegalStateException("Failed to translate fpl to gav", e);
+            }
+        }
+        return legacyGav;
     }
 
     public FeaturePackLocation getLocation() {

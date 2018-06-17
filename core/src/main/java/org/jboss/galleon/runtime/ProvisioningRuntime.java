@@ -35,6 +35,8 @@ import java.util.stream.Stream;
 
 import javax.xml.stream.XMLStreamException;
 
+import org.jboss.galleon.ArtifactCoords;
+import org.jboss.galleon.ArtifactException;
 import org.jboss.galleon.Constants;
 import org.jboss.galleon.Errors;
 import org.jboss.galleon.FeaturePackLocation;
@@ -428,6 +430,17 @@ public class ProvisioningRuntime implements FeaturePackSet<FeaturePackRuntime>, 
 
     public UniverseResolver getUniverseResolver() {
         return universeResolver;
+    }
+
+    /**
+     * @deprecated
+     */
+    public Path resolveArtifact(ArtifactCoords coords) throws ArtifactException {
+        try {
+            return universeResolver.getArtifactResolver("repository.maven").resolve(coords.toString());
+        } catch (ProvisioningException e) {
+            throw new ArtifactException("Failed to resolve " + coords, e);
+        }
     }
 
     @Override

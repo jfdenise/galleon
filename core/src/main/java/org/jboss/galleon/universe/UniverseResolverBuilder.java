@@ -87,6 +87,13 @@ public abstract class UniverseResolverBuilder<T extends UniverseResolverBuilder<
         return (T) this;
     }
 
+    public boolean hasUniverse(String name) {
+        if(name == null ? defaultUniverse != null : universes.containsKey(name)) {
+            return true;
+        }
+        return primaryResolver == null ? false : primaryResolver.hasUniverse(name);
+    }
+
     protected boolean canBuildUniverseResolver() {
         return ufl != null || defaultUniverse != null || !universes.isEmpty() || primaryResolver != null;
     }

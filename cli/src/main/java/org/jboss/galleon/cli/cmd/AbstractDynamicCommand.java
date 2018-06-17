@@ -209,7 +209,7 @@ public abstract class AbstractDynamicCommand extends MapCommand<PmCommandInvocat
             runCommand(session, options);
             return CommandResult.SUCCESS;
         } catch (Throwable t) {
-            t.printStackTrace();
+            //t.printStackTrace();
             if (t instanceof RuntimeException) {
                 t.printStackTrace(session.getErr());
             }

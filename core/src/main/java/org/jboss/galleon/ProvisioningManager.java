@@ -59,6 +59,17 @@ public class ProvisioningManager {
         private Builder() {
         }
 
+        /**
+         * @deprecated
+         */
+        public Builder setArtifactResolver(ArtifactRepositoryManager arm) {
+            try {
+                return addArtifactResolver(arm);
+            } catch (ProvisioningException e) {
+                throw new IllegalStateException("Failed to set artifact resolver", e);
+            }
+        }
+
         public Builder setEncoding(String encoding) {
             this.encoding = encoding;
             return this;
@@ -182,12 +193,7 @@ public class ProvisioningManager {
             throws ProvisioningException {
         final ProvisioningConfig provisionedConfig = this.getProvisioningConfig();
         if(provisionedConfig == null) {
-            // TODO this has to be done somehow differently
-            final ProvisioningConfig.Builder configBuilder = ProvisioningConfig.builder().addFeaturePackDep(fpConfig);
-            if(fpConfig.getLocation().getUniverse().equals(LegacyGalleon1Universe.NAME) && !universeResolver.hasUniverse(LegacyGalleon1Universe.NAME)) {
-                configBuilder.addUniverse(new UniverseConfig(LegacyGalleon1Universe.NAME, LegacyGalleon1UniverseFactory.ID, null));
-            }
-            provision(configBuilder.build(), options);
+            provision(ProvisioningConfig.builder().addFeaturePackDep(fpConfig).build(), options);
             return;
         }
 
@@ -543,6 +549,10 @@ public class ProvisioningManager {
                 }
                 urBuilder.addUniverse(universeConfig.getName(), universeConfig.getFactory(), universeConfig.getLocation());
             }
+        }
+        // TODO this has to be done somehow differently
+        if(!urBuilder.hasUniverse(LegacyGalleon1Universe.NAME)) {
+            urBuilder.addUniverse(LegacyGalleon1Universe.NAME, LegacyGalleon1UniverseFactory.ID, null);
         }
         return urBuilder.build();
     }
