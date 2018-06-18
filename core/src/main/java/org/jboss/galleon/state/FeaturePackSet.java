@@ -19,7 +19,7 @@ package org.jboss.galleon.state;
 import java.util.Collection;
 import java.util.List;
 
-import org.jboss.galleon.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation;
 
 /**
  *
@@ -31,9 +31,9 @@ public interface FeaturePackSet<F extends FeaturePack<?>> {
 
     Collection<F> getFeaturePacks();
 
-    boolean hasFeaturePack(FeaturePackLocation.Channel channel);
+    boolean hasFeaturePack(FeaturePackLocation.ChannelSpec channel);
 
-    F getFeaturePack(FeaturePackLocation.Channel channel);
+    F getFeaturePack(FeaturePackLocation.ChannelSpec channel);
 
     boolean hasConfigs();
 

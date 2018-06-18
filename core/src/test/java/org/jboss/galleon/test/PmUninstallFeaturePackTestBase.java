@@ -16,7 +16,7 @@
  */
 package org.jboss.galleon.test;
 
-import org.jboss.galleon.FeaturePackLocation.FPID;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningManager;

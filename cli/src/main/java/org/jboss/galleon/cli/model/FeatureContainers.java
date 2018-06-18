@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningManager;
 import org.jboss.galleon.cli.PmSession;
@@ -41,6 +40,8 @@ import org.jboss.galleon.runtime.ProvisioningRuntime.PluginVisitor;
 import org.jboss.galleon.runtime.ResolvedSpecId;
 import org.jboss.galleon.state.ProvisionedConfig;
 import org.jboss.galleon.state.ProvisionedFeature;
+import org.jboss.galleon.universe.FeaturePackLocation.ChannelSpec;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 
 /**
  *
@@ -48,7 +49,7 @@ import org.jboss.galleon.state.ProvisionedFeature;
  */
 public abstract class FeatureContainers {
 
-    public static FeatureContainer fromFeaturePackId(PmSession session, ProvisioningManager manager, FeaturePackLocation.FPID fpid,
+    public static FeatureContainer fromFeaturePackId(PmSession session, ProvisioningManager manager, FPID fpid,
             String name) throws ProvisioningException, IOException {
         FeatureContainer fp = Caches.getFeaturePackInfo(fpid);
         if (fp != null) {
@@ -162,7 +163,7 @@ public abstract class FeatureContainers {
         }
         fp.setAllPackages(pkgBuilder.getPackages());
 
-        Map<FeaturePackLocation.Channel, Set<ResolvedSpecId>> actualSet = new HashMap<>();
+        Map<ChannelSpec, Set<ResolvedSpecId>> actualSet = new HashMap<>();
         Map<ResolvedSpecId, List<FeatureInfo>> features = new HashMap<>();
         for (ProvisionedConfig c : runtime.getConfigs()) {
             ConfigInfo config = new ConfigInfo(c.getModel(), c.getName());
@@ -201,7 +202,7 @@ public abstract class FeatureContainers {
         if (!allSpecs) {
             // Build the set of FeatureSpecInfo, side effect is to connect
             // packages and feature-specs.
-            for (Entry<FeaturePackLocation.Channel, Set<ResolvedSpecId>> entry : actualSet.entrySet()) {
+            for (Entry<ChannelSpec, Set<ResolvedSpecId>> entry : actualSet.entrySet()) {
                 Group specsRoot = specsBuilder.buildTree(session, entry.getKey().getLocation().getFPID(), fp.getFPID(),
                         pkgBuilder.getPackages(), false, entry.getValue());
                 for (ResolvedSpecId rs : entry.getValue()) {
@@ -217,7 +218,7 @@ public abstract class FeatureContainers {
         fp.setAllFeatures(features);
     }
 
-    private static ProvisioningRuntime buildFullRuntime(FeaturePackLocation.FPID fpid, ProvisioningManager manager) throws ProvisioningException {
+    private static ProvisioningRuntime buildFullRuntime(FPID fpid, ProvisioningManager manager) throws ProvisioningException {
         FeaturePackConfig config = FeaturePackConfig.forLocation(fpid.getLocation());
         ProvisioningConfig provisioning = ProvisioningConfig.builder().addFeaturePackDep(config).build();
         ProvisioningRuntime runtime = manager.getRuntime(provisioning, null, Collections.emptyMap());

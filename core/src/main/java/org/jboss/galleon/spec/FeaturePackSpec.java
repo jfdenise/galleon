@@ -20,11 +20,11 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.jboss.galleon.ArtifactCoords;
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.config.FeaturePackDepsConfig;
 import org.jboss.galleon.config.FeaturePackDepsConfigBuilder;
+import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
 import org.jboss.galleon.util.CollectionUtils;
 import org.jboss.galleon.util.StringUtils;
@@ -60,7 +60,11 @@ public class FeaturePackSpec extends FeaturePackDepsConfig {
         }
 
         public FeaturePackSpec build() throws ProvisioningDescriptionException {
-            return new FeaturePackSpec(this);
+            try {
+                return new FeaturePackSpec(this);
+            } catch(ProvisioningDescriptionException e) {
+                throw new ProvisioningDescriptionException("Failed to build feature-pack spec for " + fpid, e);
+            }
         }
     }
 
@@ -84,7 +88,7 @@ public class FeaturePackSpec extends FeaturePackDepsConfig {
 
     private ArtifactCoords.Gav legacyGav;
 
-    protected FeaturePackSpec(Builder builder) {
+    protected FeaturePackSpec(Builder builder) throws ProvisioningDescriptionException {
         super(builder);
         this.fpid = builder.fpid;
         this.defPackages = CollectionUtils.unmodifiable(builder.defPackages);

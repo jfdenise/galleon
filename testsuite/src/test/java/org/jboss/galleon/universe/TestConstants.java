@@ -23,5 +23,5 @@ package org.jboss.galleon.universe;
  */
 public interface TestConstants {
 
-    String GROUP_ID = "org.jboss.galleon.universe.maven.test";
+    String GROUP_ID = "org.jboss.galleon.universe.test";
 }

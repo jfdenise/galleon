@@ -17,6 +17,8 @@
 
 package org.jboss.galleon.config;
 
+import org.jboss.galleon.universe.UniverseSpec;
+
 /**
  *
  * @author Alexey Loubyansky
@@ -24,13 +26,15 @@ package org.jboss.galleon.config;
 public class UniverseConfig {
 
     private final String name;
-    private final String factory;
-    private final String location;
+    private final UniverseSpec universeSource;
 
     public UniverseConfig(String name, String factory, String location) {
+        this(name, new UniverseSpec(factory, location));
+    }
+
+    public UniverseConfig(String name, UniverseSpec universeSource) {
         this.name = name;
-        this.factory = factory;
-        this.location = location;
+        this.universeSource = universeSource;
     }
 
     public boolean isDefault() {
@@ -41,21 +45,16 @@ public class UniverseConfig {
         return name;
     }
 
-    public String getFactory() {
-        return factory;
-    }
-
-    public String getLocation() {
-        return location;
+    public UniverseSpec getSpec() {
+        return universeSource;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((factory == null) ? 0 : factory.hashCode());
-        result = prime * result + ((location == null) ? 0 : location.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((universeSource == null) ? 0 : universeSource.hashCode());
         return result;
     }
 
@@ -68,20 +67,15 @@ public class UniverseConfig {
         if (getClass() != obj.getClass())
             return false;
         UniverseConfig other = (UniverseConfig) obj;
-        if (factory == null) {
-            if (other.factory != null)
-                return false;
-        } else if (!factory.equals(other.factory))
-            return false;
-        if (location == null) {
-            if (other.location != null)
-                return false;
-        } else if (!location.equals(other.location))
-            return false;
         if (name == null) {
             if (other.name != null)
                 return false;
         } else if (!name.equals(other.name))
+            return false;
+        if (universeSource == null) {
+            if (other.universeSource != null)
+                return false;
+        } else if (!universeSource.equals(other.universeSource))
             return false;
         return true;
     }
@@ -91,8 +85,7 @@ public class UniverseConfig {
         return new StringBuilder()
                 .append("[universe ")
                 .append(name == null ? "default" : name)
-                .append(" factory=").append(factory)
-                .append(" location ").append(location)
+                .append(' ').append(universeSource)
                 .append(']').toString();
     }
 }

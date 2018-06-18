@@ -43,6 +43,11 @@ public abstract class MavenUniverseBase implements Universe<MavenProducer> {
         return MavenUniverseFactory.ID;
     }
 
+    @Override
+    public String getLocation() {
+        return artifact.getCoordsAsString();
+    }
+
     public MavenRepoManager getRepo() {
         return repo;
     }

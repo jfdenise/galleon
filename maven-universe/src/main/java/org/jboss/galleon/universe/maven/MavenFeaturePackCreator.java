@@ -19,9 +19,11 @@ package org.jboss.galleon.universe.maven;
 
 import java.io.IOException;
 import java.nio.file.Path;
+
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.creator.UniverseFeaturePackCreator;
-import org.jboss.galleon.spec.FeaturePackSpec;
+import org.jboss.galleon.universe.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.Universe;
 import org.jboss.galleon.util.IoUtils;
 import org.jboss.galleon.util.ZipUtils;
@@ -40,16 +42,17 @@ public class MavenFeaturePackCreator implements UniverseFeaturePackCreator {
     }
 
     @Override
-    public void install(Universe<?> universe, FeaturePackSpec spec, Path fpContentDir) throws ProvisioningException {
+    public void install(Universe<?> universe, FPID fpid, Path fpContentDir) throws ProvisioningException {
         final MavenUniverse mvnUni = (MavenUniverse) universe;
-        final MavenProducer producer = mvnUni.getProducer(spec.getFPID().getProducer());
+        final FeaturePackLocation fps = fpid.getLocation();
+        final MavenProducer producer = mvnUni.getProducer(fps.getProducer());
         // make sure the channel exists
-        producer.getChannel(spec.getFPID().getChannelName());
+        producer.getChannel(fps.getChannelName());
 
         final MavenArtifact artifact = new MavenArtifact();
         artifact.setGroupId(producer.getFeaturePackGroupId());
         artifact.setArtifactId(producer.getFeaturePackArtifactId());
-        artifact.setVersion(spec.getFPID().getBuild());
+        artifact.setVersion(fpid.getBuild());
         artifact.setExtension(ZIP);
 
         Path tmpFile = null;

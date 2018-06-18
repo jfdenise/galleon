@@ -21,7 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.aesh.command.option.Argument;
-import org.jboss.galleon.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation.ChannelSpec;
 import org.jboss.galleon.cli.CommandExecutionException;
 import org.jboss.galleon.cli.PmCompleterInvocation;
 import org.jboss.galleon.cli.PmSession;
@@ -101,7 +102,7 @@ public abstract class AbstractPackageCommand extends AbstractFPProvisionedComman
     }
 
     @Override
-    public FeaturePackLocation.Channel getChannel(PmSession session) throws CommandExecutionException {
+    public ChannelSpec getChannel(PmSession session) throws CommandExecutionException {
         if (pkg == null) {
             throw new CommandExecutionException("No package set.");
         }

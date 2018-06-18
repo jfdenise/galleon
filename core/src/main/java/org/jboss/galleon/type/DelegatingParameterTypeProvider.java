@@ -16,7 +16,7 @@
  */
 package org.jboss.galleon.type;
 
-import org.jboss.galleon.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation.ChannelSpec;
 
 /**
  *
@@ -32,10 +32,10 @@ public abstract class DelegatingParameterTypeProvider implements ParameterTypePr
     }
 
     @Override
-    public FeatureParameterType getType(FeaturePackLocation.Channel fpChannel, String name) throws ParameterTypeNotFoundException {
+    public FeatureParameterType getType(ChannelSpec fpChannel, String name) throws ParameterTypeNotFoundException {
         final FeatureParameterType type = resolveType(fpChannel, name);
         return type == null ? delegate.getType(fpChannel, name) : type;
     }
 
-    protected abstract FeatureParameterType resolveType(FeaturePackLocation.Channel fpChannel, String name);
+    protected abstract FeatureParameterType resolveType(ChannelSpec fpChannel, String name);
 }

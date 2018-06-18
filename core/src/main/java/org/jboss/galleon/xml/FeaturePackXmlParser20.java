@@ -19,16 +19,17 @@ package org.jboss.galleon.xml;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.config.ConfigModel;
 import org.jboss.galleon.config.FeaturePackDepsConfigBuilder;
 import org.jboss.galleon.spec.FeaturePackSpec;
 import org.jboss.galleon.spec.FeaturePackSpec.Builder;
+import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.util.ParsingUtils;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
 
@@ -54,6 +55,7 @@ public class FeaturePackXmlParser20 implements PlugableXmlParser<FeaturePackSpec
         NAME("name"),
         PACKAGES("packages"),
         PACKAGE("package"),
+        UNIVERSES("universes"),
 
         // default unknown element
         UNKNOWN(null);
@@ -61,7 +63,7 @@ public class FeaturePackXmlParser20 implements PlugableXmlParser<FeaturePackSpec
         private static final Map<String, Element> elements;
 
         static {
-            elements = new HashMap<>(12);
+            elements = new HashMap<>(13);
             elements.put(CONFIG.name, CONFIG);
             elements.put(DEFAULT_CONFIGS.name, DEFAULT_CONFIGS);
             elements.put(DEFAULT_PACKAGES.name, DEFAULT_PACKAGES);
@@ -73,6 +75,7 @@ public class FeaturePackXmlParser20 implements PlugableXmlParser<FeaturePackSpec
             elements.put(NAME.name, NAME);
             elements.put(PACKAGES.name, PACKAGES);
             elements.put(PACKAGE.name, PACKAGE);
+            elements.put(UNIVERSES.name, UNIVERSES);
             elements.put(null, UNKNOWN);
         }
 
@@ -166,7 +169,7 @@ public class FeaturePackXmlParser20 implements PlugableXmlParser<FeaturePackSpec
 
     @Override
     public void readElement(XMLExtendedStreamReader reader, Builder fpBuilder) throws XMLStreamException {
-        fpBuilder.setFPID(readFpl(reader).getFPID());
+        fpBuilder.setFPID(readSource(reader).getFPID());
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
@@ -175,6 +178,9 @@ public class FeaturePackXmlParser20 implements PlugableXmlParser<FeaturePackSpec
                 case XMLStreamConstants.START_ELEMENT: {
                     final Element element = Element.of(reader.getName().getLocalPart());
                     switch (element) {
+                        case UNIVERSES:
+                            ProvisioningXmlParser20.readUniverses(reader, fpBuilder);
+                            break;
                         case DEPENDENCIES:
                             readFeaturePackDeps(reader, fpBuilder);
                             break;
@@ -206,7 +212,7 @@ public class FeaturePackXmlParser20 implements PlugableXmlParser<FeaturePackSpec
         throw ParsingUtils.endOfDocument(reader.getLocation());
     }
 
-    private FeaturePackLocation readFpl(XMLExtendedStreamReader reader) throws XMLStreamException {
+    private FeaturePackLocation readSource(XMLExtendedStreamReader reader) throws XMLStreamException {
         FeaturePackLocation location = null;
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i++) {
@@ -215,7 +221,7 @@ public class FeaturePackXmlParser20 implements PlugableXmlParser<FeaturePackSpec
                 case LOCATION:
                     try {
                         location = FeaturePackLocation.fromString(reader.getAttributeValue(i));
-                    } catch (ProvisioningDescriptionException e) {
+                    } catch (IllegalArgumentException e) {
                         throw new XMLStreamException(ParsingUtils.error("Failed to parse feature-pack location", reader.getLocation()), e);
                     }
                     break;

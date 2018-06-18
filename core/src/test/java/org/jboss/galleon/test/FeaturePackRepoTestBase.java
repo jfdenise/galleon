@@ -18,6 +18,7 @@ package org.jboss.galleon.test;
 
 import java.nio.file.Path;
 
+import org.jboss.galleon.ArtifactRepositoryManager;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningManager;
 import org.jboss.galleon.config.ProvisioningConfig;
@@ -26,7 +27,6 @@ import org.jboss.galleon.repomanager.FeaturePackRepositoryManager;
 import org.jboss.galleon.state.ProvisionedState;
 import org.jboss.galleon.test.util.TestUtils;
 import org.jboss.galleon.universe.UniverseResolver;
-import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
 import org.jboss.galleon.util.IoUtils;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -41,36 +41,26 @@ import org.junit.BeforeClass;
 public class FeaturePackRepoTestBase {
 
     protected static Path repoHome;
-    protected static UniverseResolver universeResolver;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
         repoHome = TestUtils.mkRandomTmpDir();
-        universeResolver = UniverseResolver.builder()
-                .addUniverse(LegacyGalleon1Universe.NAME,
-                        new LegacyGalleon1Universe(FeaturePackRepositoryManager.newInstance(repoHome)))
-                .build();
-        doBeforeClass();
-    }
-
-    protected static void doBeforeClass() throws Exception {
     }
 
     @AfterClass
     public static void afterClass() throws Exception {
-        doAfterClass();
         IoUtils.recursiveDelete(repoHome);
     }
 
-    protected static void doAfterClass() throws Exception {
-    }
-
     protected Path installHome;
+    protected ArtifactRepositoryManager repo;
+    protected UniverseResolver universeResolver;
     protected FeaturePackCreator creator;
 
     @Before
     public void before() throws Exception {
         installHome = TestUtils.mkRandomTmpDir();
+        repo = initRepoManager(repoHome);
         doBefore();
     }
 
@@ -86,13 +76,17 @@ public class FeaturePackRepoTestBase {
     protected void doAfter() throws Exception {
     }
 
+    protected ArtifactRepositoryManager initRepoManager(Path repoHome) {
+        return FeaturePackRepositoryManager.newInstance(repoHome);
+    }
+
     protected FeaturePackCreator initCreator() throws ProvisioningException {
-        return FeaturePackCreator.getInstance().setPrimaryUniverseResolver(universeResolver);
+        return FeaturePackCreator.getInstance().addArtifactResolver(repo);
     }
 
     protected ProvisioningManager getPm() throws ProvisioningException {
         return ProvisioningManager.builder()
-                .setPrimaryUniverseResolver(universeResolver)
+                .addArtifactResolver(repo)
                 .setInstallationHome(installHome)
                 .build();
     }

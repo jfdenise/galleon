@@ -20,8 +20,9 @@ import java.util.Collection;
 import java.util.Map;
 
 import org.jboss.galleon.Errors;
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
+import org.jboss.galleon.universe.FeaturePackLocation;
+import org.jboss.galleon.universe.UniverseSpec;
 import org.jboss.galleon.util.CollectionUtils;
 
 /**
@@ -32,11 +33,11 @@ public class FeaturePackDepsConfig extends ConfigCustomizations {
 
     protected final UniverseConfig defaultUniverse;
     protected final Map<String, UniverseConfig> universeConfigs;
-    protected final Map<FeaturePackLocation.Channel, FeaturePackConfig> fpDeps;
+    protected final Map<FeaturePackLocation.ChannelSpec, FeaturePackConfig> fpDeps;
     protected final Map<String, FeaturePackConfig> fpDepsByOrigin;
-    private final Map<FeaturePackLocation.Channel, String> channelToOrigin;
+    private final Map<FeaturePackLocation.ChannelSpec, String> channelToOrigin;
 
-    protected FeaturePackDepsConfig(FeaturePackDepsConfigBuilder<?> builder) {
+    protected FeaturePackDepsConfig(FeaturePackDepsConfigBuilder<?> builder) throws ProvisioningDescriptionException {
         super(builder);
         this.fpDeps = CollectionUtils.unmodifiable(builder.fpDeps);
         this.fpDepsByOrigin = CollectionUtils.unmodifiable(builder.fpDepsByOrigin);
@@ -61,23 +62,38 @@ public class FeaturePackDepsConfig extends ConfigCustomizations {
         return universe;
     }
 
-    public boolean hasNamedUniverseConfigs() {
+    public boolean hasUniverseNamedConfigs() {
         return !universeConfigs.isEmpty();
     }
 
-    public Collection<UniverseConfig> getUniverseConfigs() {
+    public Collection<UniverseConfig> getUniverseNamedConfigs() {
         return universeConfigs.values();
+    }
+
+    public FeaturePackLocation getUserConfiguredSource(FeaturePackLocation fpSource) {
+        final UniverseSpec universeSource = fpSource.getUniverse();
+        if(defaultUniverse != null && defaultUniverse.getSpec().equals(universeSource)) {
+            return new FeaturePackLocation(null, fpSource.getProducer(), fpSource.getChannelName(), fpSource.getFrequency(),
+                    fpSource.getBuild());
+        }
+        for (UniverseConfig universeConfig : universeConfigs.values()) {
+            if (universeConfig.getSpec().equals(universeSource)) {
+                return new FeaturePackLocation(new UniverseSpec(universeConfig.getName(), null), fpSource.getProducer(),
+                        fpSource.getChannelName(), fpSource.getFrequency(), fpSource.getBuild());
+            }
+        }
+        return fpSource;
     }
 
     public boolean hasFeaturePackDeps() {
         return !fpDeps.isEmpty();
     }
 
-    public boolean hasFeaturePackDep(FeaturePackLocation.Channel channel) {
+    public boolean hasFeaturePackDep(FeaturePackLocation.ChannelSpec channel) {
         return fpDeps.containsKey(channel);
     }
 
-    public FeaturePackConfig getFeaturePackDep(FeaturePackLocation.Channel channel) {
+    public FeaturePackConfig getFeaturePackDep(FeaturePackLocation.ChannelSpec channel) {
         return fpDeps.get(channel);
     }
 
@@ -93,7 +109,7 @@ public class FeaturePackDepsConfig extends ConfigCustomizations {
         return fpDep;
     }
 
-    public String originOf(FeaturePackLocation.Channel channel) {
+    public String originOf(FeaturePackLocation.ChannelSpec channel) {
         return channelToOrigin.get(channel);
     }
 

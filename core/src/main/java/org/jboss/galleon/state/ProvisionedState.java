@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.jboss.galleon.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.util.CollectionUtils;
 import org.jboss.galleon.util.StringUtils;
 
@@ -33,7 +33,7 @@ import org.jboss.galleon.util.StringUtils;
 public class ProvisionedState implements FeaturePackSet<ProvisionedFeaturePack> {
 
     public static class Builder {
-        private Map<FeaturePackLocation.Channel, ProvisionedFeaturePack> featurePacks = Collections.emptyMap();
+        private Map<FeaturePackLocation.ChannelSpec, ProvisionedFeaturePack> featurePacks = Collections.emptyMap();
         private List<ProvisionedConfig> configs = Collections.emptyList();
 
         private Builder() {
@@ -58,7 +58,7 @@ public class ProvisionedState implements FeaturePackSet<ProvisionedFeaturePack> 
         return new Builder();
     }
 
-    private final Map<FeaturePackLocation.Channel, ProvisionedFeaturePack> featurePacks;
+    private final Map<FeaturePackLocation.ChannelSpec, ProvisionedFeaturePack> featurePacks;
     private final List<ProvisionedConfig> configs;
 
     ProvisionedState(Builder builder) {
@@ -72,7 +72,7 @@ public class ProvisionedState implements FeaturePackSet<ProvisionedFeaturePack> 
     }
 
     @Override
-    public boolean hasFeaturePack(FeaturePackLocation.Channel channel) {
+    public boolean hasFeaturePack(FeaturePackLocation.ChannelSpec channel) {
         return featurePacks.containsKey(channel);
     }
 
@@ -82,7 +82,7 @@ public class ProvisionedState implements FeaturePackSet<ProvisionedFeaturePack> 
     }
 
     @Override
-    public ProvisionedFeaturePack getFeaturePack(FeaturePackLocation.Channel channel) {
+    public ProvisionedFeaturePack getFeaturePack(FeaturePackLocation.ChannelSpec channel) {
         return featurePacks.get(channel);
     }
 

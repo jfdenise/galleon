@@ -35,13 +35,12 @@ import org.eclipse.aether.RepositoryEvent;
 import org.eclipse.aether.RepositoryListener;
 import org.eclipse.aether.transfer.ArtifactNotFoundException;
 import org.jboss.galleon.ArtifactRepositoryManager;
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.cli.config.Configuration;
 import org.jboss.galleon.cli.model.FeatureContainer;
 import org.jboss.galleon.cli.model.state.State;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.UniverseResolver;
-import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
 
 /**
  *
@@ -193,9 +192,7 @@ public class PmSession implements CommandInvocationProvider<PmCommandInvocation>
         this.maven = new MavenArtifactRepositoryManager(config.getMavenConfig(),
                 mavenListener);
 
-        universeResolver = UniverseResolver.builder()
-                .addUniverse(LegacyGalleon1Universe.NAME, new LegacyGalleon1Universe(maven))
-                .build();
+        universeResolver = UniverseResolver.builder().addArtifactResolver(maven).build();
 
         //Build the universes
         this.universes = Universes.buildUniverses(config, maven);
@@ -336,18 +333,15 @@ public class PmSession implements CommandInvocationProvider<PmCommandInvocation>
         return oa;
     }
 
-    public boolean existsInLocalRepository(FeaturePackLocation.FPID fpid) {
-        if(!fpid.getUniverse().equals(LegacyGalleon1Universe.NAME)) {
-            throw new IllegalStateException("Non Galleon-1 feature-packs are not supported by this method");
-        }
+    public boolean existsInLocalRepository(FPID fpid) {
         Path local = getPmConfiguration().getMavenConfig().getLocalRepository();
-        String grp = fpid.getProducer().replaceAll("\\.", "/");
-        String art = fpid.getChannelName().replaceAll("\\.", "/");
+        String grp = fpid.getChannel().getProducer().replaceAll("\\.", "/");
+        grp = grp.replaceAll(":", "/");
         String vers = fpid.getBuild();
-        return Files.exists(Paths.get(local.toString(), grp, art, vers));
+        return Files.exists(Paths.get(local.toString(), grp, vers));
     }
 
-    public void downloadFp(FeaturePackLocation.FPID fpid) throws ProvisioningException {
+    public void downloadFp(FPID fpid) throws ProvisioningException {
         getUniverseResolver().resolve(fpid.getLocation());
     }
 

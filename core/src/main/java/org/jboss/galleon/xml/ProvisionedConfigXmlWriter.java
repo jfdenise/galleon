@@ -20,12 +20,12 @@ import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
 
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.plugin.ProvisionedConfigHandler;
 import org.jboss.galleon.runtime.ResolvedFeatureSpec;
 import org.jboss.galleon.state.ProvisionedConfig;
 import org.jboss.galleon.state.ProvisionedFeature;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.xml.ProvisionedStateXmlParser20.Attribute;
 import org.jboss.galleon.xml.ProvisionedStateXmlParser20.Element;
 import org.jboss.galleon.xml.util.ElementNode;
@@ -47,7 +47,7 @@ public class ProvisionedConfigXmlWriter extends BaseXmlWriter<ProvisionedConfig>
         }
 
         @Override
-        public void nextFeaturePack(FeaturePackLocation.FPID fpid) {
+        public void nextFeaturePack(FPID fpid) {
             fpElement = addElement(parent, Element.FEATURE_PACK);
             addAttribute(fpElement, Attribute.LOCATION, fpid.toString());
         }

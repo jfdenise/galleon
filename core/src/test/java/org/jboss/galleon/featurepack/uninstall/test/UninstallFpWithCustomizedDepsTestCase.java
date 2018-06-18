@@ -17,8 +17,8 @@
 package org.jboss.galleon.featurepack.uninstall.test;
 
 import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
-import org.jboss.galleon.FeaturePackLocation.Channel;
-import org.jboss.galleon.FeaturePackLocation.FPID;
+import org.jboss.galleon.universe.FeaturePackLocation.ChannelSpec;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.config.FeaturePackConfig;
@@ -37,11 +37,11 @@ public class UninstallFpWithCustomizedDepsTestCase extends PmUninstallFeaturePac
 
     private static final FPID FP1_100_GAV = LegacyGalleon1Universe.newFPID("org.jboss.pm.test:fp1", "1", "1.0.0.Final");
     private static final FPID FP2_100_GAV = LegacyGalleon1Universe.newFPID("org.jboss.pm.test:fp2", "1", "1.0.0.Final");
-    private static final Channel FP2_GA = LegacyGalleon1Universe.newChannel("org.jboss.pm.test:fp2", "1");
+    private static final ChannelSpec FP2_GA = LegacyGalleon1Universe.newChannel("org.jboss.pm.test:fp2", "1");
     private static final FPID FP3_100_GAV = LegacyGalleon1Universe.newFPID("org.jboss.pm.test:fp3", "1", "1.0.0.Final");
-    private static final Channel FP3_GA = LegacyGalleon1Universe.newChannel("org.jboss.pm.test:fp3", "1");
+    private static final ChannelSpec FP3_GA = LegacyGalleon1Universe.newChannel("org.jboss.pm.test:fp3", "1");
     private static final FPID FP4_100_GAV = LegacyGalleon1Universe.newFPID("org.jboss.pm.test:fp4", "1", "1.0.0.Final");
-    private static final Channel FP4_GA = LegacyGalleon1Universe.newChannel("org.jboss.pm.test:fp4", "1");
+    private static final ChannelSpec FP4_GA = LegacyGalleon1Universe.newChannel("org.jboss.pm.test:fp4", "1");
 
     @Override
     protected void createFeaturePacks(FeaturePackCreator creator) throws ProvisioningException {

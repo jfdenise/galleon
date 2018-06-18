@@ -43,11 +43,14 @@ public class FeaturePackXmlWriter extends BaseXmlWriter<FeaturePackSpec> {
         final ElementNode fp = addElement(null, Element.FEATURE_PACK);
         addAttribute(fp, Attribute.LOCATION, fpSpec.getFPID().toString());
 
+        ProvisioningXmlWriter.writeUniverseConfigs(fpSpec, fp);
+
         if (fpSpec.hasFeaturePackDeps()) {
             final ElementNode deps = addElement(fp, Element.DEPENDENCIES);
             for (FeaturePackConfig dep : fpSpec.getFeaturePackDeps()) {
                 final ElementNode depElement = addElement(deps, Element.DEPENDENCY);
-                ProvisioningXmlWriter.writeFeaturePackConfig(depElement, depElement.getNamespace(), dep, fpSpec.originOf(dep.getLocation().getChannel()));
+                ProvisioningXmlWriter.writeFeaturePackConfig(depElement, depElement.getNamespace(),
+                        fpSpec.getUserConfiguredSource(dep.getLocation()), dep, fpSpec.originOf(dep.getLocation().getChannel()));
             }
         }
 

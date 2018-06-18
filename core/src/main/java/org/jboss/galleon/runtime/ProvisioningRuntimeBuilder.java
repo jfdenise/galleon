@@ -16,7 +16,6 @@
  */
 package org.jboss.galleon.runtime;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -31,13 +30,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.xml.stream.XMLStreamException;
-
 import org.jboss.galleon.Constants;
 import org.jboss.galleon.DefaultMessageWriter;
 import org.jboss.galleon.Errors;
-import org.jboss.galleon.FeaturePackLocation;
-import org.jboss.galleon.FeaturePackLocation.Channel;
 import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
@@ -59,12 +54,13 @@ import org.jboss.galleon.spec.PackageDependencySpec;
 import org.jboss.galleon.spec.PackageDepsSpec;
 import org.jboss.galleon.spec.SpecId;
 import org.jboss.galleon.state.ProvisionedConfig;
+import org.jboss.galleon.universe.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation.ChannelSpec;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.util.IoUtils;
 import org.jboss.galleon.util.LayoutUtils;
 import org.jboss.galleon.util.CollectionUtils;
-import org.jboss.galleon.util.ZipUtils;
-import org.jboss.galleon.xml.FeaturePackXmlParser;
 
 
 /**
@@ -94,7 +90,7 @@ public class ProvisioningRuntimeBuilder {
     String operation;
     UniverseResolver universeResolver;
     ProvisioningConfig config;
-    private Map<FeaturePackLocation.Channel, FeaturePackLocation.FPID> uninstallFps = Collections.emptyMap();
+    private Map<ChannelSpec, FPID> uninstallFps = Collections.emptyMap();
     Path installDir;
     final Path workDir;
     final Path layoutDir;
@@ -102,7 +98,7 @@ public class ProvisioningRuntimeBuilder {
     Map<String, String> pluginOptions = Collections.emptyMap();
     private final MessageWriter messageWriter;
 
-    private final Map<FeaturePackLocation.Channel, FeaturePackRuntimeBuilder> fpRtBuilders = new HashMap<>();
+    private final Map<ChannelSpec, FeaturePackRuntimeBuilder> fpRtBuilders = new HashMap<>();
     private List<FeaturePackRuntimeBuilder> fpRtBuildersOrdered = new ArrayList<>();
 
     List<ConfigModelStack> anonymousConfigs = Collections.emptyList();
@@ -115,7 +111,7 @@ public class ProvisioningRuntimeBuilder {
     // 1) avoid resolving model only configs that are not going to get merged;
     // 2) to avoid adding package dependencies of the model only configs that are not merged.
     private List<ConfigModel> modelOnlyConfigSpecs = Collections.emptyList();
-    private List<FeaturePackLocation.FPID> modelOnlyGavs = Collections.emptyList();
+    private List<FPID> modelOnlyFPIDs = Collections.emptyList();
 
     private FeaturePackRuntimeBuilder thisOrigin;
     private FeaturePackRuntimeBuilder currentOrigin;
@@ -152,8 +148,8 @@ public class ProvisioningRuntimeBuilder {
         return this;
     }
 
-    public ProvisioningRuntimeBuilder uninstall(FeaturePackLocation.Channel channel) {
-        uninstallFps = CollectionUtils.put(uninstallFps, channel, channel.getLocation().getFPID());
+    public ProvisioningRuntimeBuilder uninstall(FeaturePackLocation.FPID fpid) {
+        uninstallFps = CollectionUtils.put(uninstallFps, fpid.getChannel(), fpid);
         return this;
     }
 
@@ -174,21 +170,21 @@ public class ProvisioningRuntimeBuilder {
     private ProvisioningRuntime doBuild() throws ProvisioningException {
 
         if(!uninstallFps.isEmpty()) {
-            Map<FeaturePackLocation.Channel, FeaturePackLocation.FPID> depsOfUninstalled = Collections.emptyMap();
-            for(FeaturePackLocation.Channel uninstallGa : uninstallFps.keySet()) {
-                if(!config.hasFeaturePackDep(uninstallGa)) {
-                    throw new ProvisioningException(Errors.unknownFeaturePack(uninstallGa.getLocation().getFPID()));
+            Map<ChannelSpec, FPID> depsOfUninstalled = Collections.emptyMap();
+            for(ChannelSpec uninstallFp : uninstallFps.keySet()) {
+                if(!config.hasFeaturePackDep(uninstallFp)) {
+                    throw new ProvisioningException(Errors.unknownFeaturePack(uninstallFp.getLocation().getFPID()));
                 }
-                final FeaturePackRuntimeBuilder fp = getOrLoadFpBuilder(uninstallGa.getLocation().getFPID());
-                depsOfUninstalled = FpVersionsResolver.resolveDeps(this, fp.spec, depsOfUninstalled);
+                final FeaturePackRuntimeBuilder fp = getOrLoadFpBuilder(universeResolver, uninstallFp.getLocation().getFPID());
+                depsOfUninstalled = FpVersionsResolver.resolveDeps(this, fp, depsOfUninstalled);
             }
             if(!depsOfUninstalled.isEmpty()) {
-                Map<FeaturePackLocation.Channel, FeaturePackLocation.FPID> depsOfRemaining = Collections.emptyMap();
+                Map<ChannelSpec, FPID> depsOfRemaining = Collections.emptyMap();
                 for (FeaturePackConfig fpConfig : config.getFeaturePackDeps()) {
                     if (fpConfig.getLocation().getBuild() == null) {
                         continue;
                     }
-                    final FeaturePackLocation.FPID uninstallGav = uninstallFps.get(fpConfig.getLocation().getChannel());
+                    final FPID uninstallGav = uninstallFps.get(fpConfig.getLocation().getChannel());
                     if (uninstallGav != null) {
                         if (!uninstallGav.equals(fpConfig.getLocation().getFPID())) {
                             throw new ProvisioningException(Errors.unknownFeaturePack(fpConfig.getLocation().getFPID()));
@@ -196,17 +192,17 @@ public class ProvisioningRuntimeBuilder {
                         continue;
                     }
                     if (depsOfRemaining != null) {
-                        depsOfRemaining = FpVersionsResolver.resolveDeps(this, getOrLoadFpBuilder(fpConfig.getLocation().getFPID()).spec, depsOfRemaining);
+                        depsOfRemaining = FpVersionsResolver.resolveDeps(this, getOrLoadFpBuilder(universeResolver, fpConfig.getLocation().getFPID()), depsOfRemaining);
                     }
                 }
                 if (!depsOfRemaining.isEmpty()) {
                     if (depsOfUninstalled.size() == 1) {
-                        final FeaturePackLocation.FPID depOfRemaining = depsOfRemaining.get(depsOfUninstalled.keySet().iterator().next());
+                        final FPID depOfRemaining = depsOfRemaining.get(depsOfUninstalled.keySet().iterator().next());
                         if (depOfRemaining != null) {
                             depsOfUninstalled = Collections.emptyMap();
                         }
                     } else {
-                        for (FeaturePackLocation.Channel depOfRemaining : depsOfRemaining.keySet()) {
+                        for (ChannelSpec depOfRemaining : depsOfRemaining.keySet()) {
                             if (depsOfUninstalled.remove(depOfRemaining) != null) {
                                 if (depsOfUninstalled.isEmpty()) {
                                     break;
@@ -220,7 +216,7 @@ public class ProvisioningRuntimeBuilder {
             // TODO copy the configs
             final ProvisioningConfig.Builder configBuilder = ProvisioningConfig.builder();
             for (FeaturePackConfig fpConfig : config.getFeaturePackDeps()) {
-                final Channel channel = fpConfig.getLocation().getChannel();
+                final ChannelSpec channel = fpConfig.getLocation().getChannel();
                 if(uninstallFps.containsKey(channel)) {
                     continue;
                 }
@@ -284,7 +280,7 @@ public class ProvisioningRuntimeBuilder {
         return new ProvisioningRuntime(this, messageWriter);
     }
 
-    Map<FeaturePackLocation.Channel, FeaturePackRuntime> getFpRuntimes(ProvisioningRuntime runtime) throws ProvisioningException {
+    Map<ChannelSpec, FeaturePackRuntime> getFpRuntimes(ProvisioningRuntime runtime) throws ProvisioningException {
         if(fpRtBuildersOrdered.isEmpty()) {
             return Collections.emptyMap();
         }
@@ -293,7 +289,7 @@ public class ProvisioningRuntimeBuilder {
             copyResources(builder);
             return Collections.singletonMap(builder.fpid.getChannel(), builder.build(runtime));
         }
-        final Map<FeaturePackLocation.Channel, FeaturePackRuntime> fpRuntimes = new LinkedHashMap<>(fpRtBuildersOrdered.size());
+        final Map<ChannelSpec, FeaturePackRuntime> fpRuntimes = new LinkedHashMap<>(fpRtBuildersOrdered.size());
         for (FeaturePackRuntimeBuilder builder : fpRtBuildersOrdered) {
             copyResources(builder);
             fpRuntimes.put(builder.fpid.getChannel(), builder.build(runtime));
@@ -309,8 +305,8 @@ public class ProvisioningRuntimeBuilder {
                     continue;
                 }
                 fpConfigStack.activateConfigStack(i);
-                final FeaturePackLocation.FPID fpGav = modelOnlyGavs.get(i);
-                thisOrigin = fpGav == null ? null : getFpBuilder(modelOnlyGavs.get(i).getChannel());
+                final FPID fpid = modelOnlyFPIDs.get(i);
+                thisOrigin = fpid == null ? null : getFpBuilder(fpid.getChannel());
                 setOrigin(thisOrigin);
                 if(processConfig(getConfigStack(modelOnlySpec.getId()), modelOnlySpec) && currentOrigin != null && !currentOrigin.ordered) {
                     orderFpRtBuilder(currentOrigin);
@@ -429,9 +425,9 @@ public class ProvisioningRuntimeBuilder {
         }
     }
 
-    private void recordModelOnlyConfig(FeaturePackLocation.FPID fpid, ConfigModel config) {
+    private void recordModelOnlyConfig(FPID fpid, ConfigModel config) {
         modelOnlyConfigSpecs = CollectionUtils.add(modelOnlyConfigSpecs, config);
-        modelOnlyGavs = CollectionUtils.add(modelOnlyGavs, fpid);
+        modelOnlyFPIDs = CollectionUtils.add(modelOnlyFPIDs, fpid);
         fpConfigStack.recordStack();
     }
 
@@ -554,7 +550,7 @@ public class ProvisioningRuntimeBuilder {
     }
 
     ResolvedFeatureGroupConfig resolveFeatureGroupConfig(FeatureGroupSupport fg) throws ProvisioningException {
-        FeaturePackLocation.FPID fgOrigin = null;
+        FPID fgOrigin = null;
         if(!fg.isConfig()) {
             final FeaturePackRuntimeBuilder originalOrigin = currentOrigin;
             getFeatureGroupSpec(fg.getName());
@@ -788,19 +784,11 @@ public class ProvisioningRuntimeBuilder {
         return resolvedDeps;
     }
 
-    FeaturePackRuntimeBuilder getOrLoadFpBuilder(FeaturePackLocation.FPID fpid) throws ProvisioningException {
-        final FeaturePackRuntimeBuilder fp = getFpBuilder(fpid.getChannel(), false);
-        if(fp != null) {
-            return fp;
-        }
-        return loadFpBuilder(fpid);
-    }
-
-    FeaturePackRuntimeBuilder getFpBuilder(FeaturePackLocation.Channel channel) throws ProvisioningDescriptionException {
+    FeaturePackRuntimeBuilder getFpBuilder(ChannelSpec channel) throws ProvisioningDescriptionException {
         return getFpBuilder(channel, true);
     }
 
-    FeaturePackRuntimeBuilder getFpBuilder(FeaturePackLocation.Channel channel, boolean failIfNotFound) throws ProvisioningDescriptionException {
+    FeaturePackRuntimeBuilder getFpBuilder(ChannelSpec channel, boolean failIfNotFound) throws ProvisioningDescriptionException {
         final FeaturePackRuntimeBuilder fp = fpRtBuilders.get(channel);
         if(fp == null && failIfNotFound) {
             throw new ProvisioningDescriptionException(Errors.unknownFeaturePack(channel.getLocation().getFPID()));
@@ -808,28 +796,18 @@ public class ProvisioningRuntimeBuilder {
         return fp;
     }
 
-    FeaturePackRuntimeBuilder loadFpBuilder(FeaturePackLocation.FPID fpid) throws ProvisioningException {
+    FeaturePackRuntimeBuilder getOrLoadFpBuilder(UniverseResolver universeResolver, FPID fpid) throws ProvisioningException {
+        final FeaturePackRuntimeBuilder fp = getFpBuilder(fpid.getChannel(), false);
+        if(fp != null) {
+            return fp;
+        }
+        return loadFpBuilder(universeResolver, fpid);
+    }
+
+    FeaturePackRuntimeBuilder loadFpBuilder(UniverseResolver universeResolver, FPID fpid) throws ProvisioningException {
         final Path fpDir = LayoutUtils.getFeaturePackDir(layoutDir, fpid, false);
         mkdirs(fpDir);
-
-        final Path artifactPath = universeResolver.resolve(fpid.getLocation());
-        try {
-            ZipUtils.unzip(artifactPath, fpDir);
-        } catch (IOException e) {
-            throw new ProvisioningException("Failed to unzip " + artifactPath + " to " + layoutDir, e);
-        }
-
-        final Path fpXml = fpDir.resolve(Constants.FEATURE_PACK_XML);
-        if (!Files.exists(fpXml)) {
-            throw new ProvisioningDescriptionException(Errors.pathDoesNotExist(fpXml));
-        }
-
-        final FeaturePackRuntimeBuilder fp;
-        try (BufferedReader reader = Files.newBufferedReader(fpXml)) {
-            fp = FeaturePackRuntime.builder(FeaturePackXmlParser.getInstance().parse(reader), fpDir);
-        } catch (IOException | XMLStreamException e) {
-            throw new ProvisioningException(Errors.parseXml(fpXml), e);
-        }
+        final FeaturePackRuntimeBuilder fp = new FeaturePackRuntimeBuilder(universeResolver, fpid, fpDir);
         fpRtBuilders.put(fpid.getChannel(), fp);
         return fp;
     }
@@ -841,16 +819,19 @@ public class ProvisioningRuntimeBuilder {
         throw new ProvisioningDescriptionException(Errors.packageNotFound(currentOrigin.fpid, pkgName));
     }
 
-    private boolean resolvePackage(FeaturePackRuntimeBuilder origin, String name, Set<FeaturePackLocation.Channel> visitedChannels, boolean switchOrigin) throws ProvisioningException {
+    private boolean resolvePackage(FeaturePackRuntimeBuilder origin, String name, Set<ChannelSpec> visitedChannels, boolean switchOrigin) throws ProvisioningException {
         final FeaturePackDepsConfig fpDeps;
+        final UniverseResolver universeResolver;
         if (origin != null) {
             if(origin.resolvePackage(name, this)) {
                 return true;
             }
             fpDeps = origin.spec;
+            universeResolver = this.universeResolver;
             visitedChannels = CollectionUtils.add(visitedChannels, origin.fpid.getChannel());
         } else {
             fpDeps = config;
+            universeResolver = this.universeResolver;
         }
 
         if (!fpDeps.hasFeaturePackDeps()) {
@@ -861,7 +842,7 @@ public class ProvisioningRuntimeBuilder {
             if (visitedChannels.contains(fpDep.getLocation().getChannel())) {
                 continue;
             }
-            if(resolvePackage(getOrLoadFpBuilder(fpDep.getLocation().getFPID()), name, visitedChannels, switchOrigin)) {
+            if(resolvePackage(getOrLoadFpBuilder(universeResolver, fpDep.getLocation().getFPID()), name, visitedChannels, switchOrigin)) {
                 return true;
             }
         }
@@ -1073,8 +1054,9 @@ public class ProvisioningRuntimeBuilder {
         return fg;
     }
 
-    private FeatureGroup getFeatureGroupSpec(FeaturePackRuntimeBuilder origin, String name, Set<FeaturePackLocation.Channel> visitedChannels) throws ProvisioningException {
+    private FeatureGroup getFeatureGroupSpec(FeaturePackRuntimeBuilder origin, String name, Set<ChannelSpec> visitedChannels) throws ProvisioningException {
         final FeaturePackDepsConfig fpDeps;
+        final UniverseResolver universeResolver;
         if(origin != null) {
             final FeatureGroup fg = origin.getFeatureGroupSpec(name);
             if(fg != null) {
@@ -1082,9 +1064,11 @@ public class ProvisioningRuntimeBuilder {
                 return fg;
             }
             fpDeps = origin.spec;
+            universeResolver = this.universeResolver;
             visitedChannels = CollectionUtils.add(visitedChannels, origin.fpid.getChannel());
         } else {
             fpDeps = config;
+            universeResolver = this.universeResolver;
         }
 
         if (!fpDeps.hasFeaturePackDeps()) {
@@ -1095,7 +1079,7 @@ public class ProvisioningRuntimeBuilder {
             if (visitedChannels.contains(fpDep.getLocation().getChannel())) {
                 continue;
             }
-            final FeatureGroup fg = getFeatureGroupSpec(getOrLoadFpBuilder(fpDep.getLocation().getFPID()), name, visitedChannels);
+            final FeatureGroup fg = getFeatureGroupSpec(getOrLoadFpBuilder(universeResolver, fpDep.getLocation().getFPID()), name, visitedChannels);
             if (fg != null) {
                 return fg;
             }
@@ -1126,8 +1110,9 @@ public class ProvisioningRuntimeBuilder {
         return resolvedSpec;
     }
 
-    private ResolvedFeatureSpec getFeatureSpec(FeaturePackRuntimeBuilder origin, String name, Set<FeaturePackLocation.Channel> visitedChannels, boolean switchOrigin) throws ProvisioningException {
+    private ResolvedFeatureSpec getFeatureSpec(FeaturePackRuntimeBuilder origin, String name, Set<ChannelSpec> visitedChannels, boolean switchOrigin) throws ProvisioningException {
         final FeaturePackDepsConfig fpDeps;
+        final UniverseResolver universeResolver;
         if (origin != null) {
             final ResolvedFeatureSpec fs = origin.getFeatureSpec(name);
             if (fs != null) {
@@ -1137,9 +1122,11 @@ public class ProvisioningRuntimeBuilder {
                 return fs;
             }
             fpDeps = origin.spec;
+            universeResolver = this.universeResolver;
             visitedChannels = CollectionUtils.add(visitedChannels, origin.fpid.getChannel());
         } else {
             fpDeps = config;
+            universeResolver = this.universeResolver;
         }
 
         if (!fpDeps.hasFeaturePackDeps()) {
@@ -1147,11 +1134,11 @@ public class ProvisioningRuntimeBuilder {
         }
 
         for (FeaturePackConfig fpDep : fpDeps.getFeaturePackDeps()) {
-            final FeaturePackLocation fpl = fpDep.getLocation();
-            if (visitedChannels.contains(fpl.getChannel())) {
+            final FeaturePackLocation fps = fpDep.getLocation();
+            if (visitedChannels.contains(fps.getChannel())) {
                 continue;
             }
-            final ResolvedFeatureSpec fs = getFeatureSpec(getOrLoadFpBuilder(fpl.getFPID()), name, visitedChannels, switchOrigin);
+            final ResolvedFeatureSpec fs = getFeatureSpec(getOrLoadFpBuilder(universeResolver, fps.getFPID()), name, visitedChannels, switchOrigin);
             if (fs != null) {
                 return fs;
             }

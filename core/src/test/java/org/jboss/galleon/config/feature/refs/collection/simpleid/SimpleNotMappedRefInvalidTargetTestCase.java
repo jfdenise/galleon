@@ -17,7 +17,7 @@
 package org.jboss.galleon.config.feature.refs.collection.simpleid;
 
 import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
-import org.jboss.galleon.FeaturePackLocation.FPID;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.Errors;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.config.ConfigModel;
@@ -75,7 +75,7 @@ public class SimpleNotMappedRefInvalidTargetTestCase extends PmInstallFeaturePac
     protected String[] pmErrors() {
         return new String[] {
                 Errors.failedToBuildConfigSpec(null, null),
-                "{org.jboss.pm.test:fp1@galleon1:1}specB:b=b1 has unresolved dependency on {org.jboss.pm.test:fp1@galleon1:1}specA:a=a2"
+                "{org.jboss.pm.test:fp1@universe.factory.galleon1:1}specB:b=b1 has unresolved dependency on {org.jboss.pm.test:fp1@universe.factory.galleon1:1}specA:a=a2"
         };
     }
 

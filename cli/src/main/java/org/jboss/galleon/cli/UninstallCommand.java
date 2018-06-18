@@ -18,10 +18,10 @@ package org.jboss.galleon.cli;
 
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.option.Argument;
-import org.jboss.galleon.FeaturePackLocation;
-import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.cli.cmd.state.NoStateCommandActivator;
+import org.jboss.galleon.universe.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 
 /**
  *
@@ -42,13 +42,13 @@ public class UninstallCommand extends ProvisioningCommand {
         }
     }
 
-    private FeaturePackLocation.FPID getFPID(PmSession session) throws CommandExecutionException {
+    private FPID getFPID(PmSession session) throws CommandExecutionException {
         if (streamName == null) {
             throw new CommandExecutionException("No feature-pack provided");
         }
         try {
             return FeaturePackLocation.fromString(streamName).getFPID();
-        } catch (ProvisioningDescriptionException e) {
+        } catch (IllegalArgumentException e) {
             throw new CommandExecutionException("Failed to parse " + streamName, e);
         }
     }

@@ -17,8 +17,8 @@
 package org.jboss.galleon.installation.configs.customsubset;
 
 import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
-import org.jboss.galleon.FeaturePackLocation.Channel;
-import org.jboss.galleon.FeaturePackLocation.FPID;
+import org.jboss.galleon.universe.FeaturePackLocation.ChannelSpec;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.config.ConfigModel;
@@ -44,7 +44,7 @@ import org.jboss.galleon.xml.ProvisionedFeatureBuilder;
 public class CustomizedImplicitFpDepTestCase extends PmProvisionConfigTestBase {
 
     private static final FPID FP1_GAV = LegacyGalleon1Universe.newFPID("org.jboss.pm.test:fp1", "1", "1.0.0.Final");
-    private static final Channel FP1_GA = LegacyGalleon1Universe.newChannel("org.jboss.pm.test:fp1", "1");
+    private static final ChannelSpec FP1_GA = LegacyGalleon1Universe.newChannel("org.jboss.pm.test:fp1", "1");
     private static final FPID FP2_GAV = LegacyGalleon1Universe.newFPID("org.jboss.pm.test:fp2", "2", "2.0.0.Final");
 
     @Override

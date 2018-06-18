@@ -17,7 +17,7 @@
 package org.jboss.galleon.config.feature.refs.one2one;
 
 import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
-import org.jboss.galleon.FeaturePackLocation.FPID;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.config.ConfigModel;
@@ -81,6 +81,6 @@ public class NonNillableReferenceToAMissingFeatureTestCase extends PmInstallFeat
         Assert.assertEquals("Failed to build config named config1", e.getMessage());
         e = (ProvisioningException) e.getCause();
         Assert.assertNotNull(e);
-        Assert.assertEquals("{org.jboss.pm.test:fp1@galleon1:1}specB:name=b has unresolved dependency on {org.jboss.pm.test:fp1@galleon1:1}specA:name=a", e.getMessage());
+        Assert.assertEquals("{org.jboss.pm.test:fp1@universe.factory.galleon1:1}specB:name=b has unresolved dependency on {org.jboss.pm.test:fp1@universe.factory.galleon1:1}specA:name=a", e.getMessage());
     }
 }

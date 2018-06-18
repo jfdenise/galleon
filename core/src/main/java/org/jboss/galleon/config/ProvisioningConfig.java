@@ -16,7 +16,6 @@
  */
 package org.jboss.galleon.config;
 
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.util.StringUtils;
 
@@ -44,11 +43,7 @@ public class ProvisioningConfig extends FeaturePackDepsConfig {
             }
         }
 
-        public Builder addFeaturePackDep(FeaturePackLocation fpl) throws ProvisioningDescriptionException {
-            return addFeaturePackDep(FeaturePackConfig.forLocation(fpl));
-        }
-
-        public ProvisioningConfig build() {
+        public ProvisioningConfig build() throws ProvisioningDescriptionException {
             return new ProvisioningConfig(this);
         }
     }
@@ -71,7 +66,7 @@ public class ProvisioningConfig extends FeaturePackDepsConfig {
 
     private final Builder builder;
 
-    private ProvisioningConfig(Builder builder) {
+    private ProvisioningConfig(Builder builder) throws ProvisioningDescriptionException {
         super(builder);
         this.builder = builder;
     }

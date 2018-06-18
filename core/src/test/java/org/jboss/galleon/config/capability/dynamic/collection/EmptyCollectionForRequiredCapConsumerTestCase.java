@@ -17,7 +17,7 @@
 package org.jboss.galleon.config.capability.dynamic.collection;
 
 import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
-import org.jboss.galleon.FeaturePackLocation.FPID;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.Errors;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.config.ConfigModel;
@@ -66,7 +66,7 @@ public class EmptyCollectionForRequiredCapConsumerTestCase extends PmInstallFeat
     protected String[] pmErrors() throws ProvisioningException {
         return new String[] {
                 Errors.failedToBuildConfigSpec(null, null),
-                "Failed to resolve capability cap.$p1 for {org.jboss.pm.test:fp1@galleon1:1}specA:a=1",
+                "Failed to resolve capability cap.$p1 for {org.jboss.pm.test:fp1@universe.factory.galleon1:1}specA:a=1",
                 Errors.capabilityMissingParameter(CapabilitySpec.fromString("cap.$p1"), "p1")
         };
     }

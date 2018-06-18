@@ -31,6 +31,8 @@ public interface Universe<P extends Producer<?>> {
 
     String getFactoryId();
 
+    String getLocation();
+
     boolean hasProducer(String producerName) throws ProvisioningException;
 
     P getProducer(String producerName) throws ProvisioningException;

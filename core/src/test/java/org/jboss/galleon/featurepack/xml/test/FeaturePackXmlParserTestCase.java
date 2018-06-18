@@ -20,7 +20,6 @@ import java.nio.file.Paths;
 import java.util.Locale;
 
 import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.config.ConfigModel;
 import org.jboss.galleon.config.FeatureConfig;
 import org.jboss.galleon.config.FeatureGroup;
@@ -101,7 +100,7 @@ public class FeaturePackXmlParserTestCase  {
     public void readEmpty() throws Exception {
         FeaturePackSpec found = validator.validateAndParse("xml/feature-pack/feature-pack-1.0-empty.xml", null, null);
         FeaturePackSpec expected = FeaturePackSpec.builder()
-                .setFPID(new FeaturePackLocation(LegacyGalleon1Universe.NAME, "org.jboss.fp.group1:fp1", "1", null, "1.0.0").getFPID())
+                .setFPID(LegacyGalleon1Universe.newFPID("org.jboss.fp.group1:fp1", "1", "1.0.0"))
                 .build();
         Assert.assertEquals(expected, found);
     }
@@ -110,7 +109,7 @@ public class FeaturePackXmlParserTestCase  {
     public void readDependencyWithOrigin() throws Exception {
         FeaturePackSpec found = validator.validateAndParse("xml/feature-pack/feature-pack-deps-with-origin.xml", null, null);
         FeaturePackSpec expected = FeaturePackSpec.builder()
-                .setFPID(new FeaturePackLocation(LegacyGalleon1Universe.NAME, "org.jboss.fp.group1:fp1", "1", null, "1.0.0").getFPID())
+                .setFPID(LegacyGalleon1Universe.newFPID("org.jboss.fp.group1:fp1", "1", "1.0.0"))
                 .addFeaturePackDep("dep1", FeaturePackConfig.forLocation(LegacyGalleon1Universe.newFPID("org.jboss.dep.group1:dep1", "0", "0.0.1").getLocation()))
                 .addFeaturePackDep("deptwo", FeaturePackConfig
                         .builder(LegacyGalleon1Universe.newFPID("org.jboss.dep.group2:dep2", "0", "0.0.2").getLocation())
@@ -129,7 +128,7 @@ public class FeaturePackXmlParserTestCase  {
     public void readValid() throws Exception {
         FeaturePackSpec found = validator.validateAndParse("xml/feature-pack/feature-pack-1.0.xml", null, null);
         FeaturePackSpec expected = FeaturePackSpec.builder()
-                .setFPID(new FeaturePackLocation(LegacyGalleon1Universe.NAME, "org.jboss.fp.group1:fp1", "1", null, "1.0.0").getFPID())
+                .setFPID(LegacyGalleon1Universe.newFPID("org.jboss.fp.group1:fp1", "1", "1.0.0"))
                 .addFeaturePackDep(FeaturePackConfig.forLocation(LegacyGalleon1Universe.newFPID("org.jboss.dep.group1:dep1", "0", "0.0.1").getLocation()))
                 .addFeaturePackDep(FeaturePackConfig
                         .builder(LegacyGalleon1Universe.newFPID("org.jboss.dep.group2:dep2", "0", "0.0.2").getLocation())
@@ -153,7 +152,7 @@ public class FeaturePackXmlParserTestCase  {
     public void readVersionOptional() throws Exception {
         FeaturePackSpec found = validator.validateAndParse("xml/feature-pack/feature-pack-1.0-version-optional.xml", null, null);
         FeaturePackSpec expected = FeaturePackSpec.builder()
-                .setFPID(new FeaturePackLocation(LegacyGalleon1Universe.NAME, "org.jboss.fp.group1:fp1", null, null, null).getFPID())
+                .setFPID(LegacyGalleon1Universe.newFPID("org.jboss.fp.group1:fp1", null, null))
                 .addFeaturePackDep(FeaturePackConfig.forLocation(LegacyGalleon1Universe.newFPID("org.jboss.dep.group1:dep1", null, null).getLocation()))
                 .addFeaturePackDep(FeaturePackConfig.forLocation(LegacyGalleon1Universe.newFPID("org.jboss.dep.group2:dep2", null, null).getLocation()))
                 .addDefaultPackage("package1")
@@ -166,7 +165,7 @@ public class FeaturePackXmlParserTestCase  {
     public void readDefaultConfigs() throws Exception {
         FeaturePackSpec found = validator.validateAndParse("xml/feature-pack/feature-pack-default-configs.xml", null, null);
         FeaturePackSpec expected = FeaturePackSpec.builder()
-                .setFPID(new FeaturePackLocation(LegacyGalleon1Universe.NAME, "org.jboss.fp.group1:fp1", "1", null, "1.0.0").getFPID())
+                .setFPID(LegacyGalleon1Universe.newFPID("org.jboss.fp.group1:fp1", "1", "1.0.0"))
                 .addConfig(ConfigModel.builder().setName("config1").setModel("model1")
                     .setProperty("prop1", "value1")
                     .setProperty("prop2", "value2")
@@ -203,7 +202,7 @@ public class FeaturePackXmlParserTestCase  {
     public void readUnnamedConfigs() throws Exception {
         FeaturePackSpec found = validator.validateAndParse("xml/feature-pack/feature-pack-unnamed-config.xml", null, null);
         FeaturePackSpec expected = FeaturePackSpec.builder()
-                .setFPID(new FeaturePackLocation(LegacyGalleon1Universe.NAME, "org.jboss.fp.group1:fp1", "1", null, "1.0.0").getFPID())
+                .setFPID(LegacyGalleon1Universe.newFPID("org.jboss.fp.group1:fp1", "1", "1.0.0"))
                 .addConfig(ConfigModel.builder()
                         .setProperty("prop1", "value1")
                         .setProperty("prop1", "value1")

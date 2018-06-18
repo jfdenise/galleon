@@ -32,6 +32,8 @@ import org.jboss.galleon.runtime.ResolvedFeatureId;
 import org.jboss.galleon.runtime.ResolvedSpecId;
 import org.jboss.galleon.spec.CapabilitySpec;
 import org.jboss.galleon.spec.FeatureReferenceSpec;
+import org.jboss.galleon.universe.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.util.StringUtils;
 
 /**
@@ -104,7 +106,7 @@ public interface Errors {
         return p + " has to be empty or contain a provisioned installation to be used by the tool";
     }
 
-    static String fpVersionCheckFailed(Collection<FeaturePackLocation.Channel> missingVersions, Collection<Set<FeaturePackLocation.FPID>> versionConflicts) throws ProvisioningException {
+    static String fpVersionCheckFailed(Collection<FeaturePackLocation.ChannelSpec> missingVersions, Collection<Set<FeaturePackLocation.FPID>> versionConflicts) throws ProvisioningException {
         final StringWriter strWriter = new StringWriter();
         try(BufferedWriter writer = new BufferedWriter(strWriter)) {
             writer.write("Feature-pack versions check failed with the following errors:");
@@ -131,7 +133,7 @@ public interface Errors {
         return strWriter.toString();
     }
 
-    static String failedToResolveReleaseVersions(Collection<FeaturePackLocation.Channel> channels) {
+    static String failedToResolveReleaseVersions(Collection<FeaturePackLocation.ChannelSpec> channels) {
         final StringBuilder buf = new StringBuilder("Missing build number");
         if(channels.size() > 1) {
             buf.append('s');
@@ -145,7 +147,7 @@ public interface Errors {
         return "Failed to copy package " + packageName + " content";
     }
 
-    static String packageNotFound(FeaturePackLocation.FPID fpid, String packageName) {
+    static String packageNotFound(FPID fpid, String packageName) {
         return "Failed to resolve package " + packageName + " in " + fpid;
     }
 
@@ -157,12 +159,8 @@ public interface Errors {
         return "Feature-pack " + fpid + " is not found";
     }
 
-    static String unsatisfiedFeaturePackDep(FeaturePackLocation.Channel channel) {
+    static String unsatisfiedFeaturePackDep(FeaturePackLocation.ChannelSpec channel) {
         return "Feature-pack " + channel + " is required dependency";
-    }
-
-    static String unknownFeaturePackDependency(FeaturePackLocation.Channel channel) {
-        return channel + " is not found among the feature-pack dependencies";
     }
 
     static String featurePackVersionConflict(FeaturePackLocation.FPID fpid1, FeaturePackLocation.FPID fpid2) {
@@ -193,7 +191,7 @@ public interface Errors {
         return buf.toString();
     }
 
-    static String unsatisfiedPackageDependency(FeaturePackLocation.FPID fpid, String targetPackage) {
+    static String unsatisfiedPackageDependency(FPID fpid, String targetPackage) {
         return "Unsatisfied dependency on feature-pack " + fpid + " package " + targetPackage;
     }
 
@@ -213,10 +211,6 @@ public interface Errors {
         return "Dependency with name " + name + " already exists";
     }
 
-    static String unknownFeaturePackDependencyName(FeaturePackLocation.FPID fpid, String depName) {
-        return "Dependency " + depName + " not found in " + fpid + " feature-pack description";
-    }
-
     static String unknownFeaturePackDependencyName(String depName) {
         return depName + " was not found among the feature-pack dependencies";
     }
@@ -227,10 +221,6 @@ public interface Errors {
 
     static String unknownFeaturePackDependencyName(FeaturePackLocation.FPID fpid, String pkgName, String depName) {
         return fpid + " package " + pkgName + " references unknown feature-pack dependency " + depName;
-    }
-
-    static String packageAlreadyExists(FeaturePackLocation.FPID fpid, String name) {
-        return "Package " + name + " already exists in feature-pack " + fpid;
     }
 
     static String noCapabilityProvider(String capability) {
@@ -352,7 +342,7 @@ public interface Errors {
         return "Non-nillable parameter " + paramName + " of " + featureId + " has not been initialized";
     }
 
-    static String featureNotInScope(ResolvedFeatureId id, String groupName, FeaturePackLocation.FPID fpid) {
+    static String featureNotInScope(ResolvedFeatureId id, String groupName, FPID fpid) {
         final StringBuilder buf = new StringBuilder();
         buf.append(id).append(" cannot be included into group ").append(groupName);
         if(fpid != null) {
@@ -380,13 +370,13 @@ public interface Errors {
         return buf.toString();
     }
 
-    static String failedToProcess(FeaturePackLocation.FPID fpid, FeatureConfig feature) {
+    static String failedToProcess(FPID fpid, FeatureConfig feature) {
         final StringBuilder buf = new StringBuilder();
         buf.append("Failed to process feature-pack ").append(fpid).append(" feature ").append(feature);
         return buf.toString();
     }
 
-    static String failedToProcess(FeaturePackLocation.FPID fpid, String groupName) {
+    static String failedToProcess(FPID fpid, String groupName) {
         final StringBuilder buf = new StringBuilder();
         buf.append("Failed to process feature-pack ").append(fpid).append(" group ").append(groupName);
         return buf.toString();

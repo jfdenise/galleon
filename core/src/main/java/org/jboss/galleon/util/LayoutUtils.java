@@ -21,8 +21,9 @@ import java.nio.file.Path;
 
 import org.jboss.galleon.Constants;
 import org.jboss.galleon.Errors;
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
+import org.jboss.galleon.universe.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 
 /**
  *
@@ -30,12 +31,13 @@ import org.jboss.galleon.ProvisioningDescriptionException;
  */
 public class LayoutUtils {
 
-    public static Path getFeaturePackDir(Path fpLayoutDir, FeaturePackLocation.FPID fpid) throws ProvisioningDescriptionException {
+    public static Path getFeaturePackDir(Path fpLayoutDir, FPID fpid) throws ProvisioningDescriptionException {
         return getFeaturePackDir(fpLayoutDir, fpid, true);
     }
 
-    public static Path getFeaturePackDir(Path fpLayoutDir, FeaturePackLocation.FPID fpid, boolean existing) throws ProvisioningDescriptionException {
-        final Path fpPath = fpLayoutDir.resolve(fpid.getUniverse()).resolve(fpid.getProducer()).resolve(fpid.getChannelName()).resolve(fpid.getBuild());
+    public static Path getFeaturePackDir(Path fpLayoutDir, FPID fpid, boolean existing) throws ProvisioningDescriptionException {
+        final FeaturePackLocation fps = fpid.getLocation();
+        final Path fpPath = fpLayoutDir.resolve(fps.getUniverse().getFactory()).resolve(fps.getProducer()).resolve(fps.getChannelName()).resolve(fpid.getBuild());
         if(existing && !Files.exists(fpPath)) {
             throw new ProvisioningDescriptionException(Errors.pathDoesNotExist(fpPath));
         }

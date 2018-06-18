@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import javax.xml.stream.XMLStreamException;
 
 import org.jboss.galleon.Errors;
+import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.config.ProvisioningConfig;
 
@@ -58,6 +59,10 @@ public class ProvisioningXmlParser implements XmlParser<ProvisioningConfig> {
     public ProvisioningConfig parse(final Reader input) throws XMLStreamException {
         final ProvisioningConfig.Builder builder = ProvisioningConfig.builder();
         XmlParsers.parse(input, builder);
-        return builder.build();
+        try {
+            return builder.build();
+        } catch (ProvisioningDescriptionException e) {
+            throw new XMLStreamException("Failed to build provisioning configuration", e);
+        }
     }
 }

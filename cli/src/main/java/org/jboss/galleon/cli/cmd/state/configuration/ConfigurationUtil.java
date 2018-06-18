@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningManager;
 import org.jboss.galleon.cli.PmSession;
@@ -35,6 +34,7 @@ import org.jboss.galleon.cli.path.PathParser;
 import org.jboss.galleon.cli.path.PathParserException;
 import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.config.FeaturePackConfig;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 
 /**
  *
@@ -105,7 +105,7 @@ public abstract class ConfigurationUtil extends AbstractFPProvisionedCommand {
         return configs;
     }
 
-    private static ConfigInfo getConfig(PmSession session, FeaturePackLocation.FPID fpid, String configuration) throws ProvisioningException, IOException, PathParserException, PathConsumerException {
+    private static ConfigInfo getConfig(PmSession session, FPID fpid, String configuration) throws ProvisioningException, IOException, PathParserException, PathConsumerException {
         String path = FeatureContainerPathConsumer.FINAL_CONFIGS_PATH + configuration + PathParser.PATH_SEPARATOR;
         FeatureContainer full = FeatureContainers.fromFeaturePackId(session, ProvisioningManager.builder()
                 .addArtifactResolver(session.getArtifactResolver()).build(), fpid, null);

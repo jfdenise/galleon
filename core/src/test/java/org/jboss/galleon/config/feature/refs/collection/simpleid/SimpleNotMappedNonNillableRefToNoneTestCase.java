@@ -17,7 +17,7 @@
 package org.jboss.galleon.config.feature.refs.collection.simpleid;
 
 import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
-import org.jboss.galleon.FeaturePackLocation.FPID;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.Errors;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.config.ConfigModel;
@@ -75,7 +75,7 @@ public class SimpleNotMappedNonNillableRefToNoneTestCase extends PmInstallFeatur
     protected String[] pmErrors() {
         return new String[] {
                 Errors.failedToBuildConfigSpec(null, null),
-                "Reference specA of {org.jboss.pm.test:fp1@galleon1:1}specB:b=b1 cannot be null"
+                "Reference specA of {org.jboss.pm.test:fp1@universe.factory.galleon1:1}specB:b=b1 cannot be null"
         };
     }
 

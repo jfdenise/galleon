@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.jboss.galleon.Constants;
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.config.ConfigModel;
@@ -43,6 +42,7 @@ import org.jboss.galleon.repomanager.fs.FsTaskList;
 import org.jboss.galleon.spec.FeaturePackSpec;
 import org.jboss.galleon.spec.FeatureSpec;
 import org.jboss.galleon.spec.PackageSpec;
+import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.util.CollectionUtils;
 import org.jboss.galleon.util.IoUtils;
 import org.jboss.galleon.util.ZipUtils;
@@ -80,6 +80,16 @@ public class FeaturePackBuilder {
         return this;
     }
 
+    public FeaturePackBuilder setDefaultUniverse(String factory, String location) throws ProvisioningDescriptionException {
+        fpBuilder.setDefaultUniverse(factory, location);
+        return this;
+    }
+
+    public FeaturePackBuilder addUniverse(String name, String factory, String location) throws ProvisioningDescriptionException {
+        fpBuilder.addUniverse(name, factory, location);
+        return this;
+    }
+
     public FeaturePackBuilder addDependency(String origin, FeaturePackConfig dep) throws ProvisioningDescriptionException {
         fpBuilder.addFeaturePackDep(origin, dep);
         return this;
@@ -89,12 +99,12 @@ public class FeaturePackBuilder {
         return addDependency(null, dep);
     }
 
-    public FeaturePackBuilder addDependency(FeaturePackLocation fpl) throws ProvisioningDescriptionException {
-        return addDependency(FeaturePackConfig.forLocation(fpl));
+    public FeaturePackBuilder addDependency(FeaturePackLocation fps) throws ProvisioningDescriptionException {
+        return addDependency(FeaturePackConfig.forLocation(fps));
     }
 
-    public FeaturePackBuilder addDependency(String origin, FeaturePackLocation fpl) throws ProvisioningDescriptionException {
-        return addDependency(origin, FeaturePackConfig.forLocation(fpl));
+    public FeaturePackBuilder addDependency(String origin, FeaturePackLocation fps) throws ProvisioningDescriptionException {
+        return addDependency(origin, FeaturePackConfig.forLocation(fps));
     }
 
     public FeaturePackBuilder addPackage(PackageBuilder pkg) {
@@ -209,24 +219,21 @@ public class FeaturePackBuilder {
     }
 
     void build() throws ProvisioningException {
-        final FeaturePackLocation.FPID fpid = fpBuilder.getFPID();
-        if(fpid == null) {
+        final FeaturePackLocation fps = this.fpBuilder.getFPID().getLocation();
+        if(fps == null) {
             throw new ProvisioningDescriptionException("Feature-pack location has not been set");
         }
-        if(fpid.getUniverse() == null) {
-            throw new ProvisioningDescriptionException("Feature-pack universe has not been set");
-        }
-        if(fpid.getProducer() == null) {
+        if(fps.getProducer() == null) {
             throw new ProvisioningDescriptionException("Feature-pack producer has not been set");
         }
-        if(fpid.getChannel() == null) {
+        if(fps.getChannelName() == null) {
             throw new ProvisioningDescriptionException("Feature-pack channel has not been set");
         }
-        if(fpid.getBuild() == null) {
+        if(fps.getBuild() == null) {
             throw new ProvisioningDescriptionException("Feature-pack build number has not been set");
         }
 
-        final Path fpWorkDir = creator.getWorkDir().resolve(fpid.getUniverse()).resolve(fpid.getProducer()).resolve(fpid.getChannelName()).resolve(fpid.getBuild());
+        final Path fpWorkDir = creator.getWorkDir().resolve(fps.getUniverse().getFactory()).resolve(fps.getProducer()).resolve(fps.getChannelName()).resolve(fps.getBuild());
         final FeaturePackSpec fpSpec;
         try {
             ensureDir(fpWorkDir);
@@ -266,7 +273,7 @@ public class FeaturePackBuilder {
             if(tasks != null && !tasks.isEmpty()) {
                 tasks.execute(FsTaskContext.builder().setTargetRoot(fpWorkDir.resolve(Constants.RESOURCES)).build());
             }
-            creator.install(fpSpec, fpWorkDir);
+            creator.install(fps.getFPID(), fpWorkDir);
         } catch(ProvisioningDescriptionException e) {
             throw e;
         } catch (Exception e) {

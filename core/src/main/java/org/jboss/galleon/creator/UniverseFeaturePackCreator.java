@@ -20,7 +20,7 @@ package org.jboss.galleon.creator;
 import java.nio.file.Path;
 
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.spec.FeaturePackSpec;
+import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.Universe;
 
 /**
@@ -41,9 +41,9 @@ public interface UniverseFeaturePackCreator {
      * and installs it into the target repository.
      *
      * @param universe  target universe
-     * @param spec  feature-pack spec
+     * @param fpid  feature-pack id
      * @param fpContentDir  directory containing prepare feature-pack content
      * @throws ProvisioningException  in case anything goes wrong
      */
-    void install(Universe<?> universe, FeaturePackSpec spec, Path fpContentDir) throws ProvisioningException;
+    void install(Universe<?> universe, FeaturePackLocation.FPID fpid, Path fpContentDir) throws ProvisioningException;
 }

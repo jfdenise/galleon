@@ -87,6 +87,11 @@ public class UniverseFactoryLoader {
         return factory.getUniverse(artifactResolver, location);
     }
 
+    public Universe<?> getUniverse(UniverseSpec universeSource) throws ProvisioningException {
+        final UniverseFactory factory = getUniverseFactory(universeSource.getFactory());
+        return factory.getUniverse(getArtifactResolver(factory.getRepositoryId()), universeSource.getLocation());
+    }
+
     private UniverseFactory getUniverseFactory(String factoryId) throws ProvisioningException {
         final UniverseFactory factory = factories.get(factoryId);
         if(factory == null) {

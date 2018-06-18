@@ -30,15 +30,15 @@ import javax.xml.stream.XMLStreamException;
 
 import org.jboss.galleon.config.FeaturePackConfig;
 import org.jboss.galleon.config.ProvisioningConfig;
-import org.jboss.galleon.config.UniverseConfig;
 import org.jboss.galleon.runtime.ProvisioningRuntime;
 import org.jboss.galleon.runtime.ProvisioningRuntimeBuilder;
 import org.jboss.galleon.state.ProvisionedFeaturePack;
 import org.jboss.galleon.state.ProvisionedState;
+import org.jboss.galleon.universe.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.UniverseResolverBuilder;
 import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
-import org.jboss.galleon.universe.galleon1.LegacyGalleon1UniverseFactory;
 import org.jboss.galleon.util.IoUtils;
 import org.jboss.galleon.util.PathsUtils;
 import org.jboss.galleon.xml.ProvisionedStateXmlParser;
@@ -89,11 +89,6 @@ public class ProvisioningManager {
             return new ProvisioningManager(this);
         }
 
-        @Override
-        protected boolean canBuildUniverseResolver() {
-            return super.canBuildUniverseResolver();
-        }
-
         protected UniverseResolver getUniverseResolver() throws ProvisioningException {
             return buildUniverseResolver();
         }
@@ -113,7 +108,7 @@ public class ProvisioningManager {
     private ProvisioningManager(Builder builder) throws ProvisioningException {
         this.encoding = builder.encoding;
         this.installationHome = builder.installationHome;
-        this.universeResolver = builder.canBuildUniverseResolver() ? builder.getUniverseResolver() : null;
+        this.universeResolver = builder.getUniverseResolver();
         this.messageWriter = builder.messageWriter == null ? DefaultMessageWriter.getDefaultInstance() : builder.messageWriter;
     }
 
@@ -153,22 +148,22 @@ public class ProvisioningManager {
     /**
      * Installs the specified feature-pack.
      *
-     * @param fpl  feature-pack location
+     * @param fps  feature-pack source
      * @throws ProvisioningException  in case the installation fails
      */
-    public void install(FeaturePackLocation fpl) throws ProvisioningException {
-        install(FeaturePackConfig.forLocation(fpl));
+    public void install(FeaturePackLocation fps) throws ProvisioningException {
+        install(FeaturePackConfig.forLocation(fps));
     }
 
     /**
      * Installs the specified feature-pack taking into account provided plug-in options.
      *
-     * @param  fpl feature-pack location
+     * @param  fps feature-pack source
      * @param options  plug-in options
      * @throws ProvisioningException  in case the installation fails
      */
-    public void install(FeaturePackLocation fpl, Map<String, String> options) throws ProvisioningException {
-        install(FeaturePackConfig.forLocation(fpl), options);
+    public void install(FeaturePackLocation fps, Map<String, String> options) throws ProvisioningException {
+        install(FeaturePackConfig.forLocation(fps), options);
     }
 
     /**
@@ -193,7 +188,9 @@ public class ProvisioningManager {
             throws ProvisioningException {
         final ProvisioningConfig provisionedConfig = this.getProvisioningConfig();
         if(provisionedConfig == null) {
-            provision(ProvisioningConfig.builder().addFeaturePackDep(fpConfig).build(), options);
+            provision(ProvisioningConfig.builder()
+                    .addFeaturePackDep(fpConfig)
+                    .build(), options);
             return;
         }
 
@@ -243,7 +240,7 @@ public class ProvisioningManager {
             }
             throw new ProvisioningException(Errors.unknownFeaturePack(fpid));
         }
-        doProvision(provisionedConfig, fpid.getChannel(), Collections.emptyMap());
+        doProvision(provisionedConfig, fpid, Collections.emptyMap());
     }
 
     /**
@@ -267,7 +264,7 @@ public class ProvisioningManager {
         doProvision(provisioningConfig, null, options);
     }
 
-    private void doProvision(ProvisioningConfig provisioningConfig, FeaturePackLocation.Channel uninstallChannel, Map<String, String> options) throws ProvisioningException {
+    private void doProvision(ProvisioningConfig provisioningConfig, FeaturePackLocation.FPID uninstallFpid, Map<String, String> options) throws ProvisioningException {
         checkInstallationDir(installationHome);
 
         if(!provisioningConfig.hasFeaturePackDeps()) {
@@ -276,7 +273,7 @@ public class ProvisioningManager {
             return;
         }
 
-        try(ProvisioningRuntime runtime = getRuntime(provisioningConfig, uninstallChannel, options)) {
+        try(ProvisioningRuntime runtime = getRuntime(provisioningConfig, uninstallFpid, options)) {
             if(runtime == null) {
                 return;
             }
@@ -299,16 +296,16 @@ public class ProvisioningManager {
         }
     }
 
-    public ProvisioningRuntime getRuntime(ProvisioningConfig provisioningConfig, FeaturePackLocation.Channel uninstallChannel, Map<String, String> options)
+    public ProvisioningRuntime getRuntime(ProvisioningConfig provisioningConfig, FeaturePackLocation.FPID uninstallFpid, Map<String, String> options)
             throws ProvisioningException {
         final ProvisioningRuntimeBuilder builder = ProvisioningRuntimeBuilder.newInstance(messageWriter)
-                .setUniverseResolver(getUniverseResolver(provisioningConfig))
+                .setUniverseResolver(universeResolver)
                 .setConfig(provisioningConfig)
                 .setEncoding(encoding)
                 .setInstallDir(installationHome)
                 .addOptions(options);
-        if(uninstallChannel != null) {
-            builder.uninstall(uninstallChannel);
+        if(uninstallFpid != null) {
+            builder.uninstall(uninstallFpid);
         }
         return builder.build();
     }
@@ -378,7 +375,7 @@ public class ProvisioningManager {
         IoUtils.copy(userProvisionedXml, exportPath);
     }
 
-    public void exportConfigurationChanges(Path location, FeaturePackLocation.FPID fpid, Map<String, String> options) throws ProvisioningException, IOException {
+    public void exportConfigurationChanges(Path location,  FPID fpid, Map<String, String> options) throws ProvisioningException, IOException {
         ProvisioningConfig configuration = this.getProvisioningConfig();
         if (configuration == null) {
             final Path userProvisionedXml = PathsUtils.getProvisioningXml(installationHome);
@@ -394,7 +391,7 @@ public class ProvisioningManager {
         Path tempInstallationDir = IoUtils.createRandomTmpDir();
         try {
             ProvisioningManager reference = new ProvisioningManager(ProvisioningManager.builder()
-                    .setPrimaryUniverseResolver(universeResolver)
+                    .setUniverseFactoryLoader(universeResolver.getFactoryLoader())
                     .setEncoding(encoding)
                     .setInstallationHome(tempInstallationDir)
                     .setMessageWriter(new MessageWriter() {
@@ -455,7 +452,7 @@ public class ProvisioningManager {
         Path stagedDir = IoUtils.createRandomTmpDir();
         try {
             ProvisioningManager reference = new ProvisioningManager(ProvisioningManager.builder()
-                    .setPrimaryUniverseResolver(universeResolver)
+                    .setUniverseFactoryLoader(universeResolver.getFactoryLoader())
                     .setEncoding(encoding)
                     .setInstallationHome(tempInstallationDir)
                     .setMessageWriter(new MessageWriter() {
@@ -487,7 +484,7 @@ public class ProvisioningManager {
             reference.provision(configuration);
             Files.createDirectories(stagedDir);
             reference = new ProvisioningManager(ProvisioningManager.builder()
-                    .setPrimaryUniverseResolver(universeResolver)
+                    .setUniverseFactoryLoader(universeResolver.getFactoryLoader())
                     .setEncoding(encoding)
                     .setInstallationHome(stagedDir)
                     .setMessageWriter(new MessageWriter() {
@@ -534,26 +531,5 @@ public class ProvisioningManager {
         } finally {
             IoUtils.recursiveDelete(tempInstallationDir);
         }
-    }
-
-    private UniverseResolver getUniverseResolver(ProvisioningConfig provisioningConfig) throws ProvisioningException {
-        final UniverseResolver.Builder urBuilder = UniverseResolver.builder(universeResolver);
-        if(provisioningConfig.hasDefaultUniverse() && !universeResolver.hasDefaultUniverse()) {
-            final UniverseConfig universe = provisioningConfig.getDefaultUniverse();
-            urBuilder.addDefaultUniverse(universe.getFactory(), universe.getLocation());
-        }
-        if(provisioningConfig.hasNamedUniverseConfigs()) {
-            for(UniverseConfig universeConfig : provisioningConfig.getUniverseConfigs()) {
-                if(universeResolver.hasUniverse(universeConfig.getName())) {
-                    continue;
-                }
-                urBuilder.addUniverse(universeConfig.getName(), universeConfig.getFactory(), universeConfig.getLocation());
-            }
-        }
-        // TODO this has to be done somehow differently
-        if(!urBuilder.hasUniverse(LegacyGalleon1Universe.NAME)) {
-            urBuilder.addUniverse(LegacyGalleon1Universe.NAME, LegacyGalleon1UniverseFactory.ID, null);
-        }
-        return urBuilder.build();
     }
 }

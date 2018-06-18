@@ -16,18 +16,18 @@
  */
 package org.jboss.galleon.runtime;
 
-import org.jboss.galleon.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation;
 
 /**
  *
  * @author Alexey Loubyansky
  */
 public class ResolvedSpecId {
-    final FeaturePackLocation.Channel channel;
+    final FeaturePackLocation.ChannelSpec channel;
     final String name;
     private final int hash;
 
-    public ResolvedSpecId(FeaturePackLocation.Channel channel, String name) {
+    public ResolvedSpecId(FeaturePackLocation.ChannelSpec channel, String name) {
         this.channel = channel;
         this.name = name;
 
@@ -38,7 +38,7 @@ public class ResolvedSpecId {
         hash = result;
     }
 
-    public FeaturePackLocation.Channel getChannel() {
+    public FeaturePackLocation.ChannelSpec getChannel() {
         return channel;
     }
 

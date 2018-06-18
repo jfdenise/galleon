@@ -28,7 +28,6 @@ import javax.xml.stream.XMLStreamException;
 
 import org.jboss.galleon.ArtifactCoords;
 import org.jboss.galleon.Errors;
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.runtime.ResolvedFeatureId;
 import org.jboss.galleon.runtime.ResolvedSpecId;
@@ -36,6 +35,7 @@ import org.jboss.galleon.state.ProvisionedConfig;
 import org.jboss.galleon.state.ProvisionedFeaturePack;
 import org.jboss.galleon.state.ProvisionedPackage;
 import org.jboss.galleon.state.ProvisionedState;
+import org.jboss.galleon.universe.FeaturePackLocation.ChannelSpec;
 import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
 import org.jboss.galleon.util.ParsingUtils;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
@@ -486,7 +486,7 @@ class ProvisionedStateXmlParser10 implements PlugableXmlParser<ProvisionedState.
         throw ParsingUtils.endOfDocument(reader.getLocation());
    }
 
-    private static void readSpec(XMLExtendedStreamReader reader, FeaturePackLocation.Channel channel, ProvisionedConfigBuilder config) throws XMLStreamException {
+    private static void readSpec(XMLExtendedStreamReader reader, ChannelSpec channel, ProvisionedConfigBuilder config) throws XMLStreamException {
         String name = null;
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i++) {

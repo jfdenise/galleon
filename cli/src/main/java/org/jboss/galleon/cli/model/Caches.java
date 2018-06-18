@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.jboss.galleon.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 
 /**
  *
@@ -29,22 +29,22 @@ import org.jboss.galleon.FeaturePackLocation;
  */
 public class Caches {
 
-    private static final Map<FeaturePackLocation.FPID, FeatureContainer> FP_CACHE = new HashMap<>();
-    private static final Map<FeaturePackLocation.FPID, Set<FeatureSpecInfo>> SPEC_CACHE = new HashMap<>();
+    private static final Map<FPID, FeatureContainer> FP_CACHE = new HashMap<>();
+    private static final Map<FPID, Set<FeatureSpecInfo>> SPEC_CACHE = new HashMap<>();
 
-    public static FeatureContainer getFeaturePackInfo(FeaturePackLocation.FPID fpid) {
+    public static FeatureContainer getFeaturePackInfo(FPID fpid) {
         return FP_CACHE.get(fpid);
     }
 
-    public static Map<FeaturePackLocation.FPID, Set<FeatureSpecInfo>> getSpecs() throws IOException {
+    public static Map<FPID, Set<FeatureSpecInfo>> getSpecs() throws IOException {
         return SPEC_CACHE;
     }
 
-    public static void addFeaturePackInfo(FeaturePackLocation.FPID fpid, FeatureContainer info) {
+    public static void addFeaturePackInfo(FPID fpid, FeatureContainer info) {
         FP_CACHE.put(fpid, info);
     }
 
-    public static void addSpecs(Map<FeaturePackLocation.FPID, Set<FeatureSpecInfo>> specs) throws IOException {
+    public static void addSpecs(Map<FPID, Set<FeatureSpecInfo>> specs) throws IOException {
         SPEC_CACHE.putAll(specs);
     }
 

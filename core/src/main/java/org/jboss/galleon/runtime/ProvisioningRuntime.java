@@ -39,7 +39,6 @@ import org.jboss.galleon.ArtifactCoords;
 import org.jboss.galleon.ArtifactException;
 import org.jboss.galleon.Constants;
 import org.jboss.galleon.Errors;
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
@@ -57,6 +56,8 @@ import org.jboss.galleon.plugin.ProvisioningPlugin;
 import org.jboss.galleon.plugin.UpgradePlugin;
 import org.jboss.galleon.state.FeaturePackSet;
 import org.jboss.galleon.state.ProvisionedConfig;
+import org.jboss.galleon.universe.FeaturePackLocation.ChannelSpec;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.util.CollectionUtils;
 import org.jboss.galleon.util.FeaturePackInstallException;
@@ -120,7 +121,7 @@ public class ProvisioningRuntime implements FeaturePackSet<FeaturePackRuntime>, 
         }
     }
 
-    public static void exportToFeaturePack(ProvisioningRuntime runtime, FeaturePackLocation.FPID fpid, Path location, Path installationHome) throws ProvisioningDescriptionException, ProvisioningException, IOException {
+    public static void exportToFeaturePack(ProvisioningRuntime runtime, FPID fpid, Path location, Path installationHome) throws ProvisioningDescriptionException, ProvisioningException, IOException {
         diff(runtime, location, installationHome);
 
         final FeaturePackCreator creator = FeaturePackCreator.getInstance();
@@ -187,7 +188,7 @@ public class ProvisioningRuntime implements FeaturePackSet<FeaturePackRuntime>, 
     private final Path workDir;
     private final Path tmpDir;
     private final Path pluginsDir;
-    private final Map<FeaturePackLocation.Channel, FeaturePackRuntime> fpRuntimes;
+    private final Map<ChannelSpec, FeaturePackRuntime> fpRuntimes;
     private final Map<String, String> pluginOptions;
     private final MessageWriter messageWriter;
     private List<ProvisionedConfig> configs = Collections.emptyList();
@@ -284,7 +285,7 @@ public class ProvisioningRuntime implements FeaturePackSet<FeaturePackRuntime>, 
     }
 
     @Override
-    public boolean hasFeaturePack(FeaturePackLocation.Channel channel) {
+    public boolean hasFeaturePack(ChannelSpec channel) {
         throw new UnsupportedOperationException();
     }
 
@@ -294,7 +295,7 @@ public class ProvisioningRuntime implements FeaturePackSet<FeaturePackRuntime>, 
     }
 
     @Override
-    public FeaturePackRuntime getFeaturePack(FeaturePackLocation.Channel channel) {
+    public FeaturePackRuntime getFeaturePack(ChannelSpec channel) {
         return fpRuntimes.get(channel);
     }
 

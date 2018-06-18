@@ -21,12 +21,13 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.jboss.galleon.Errors;
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.config.FeaturePackConfig;
 import org.jboss.galleon.spec.FeaturePackSpec;
 import org.jboss.galleon.spec.PackageDependencySpec;
 import org.jboss.galleon.spec.PackageSpec;
+import org.jboss.galleon.universe.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation.ChannelSpec;
 import org.jboss.galleon.util.CollectionUtils;
 
 /**
@@ -39,14 +40,14 @@ public class ProvisioningLayout {
 
     public static class Builder {
 
-        private Map<FeaturePackLocation.Channel, FeaturePackLayout> featurePacks = Collections.emptyMap();
+        private Map<FeaturePackLocation.ChannelSpec, FeaturePackLayout> featurePacks = Collections.emptyMap();
 
         private Builder() {
         }
 
         public Builder addFeaturePack(FeaturePackLayout fp) throws ProvisioningDescriptionException {
             assert fp != null : "fp is null";
-            final FeaturePackLocation.Channel channel = fp.getFPID().getChannel();
+            final FeaturePackLocation.ChannelSpec channel = fp.getFPID().getChannel();
             if(featurePacks.containsKey(channel)) {
                 final FeaturePackLocation.FPID existingId = featurePacks.get(channel).getFPID();
                 if(existingId.getBuild().equals(fp.getFPID().getBuild())) {
@@ -72,7 +73,7 @@ public class ProvisioningLayout {
                             try {
                                 fpDepConfig = fpSpec.getFeaturePackDep(origin);
                             } catch (ProvisioningDescriptionException e) {
-                                throw new ProvisioningDescriptionException(Errors.unknownFeaturePackDependencyName(fpSpec.getFPID(), pkg.getName(), origin), e);
+                                throw new ProvisioningDescriptionException(Errors.unknownFeaturePackDependencyName(fp.getFPID(), pkg.getName(), origin), e);
                             }
                             final FeaturePackLayout fpDepLayout = featurePacks.get(fpDepConfig.getLocation().getChannel());
                             if (fpDepLayout == null) {
@@ -82,11 +83,11 @@ public class ProvisioningLayout {
                                 final String pkgDepName = pkgDep.getName();
                                 if (!fpDepLayout.hasPackage(pkgDepName)) {
                                     throw new ProvisioningDescriptionException(Errors.unsatisfiedExternalPackageDependency(
-                                            fpSpec.getFPID(), pkg.getName(), fpDepConfig.getLocation().getFPID(), pkgDep.getName()));
+                                            fp.getFPID(), pkg.getName(), fpDepConfig.getLocation().getFPID(), pkgDep.getName()));
                                 }
                                 if (fpDepConfig.isPackageExcluded(pkgDepName) && !pkgDep.isOptional()) {
                                     throw new ProvisioningDescriptionException(Errors.unsatisfiedExternalPackageDependency(
-                                            fpSpec.getFPID(), pkg.getName(), fpDepConfig.getLocation().getFPID(), pkgDep.getName()));
+                                            fp.getFPID(), pkg.getName(), fpDepConfig.getLocation().getFPID(), pkgDep.getName()));
                                 }
                             }
                         }
@@ -103,7 +104,7 @@ public class ProvisioningLayout {
         return new Builder();
     }
 
-    private final Map<FeaturePackLocation.Channel, FeaturePackLayout> featurePacks;
+    private final Map<FeaturePackLocation.ChannelSpec, FeaturePackLayout> featurePacks;
 
     private ProvisioningLayout(Builder builder) {
         featurePacks = CollectionUtils.unmodifiable(builder.featurePacks);
@@ -113,11 +114,11 @@ public class ProvisioningLayout {
         return !featurePacks.isEmpty();
     }
 
-    public boolean contains(FeaturePackLocation.Channel channel) {
+    public boolean contains(ChannelSpec channel) {
         return featurePacks.containsKey(channel);
     }
 
-    public FeaturePackLayout getFeaturePack(FeaturePackLocation.Channel channel) {
+    public FeaturePackLayout getFeaturePack(ChannelSpec channel) {
         return featurePacks.get(channel);
     }
 

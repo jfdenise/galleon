@@ -32,9 +32,7 @@ import org.jboss.galleon.config.ConfigModel;
 import org.jboss.galleon.config.FeaturePackConfig;
 import org.jboss.galleon.config.FeaturePackDepsConfigBuilder;
 import org.jboss.galleon.config.ProvisioningConfig;
-import org.jboss.galleon.config.UniverseConfig;
 import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
-import org.jboss.galleon.universe.galleon1.LegacyGalleon1UniverseFactory;
 import org.jboss.galleon.util.ParsingUtils;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
 
@@ -186,11 +184,6 @@ public class ProvisioningXmlParser10 implements PlugableXmlParser<ProvisioningCo
                 case XMLStreamConstants.END_ELEMENT: {
                     if (!hasFp) {
                         throw ParsingUtils.expectedAtLeastOneChild(reader, Element.INSTALLATION, Element.FEATURE_PACK);
-                    }
-                    try {
-                        builder.addUniverse(new UniverseConfig(LegacyGalleon1Universe.NAME, LegacyGalleon1UniverseFactory.ID, null));
-                    } catch (ProvisioningDescriptionException e) {
-                        throw ParsingUtils.error("Failed to add galleon1 universe config", reader.getLocation(), e);
                     }
                     return;
                 }

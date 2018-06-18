@@ -17,8 +17,7 @@
 package org.jboss.galleon.config.wf;
 
 import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
-import org.jboss.galleon.FeaturePackLocation.FPID;
-import org.jboss.galleon.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.config.ConfigModel;
 import org.jboss.galleon.config.FeatureConfig;
@@ -64,7 +63,7 @@ public class ProfileFeatureIncludesLoggingGroupTestCase extends PmInstallFeature
     public static class TestConfigHandler implements ProvisionedConfigHandler {
 
         @Override
-        public void nextFeaturePack(FeaturePackLocation.FPID fpid) {
+        public void nextFeaturePack(FPID fpid) {
             //System.out.println("Feature-pack " + fpid);
         }
         @Override

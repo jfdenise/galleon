@@ -19,7 +19,7 @@ package org.jboss.galleon.cli.cmd.state.pkg;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.jboss.galleon.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningManager;
 import org.jboss.galleon.cli.PmSession;

@@ -25,9 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.spec.FeaturePackSpec;
+import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.Universe;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.UniverseResolverBuilder;
@@ -106,9 +105,8 @@ public class FeaturePackCreator extends UniverseResolverBuilder<FeaturePackCreat
         }
     }
 
-    void install(FeaturePackSpec spec, Path fpContentDir) throws ProvisioningException {
-        final FeaturePackLocation.FPID fpid = spec.getFPID();
-        final Universe<?> universe = universeResolver.getUniverse(fpid.getUniverse());
+    void install(FeaturePackLocation.FPID fpid, Path fpContentDir) throws ProvisioningException {
+        final Universe<?> universe = universeResolver.getUniverse(fpid.getLocation().getUniverse());
         final UniverseFeaturePackCreator ufpCreator = ufpCreators.get(universe.getFactoryId());
         if(ufpCreator == null) {
             final StringBuilder buf = new StringBuilder();
@@ -120,7 +118,7 @@ public class FeaturePackCreator extends UniverseResolverBuilder<FeaturePackCreat
             StringUtils.append(buf, ufpCreators.keySet());
             throw new ProvisioningException(buf.toString());
         }
-        ufpCreator.install(universe, spec, fpContentDir);
+        ufpCreator.install(universe, fpid, fpContentDir);
     }
 
     Path getWorkDir() throws ProvisioningException {

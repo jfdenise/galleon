@@ -27,7 +27,6 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
 import org.jboss.galleon.Errors;
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.runtime.ResolvedFeatureId;
 import org.jboss.galleon.runtime.ResolvedSpecId;
@@ -35,6 +34,8 @@ import org.jboss.galleon.state.ProvisionedConfig;
 import org.jboss.galleon.state.ProvisionedFeaturePack;
 import org.jboss.galleon.state.ProvisionedPackage;
 import org.jboss.galleon.state.ProvisionedState;
+import org.jboss.galleon.universe.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation.ChannelSpec;
 import org.jboss.galleon.util.ParsingUtils;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
 
@@ -67,7 +68,7 @@ class ProvisionedStateXmlParser20 implements PlugableXmlParser<ProvisionedState.
         private static final Map<QName, Element> elements;
 
         static {
-            elements = new HashMap<>(11);
+            elements = new HashMap<>(10);
             elements.put(new QName(NAMESPACE_2_0, CONFIG.name), CONFIG);
             elements.put(new QName(NAMESPACE_2_0, FEATURE.name), FEATURE);
             elements.put(new QName(NAMESPACE_2_0, FEATURE_PACK.name), FEATURE_PACK);
@@ -212,28 +213,7 @@ class ProvisionedStateXmlParser20 implements PlugableXmlParser<ProvisionedState.
     }
 
     private ProvisionedFeaturePack readFeaturePack(XMLExtendedStreamReader reader) throws XMLStreamException {
-        final int count = reader.getAttributeCount();
-        FeaturePackLocation fpl = null;
-        for (int i = 0; i < count; i++) {
-            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
-            switch (attribute) {
-                case LOCATION:
-                    try {
-                        fpl = FeaturePackLocation.fromString(reader.getAttributeValue(i));
-                    } catch (ProvisioningDescriptionException e) {
-                        throw new XMLStreamException("Failed to parse feature-pack location", e);
-                    }
-                    break;
-                default:
-                    throw ParsingUtils.unexpectedContent(reader);
-            }
-        }
-        if (fpl == null) {
-            throw ParsingUtils.missingAttributes(reader.getLocation(), Collections.singleton(Attribute.LOCATION));
-        }
-
-        final ProvisionedFeaturePack.Builder fpBuilder = ProvisionedFeaturePack.builder(fpl.getFPID());
-
+        final ProvisionedFeaturePack.Builder fpBuilder = ProvisionedFeaturePack.builder(parseSource(reader).getFPID());
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
@@ -256,6 +236,29 @@ class ProvisionedStateXmlParser20 implements PlugableXmlParser<ProvisionedState.
             }
         }
         throw ParsingUtils.endOfDocument(reader.getLocation());
+    }
+
+    private static FeaturePackLocation parseSource(XMLExtendedStreamReader reader) throws XMLStreamException {
+        final int count = reader.getAttributeCount();
+        FeaturePackLocation fps = null;
+        for (int i = 0; i < count; i++) {
+            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            switch (attribute) {
+                case LOCATION:
+                    try {
+                        fps = FeaturePackLocation.fromString(reader.getAttributeValue(i));
+                    } catch (IllegalArgumentException e) {
+                        throw new XMLStreamException("Failed to parse feature-pack location", e);
+                    }
+                    break;
+                default:
+                    throw ParsingUtils.unexpectedContent(reader);
+            }
+        }
+        if (fps == null) {
+            throw ParsingUtils.missingAttributes(reader.getLocation(), Collections.singleton(Attribute.LOCATION));
+        }
+        return fps;
     }
 
     private void readPackageList(XMLExtendedStreamReader reader, ProvisionedFeaturePack.Builder builder) throws XMLStreamException {
@@ -406,25 +409,7 @@ class ProvisionedStateXmlParser20 implements PlugableXmlParser<ProvisionedState.
     }
 
     private static void readFeaturePack(XMLExtendedStreamReader reader, ProvisionedConfigBuilder config) throws XMLStreamException {
-        FeaturePackLocation location = null;
-        final int count = reader.getAttributeCount();
-        for (int i = 0; i < count; i++) {
-            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
-            switch (attribute) {
-                case LOCATION:
-                    try {
-                        location = FeaturePackLocation.fromString(reader.getAttributeValue(i));
-                    } catch (ProvisioningDescriptionException e) {
-                        throw new XMLStreamException("Failed to parse feature-pack location", e);
-                    }
-                    break;
-                default:
-                    throw ParsingUtils.unexpectedContent(reader);
-            }
-        }
-        if (location == null) {
-            throw ParsingUtils.missingAttributes(reader.getLocation(), Collections.singleton(Attribute.LOCATION));
-        }
+        final FeaturePackLocation location = parseSource(reader);
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
@@ -449,7 +434,7 @@ class ProvisionedStateXmlParser20 implements PlugableXmlParser<ProvisionedState.
         throw ParsingUtils.endOfDocument(reader.getLocation());
    }
 
-    private static void readSpec(XMLExtendedStreamReader reader, FeaturePackLocation.Channel channel, ProvisionedConfigBuilder config) throws XMLStreamException {
+    private static void readSpec(XMLExtendedStreamReader reader, ChannelSpec channel, ProvisionedConfigBuilder config) throws XMLStreamException {
         String name = null;
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i++) {

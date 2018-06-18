@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import org.jboss.galleon.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.spec.PackageSpec;
 

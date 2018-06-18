@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.cli.path.FeatureContainerPathConsumer;
@@ -32,6 +31,7 @@ import org.jboss.galleon.config.FeatureConfig;
 import org.jboss.galleon.runtime.ResolvedSpecId;
 import org.jboss.galleon.spec.FeatureId;
 import org.jboss.galleon.state.ProvisionedFeature;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 
 /**
  *
@@ -41,14 +41,14 @@ public class FeatureInfo {
 
     private final ProvisionedFeature feature;
     private final List<String> path;
-    private final FeaturePackLocation.FPID currentFP;
+    private final FPID currentFP;
     private FeatureSpecInfo specInfo;
     private final FeatureId featureId;
     private final FeatureConfig featureConfig;
     private final String fullPath;
     private final ConfigInfo configInfo;
 
-    public FeatureInfo(ConfigInfo configInfo, ProvisionedFeature feature, List<String> path, FeaturePackLocation.FPID currentFP) throws ProvisioningDescriptionException {
+    public FeatureInfo(ConfigInfo configInfo, ProvisionedFeature feature, List<String> path, FPID currentFP) throws ProvisioningDescriptionException {
         this.feature = feature;
         this.path = path;
         this.currentFP = currentFP;

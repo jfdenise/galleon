@@ -22,8 +22,8 @@ import java.util.Map;
 
 import org.jboss.galleon.ArtifactCoords;
 import org.jboss.galleon.Constants;
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
+import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
 import org.jboss.galleon.util.CollectionUtils;
 import org.jboss.galleon.util.StringUtils;
@@ -38,7 +38,7 @@ public class ResolvedFeatureId {
         private final ResolvedSpecId specId;
         private Map<String, Object> params = Collections.emptyMap();
 
-        private Builder(FeaturePackLocation.Channel channel, String spec) {
+        private Builder(FeaturePackLocation.ChannelSpec channel, String spec) {
             this.specId = new ResolvedSpecId(channel, spec);
         }
 
@@ -93,7 +93,7 @@ public class ResolvedFeatureId {
         ResolvedSpecId specId = null;
         try {
             specId = new ResolvedSpecId(FeaturePackLocation.fromString(str.substring(1, i)).getChannel(), str.substring(i + 1, colon));
-        } catch (ProvisioningDescriptionException e) {
+        } catch (IllegalArgumentException e) {
             throw new ProvisioningDescriptionException("Failed to parse the channel part of feature id '" + str + "'", e);
         }
 

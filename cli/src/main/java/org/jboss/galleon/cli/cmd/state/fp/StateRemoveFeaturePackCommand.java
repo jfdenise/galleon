@@ -47,7 +47,7 @@ public class StateRemoveFeaturePackCommand extends AbstractStateCommand {
             List<String> lst = new ArrayList<>();
             if (session != null) {
                 for (FeaturePackConfig fp : session.getConfig().getFeaturePackDeps()) {
-                    lst.add(fp.getLocation().getChannel().toString());
+                    lst.add(fp.getLocation().getChannelName().toString());
                 }
             }
             return lst;

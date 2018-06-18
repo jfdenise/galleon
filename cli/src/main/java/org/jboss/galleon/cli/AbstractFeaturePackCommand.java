@@ -27,13 +27,13 @@ import org.aesh.command.option.Option;
 import org.aesh.readline.AeshContext;
 import org.jboss.galleon.ArtifactCoords;
 import org.jboss.galleon.ArtifactException;
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningManager;
 import org.jboss.galleon.cli.model.FeatureContainer;
 import org.jboss.galleon.cli.model.FeatureContainers;
 import org.jboss.galleon.config.ProvisioningConfig;
 import org.jboss.galleon.runtime.ProvisioningRuntime;
+import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
 
 /**

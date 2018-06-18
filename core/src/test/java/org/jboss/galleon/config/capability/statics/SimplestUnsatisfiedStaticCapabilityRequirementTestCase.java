@@ -17,7 +17,7 @@
 package org.jboss.galleon.config.capability.statics;
 
 import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
-import org.jboss.galleon.FeaturePackLocation.FPID;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.config.ConfigModel;
 import org.jboss.galleon.config.FeatureConfig;
@@ -74,6 +74,6 @@ public class SimplestUnsatisfiedStaticCapabilityRequirementTestCase extends PmIn
         Assert.assertEquals("Failed to build config", e.getMessage());
         e = (ProvisioningException) e.getCause();
         Assert.assertNotNull(e);
-        Assert.assertEquals("No provider found for capability cap.a required by {org.jboss.pm.test:fp1@galleon1:1}specB:b=b1", e.getMessage());
+        Assert.assertEquals("No provider found for capability cap.a required by {org.jboss.pm.test:fp1@universe.factory.galleon1:1}specB:b=b1", e.getMessage());
     }
 }

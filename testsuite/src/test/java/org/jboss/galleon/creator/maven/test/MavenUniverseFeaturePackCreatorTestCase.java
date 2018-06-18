@@ -19,8 +19,8 @@ package org.jboss.galleon.creator.maven.test;
 
 import java.nio.file.Path;
 
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.creator.FeaturePackCreator;
+import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.UniverseRepoTestBase;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.maven.MavenArtifact;
@@ -53,10 +53,9 @@ public class MavenUniverseFeaturePackCreatorTestCase extends UniverseRepoTestBas
                 .install();
 
         FeaturePackCreator.getInstance()
-        .addArtifactResolver(MavenUniverseFactory.DEFAULT_REPO_ID, SimplisticMavenRepoManager.getInstance(repoHome))
-        .addUniverse("test-universe", MavenUniverseFactory.ID, "universe.maven.test:maven-universe1:[1.0,2.0-alpha)")
+        .addArtifactResolver(repo)
         .newFeaturePack()
-            .setFPID(FeaturePackLocation.fromString("producer1@test-universe:1.0#1.0.0.Final").getFPID())
+            .setFPID(FeaturePackLocation.fromString("producer1@" + MavenUniverseFactory.ID + "/universe.maven.test:maven-universe1:[1.0,2.0-alpha):1.0#1.0.0.Final").getFPID())
             .newPackage("p1", true)
                 .writeContent("p1.txt", "p1 text")
                 .getFeaturePack()
@@ -67,24 +66,9 @@ public class MavenUniverseFeaturePackCreatorTestCase extends UniverseRepoTestBas
     @Test
     public void testMain() throws Exception {
         final UniverseResolver universeResolver = UniverseResolver.builder()
-                .addUniverse("test-universe",
-                        MavenUniverseFactory.ID,
-                        "universe.maven.test:maven-universe1:[1.0,2.0-alpha)",
-                        SimplisticMavenRepoManager.getInstance(repoHome))
+                .addArtifactResolver(SimplisticMavenRepoManager.getInstance(repoHome))
                 .build();
-        Path path = universeResolver.resolve(FeaturePackLocation.fromString("producer1@test-universe:1.0"));
+        Path path = universeResolver.resolve(FeaturePackLocation.fromString("producer1@" + MavenUniverseFactory.ID + "/universe.maven.test:maven-universe1:[1.0,2.0-alpha):1.0"));
         Assert.assertEquals("feature-pack1-1.0.0.Final.zip", path.getFileName().toString());
-    }
-
-    @Test
-    public void testDefaultUniverse() throws Exception {
-        final UniverseResolver universeResolver = UniverseResolver.builder()
-                .addDefaultUniverse(MavenUniverseFactory.ID,
-                        "universe.maven.test:maven-universe1:[1.0,2.0-alpha)",
-                        SimplisticMavenRepoManager.getInstance(repoHome))
-                .build();
-        Path path = universeResolver.resolve(FeaturePackLocation.fromString("producer1:1.0"));
-        Assert.assertEquals("feature-pack1-1.0.0.Final.zip", path.getFileName().toString());
-
     }
 }

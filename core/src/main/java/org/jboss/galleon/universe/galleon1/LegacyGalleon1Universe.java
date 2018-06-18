@@ -23,9 +23,12 @@ import java.util.Map;
 
 import org.jboss.galleon.ArtifactCoords;
 import org.jboss.galleon.ArtifactRepositoryManager;
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.universe.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation.ChannelSpec;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.Universe;
+import org.jboss.galleon.universe.UniverseSpec;
 import org.jboss.galleon.util.CollectionUtils;
 
 /**
@@ -34,8 +37,16 @@ import org.jboss.galleon.util.CollectionUtils;
  */
 public class LegacyGalleon1Universe implements Universe<LegacyGalleon1Producer> {
 
-    public static final String NAME = "galleon1";
     private static final String ZIP = "zip";
+
+    private static UniverseSpec universeSource;
+
+    public static UniverseSpec getUniverseSource() {
+        if(universeSource == null) {
+            universeSource = new UniverseSpec(LegacyGalleon1UniverseFactory.ID, null);
+        }
+        return universeSource;
+    }
 
     public static ArtifactCoords toArtifactCoords(FeaturePackLocation fpl) throws ProvisioningException {
         final String producer = fpl.getProducer();
@@ -49,18 +60,24 @@ public class LegacyGalleon1Universe implements Universe<LegacyGalleon1Producer> 
     public static FeaturePackLocation toFpl(ArtifactCoords.Gav gav) {
         final String version = gav.getVersion();
         if(version == null) {
-            return new FeaturePackLocation(LegacyGalleon1Universe.NAME, gav.getGroupId() + ':' + gav.getArtifactId(), null, null, version);
+            return new FeaturePackLocation(
+                    new UniverseSpec(LegacyGalleon1UniverseFactory.ID, null),
+                    gav.getGroupId() + ':' + gav.getArtifactId(),
+                    null, null, version);
         }
         final int i = version.indexOf('.');
-        return new FeaturePackLocation(LegacyGalleon1Universe.NAME, gav.getGroupId() + ':' + gav.getArtifactId(), i > 0 ? version.substring(0, i) : version, null, version);
+        return new FeaturePackLocation(
+                new UniverseSpec(LegacyGalleon1UniverseFactory.ID, null),
+                gav.getGroupId() + ':' + gav.getArtifactId(),
+                i > 0 ? version.substring(0, i) : version, null, version);
     }
 
-    public static FeaturePackLocation.FPID newFPID(String producer, String channel, String build) {
-        return new FeaturePackLocation(NAME, producer, channel, null, build).getFPID();
+    public static FPID newFPID(String producer, String channel, String build) {
+        return new FeaturePackLocation(getUniverseSource(), producer, channel, null, build).getFPID();
     }
 
-    public static FeaturePackLocation.Channel newChannel(String producer, String channel) {
-        return new FeaturePackLocation(NAME, producer, channel, null, null).getChannel();
+    public static ChannelSpec newChannel(String producer, String channel) {
+        return new FeaturePackLocation(new UniverseSpec(LegacyGalleon1UniverseFactory.ID, null), producer, channel, null, null).getChannel();
     }
 
     final ArtifactRepositoryManager artifactResolver;
@@ -73,6 +90,11 @@ public class LegacyGalleon1Universe implements Universe<LegacyGalleon1Producer> 
     @Override
     public String getFactoryId() {
         return LegacyGalleon1UniverseFactory.ID;
+    }
+
+    @Override
+    public String getLocation() {
+        return null;
     }
 
     @Override

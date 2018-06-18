@@ -19,7 +19,6 @@ package org.jboss.galleon.universe;
 
 import java.nio.file.Path;
 
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningException;
 
 /**
@@ -31,7 +30,7 @@ public interface Channel {
 
     String getName();
 
-    String getLatestBuild(FeaturePackLocation fpl) throws ProvisioningException;
+    String getLatestBuild(FeaturePackLocation fps) throws ProvisioningException;
 
-    Path resolve(FeaturePackLocation fpl) throws ProvisioningException;
+    Path resolve(FeaturePackLocation fps) throws ProvisioningException;
 }

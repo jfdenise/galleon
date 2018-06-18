@@ -23,9 +23,9 @@ import java.util.Set;
 
 import org.jboss.galleon.ArtifactCoords;
 import org.jboss.galleon.Errors;
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
 import org.jboss.galleon.util.CollectionUtils;
 
@@ -38,17 +38,17 @@ public class FeaturePackConfig extends ConfigCustomizations {
 
     public static class Builder extends ConfigCustomizationsBuilder<Builder> {
 
-        protected final FeaturePackLocation fpl;
+        protected final FeaturePackLocation fps;
         protected boolean inheritPackages = true;
         protected Set<String> excludedPackages = Collections.emptySet();
         protected Map<String, PackageConfig> includedPackages = Collections.emptyMap();
 
-        protected Builder(FeaturePackLocation fpl) {
-            this(fpl, true);
+        protected Builder(FeaturePackLocation fps) {
+            this(fps, true);
         }
 
-        protected Builder(FeaturePackLocation fpl, boolean inheritPackages) {
-            this.fpl = fpl;
+        protected Builder(FeaturePackLocation fps, boolean inheritPackages) {
+            this.fps = fps;
             this.inheritPackages = inheritPackages;
         }
 
@@ -123,19 +123,19 @@ public class FeaturePackConfig extends ConfigCustomizations {
         return new Builder(fpl);
     }
 
-    public static Builder builder(FeaturePackLocation fpl, boolean inheritPackageSet) {
-        return new Builder(fpl, inheritPackageSet);
+    public static Builder builder(FeaturePackLocation fps, boolean inheritPackageSet) {
+        return new Builder(fps, inheritPackageSet);
     }
 
-    public static FeaturePackConfig forLocation(FeaturePackLocation fpl) {
-        return new Builder(fpl).build();
+    public static FeaturePackConfig forLocation(FeaturePackLocation fps) {
+        return new Builder(fps).build();
     }
 
-    public static String getDefaultOriginName(FeaturePackLocation location) {
-        return location.getChannel().toString();
+    public static String getDefaultOriginName(FeaturePackLocation fps) {
+        return fps.getChannel().toString();
     }
 
-    private final FeaturePackLocation fpl;
+    private final FeaturePackLocation fps;
     protected final boolean inheritPackages;
     protected final Set<String> excludedPackages;
     protected final Map<String, PackageConfig> includedPackages;
@@ -145,8 +145,8 @@ public class FeaturePackConfig extends ConfigCustomizations {
 
     protected FeaturePackConfig(Builder builder) {
         super(builder);
-        assert builder.fpl != null : "location is null";
-        this.fpl = builder.fpl;
+        assert builder.fps != null : "location is null";
+        this.fps = builder.fps;
         this.inheritPackages = builder.inheritPackages;
         this.excludedPackages = CollectionUtils.unmodifiable(builder.excludedPackages);
         this.includedPackages = CollectionUtils.unmodifiable(builder.includedPackages);
@@ -163,7 +163,7 @@ public class FeaturePackConfig extends ConfigCustomizations {
     public ArtifactCoords.Gav getGav() {
         if(legacyGav == null) {
             try {
-                legacyGav = LegacyGalleon1Universe.toArtifactCoords(fpl).toGav();
+                legacyGav = LegacyGalleon1Universe.toArtifactCoords(fps).toGav();
             } catch (ProvisioningException e) {
                 throw new IllegalStateException("Failed to translate fpl to gav", e);
             }
@@ -172,7 +172,7 @@ public class FeaturePackConfig extends ConfigCustomizations {
     }
 
     public FeaturePackLocation getLocation() {
-        return fpl;
+        return fps;
     }
 
     public boolean isInheritPackages() {
@@ -208,7 +208,7 @@ public class FeaturePackConfig extends ConfigCustomizations {
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result + ((excludedPackages == null) ? 0 : excludedPackages.hashCode());
-        result = prime * result + ((fpl == null) ? 0 : fpl.hashCode());
+        result = prime * result + ((fps == null) ? 0 : fps.hashCode());
         result = prime * result + ((includedPackages == null) ? 0 : includedPackages.hashCode());
         result = prime * result + (inheritPackages ? 1231 : 1237);
         return result;
@@ -228,10 +228,10 @@ public class FeaturePackConfig extends ConfigCustomizations {
                 return false;
         } else if (!excludedPackages.equals(other.excludedPackages))
             return false;
-        if (fpl == null) {
-            if (other.fpl != null)
+        if (fps == null) {
+            if (other.fps != null)
                 return false;
-        } else if (!fpl.equals(other.fpl))
+        } else if (!fps.equals(other.fps))
             return false;
         if (includedPackages == null) {
             if (other.includedPackages != null)
@@ -246,7 +246,7 @@ public class FeaturePackConfig extends ConfigCustomizations {
     @Override
     public String toString() {
         final StringBuilder builder = new StringBuilder();
-        builder.append("[").append(fpl.toString());
+        builder.append("[").append(fps.toString());
         append(builder);
         return builder.append("]").toString();
     }

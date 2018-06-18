@@ -19,9 +19,9 @@ package org.jboss.galleon.universe.galleon1;
 
 import java.nio.file.Path;
 
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.universe.Channel;
+import org.jboss.galleon.universe.FeaturePackLocation;
 
 /**
  *
@@ -49,12 +49,12 @@ public class LegacyGalleon1Channel implements Channel {
      * @see org.jboss.galleon.universe.Channel#resolve(org.jboss.galleon.FeaturePackLocation)
      */
     @Override
-    public Path resolve(FeaturePackLocation fpl) throws ProvisioningException {
-        return universe.artifactResolver.resolve(LegacyGalleon1Universe.toArtifactCoords(fpl));
+    public Path resolve(FeaturePackLocation fps) throws ProvisioningException {
+        return universe.artifactResolver.resolve(LegacyGalleon1Universe.toArtifactCoords(fps));
     }
 
     @Override
-    public String getLatestBuild(FeaturePackLocation fpl) throws ProvisioningException {
+    public String getLatestBuild(FeaturePackLocation fps) throws ProvisioningException {
         throw new UnsupportedOperationException();
     }
 }

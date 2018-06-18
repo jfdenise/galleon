@@ -24,8 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.runtime.ResolvedSpecId;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 
 /**
  *
@@ -38,29 +38,29 @@ public abstract class FeatureContainer {
     private final Map<String, List<ConfigInfo>> finalConfigs = new HashMap<>();
     private final Map<String, Group> packagesRoots = new HashMap<>();
     private final Map<String, Group> featuresSpecRoots = new HashMap<>();
-    private final Set<FeaturePackLocation.FPID> dependencies = new HashSet<>();
+    private final Set<FPID> dependencies = new HashSet<>();
     private Map<String, FeatureContainer> fullDependencies = new HashMap<>();
     private final String name;
-    private final FeaturePackLocation.FPID fpid;
+    private final FPID fpid;
     private boolean edit;
     private Map<ResolvedSpecId, FeatureSpecInfo> allSpecs;
     private Map<Identity, Group> allPackages;
     private Map<ResolvedSpecId, List<FeatureInfo>> allFeatures;
 
-    protected FeatureContainer(String name, FeaturePackLocation.FPID fpid) {
+    protected FeatureContainer(String name, FPID fpid) {
         this.name = name;
         this.fpid = fpid;
     }
 
-    void addDependency(FeaturePackLocation.FPID fpid) {
+    void addDependency(FPID fpid) {
         dependencies.add(fpid);
     }
 
-    public Set<FeaturePackLocation.FPID> getDependencies() {
+    public Set<FPID> getDependencies() {
         return Collections.unmodifiableSet(dependencies);
     }
 
-    public FeaturePackLocation.FPID getFPID() {
+    public FPID getFPID() {
         return fpid;
     }
 

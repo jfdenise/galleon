@@ -36,12 +36,12 @@ import java.util.Map;
 import java.util.Set;
 import javax.xml.stream.XMLStreamException;
 
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.cli.PmSession;
 import org.jboss.galleon.runtime.ResolvedSpecId;
 import org.jboss.galleon.spec.FeatureSpec;
 import org.jboss.galleon.spec.PackageDependencySpec;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.xml.FeatureSpecXmlParser;
 
 /**
@@ -56,15 +56,14 @@ public class FeatureSpecsBuilder {
         return allspecs;
     }
 
-    public Group buildTree(PmSession session, FeaturePackLocation.FPID fpid,
-            FeaturePackLocation.FPID id,
+    public Group buildTree(PmSession session, FPID fpid, FPID id,
             Map<Identity, Group> allPackages, boolean useCache, Set<ResolvedSpecId> wantedSpecs) throws IOException, ProvisioningException {
         // Build the tree of specs located in all feature-packs
         FeatureGroupsBuilder grpBuilder = new FeatureGroupsBuilder();
 
         // Do we have feature-specs in cache?
         Set<FeatureSpecInfo> specs = null;
-        Map<FeaturePackLocation.FPID, Set<FeatureSpecInfo>> allSpecs = null;
+        Map<FPID, Set<FeatureSpecInfo>> allSpecs = null;
         if (useCache) {
             allSpecs = Caches.getSpecs();
             if (allSpecs != null) {

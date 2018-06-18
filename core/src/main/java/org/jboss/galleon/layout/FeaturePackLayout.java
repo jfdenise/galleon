@@ -24,11 +24,11 @@ import java.util.Map;
 import java.util.Set;
 
 import org.jboss.galleon.Errors;
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.spec.FeaturePackSpec;
 import org.jboss.galleon.spec.PackageDependencySpec;
 import org.jboss.galleon.spec.PackageSpec;
+import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.util.CollectionUtils;
 
 /**
@@ -41,10 +41,12 @@ public class FeaturePackLayout {
 
     public static class Builder {
 
+        private final FeaturePackLocation.FPID fpid;
         private final FeaturePackSpec.Builder spec;
         private Map<String, PackageSpec> packages = Collections.emptyMap();
 
-        private Builder(FeaturePackSpec.Builder spec) {
+        private Builder(FeaturePackLocation.FPID fpid, FeaturePackSpec.Builder spec) {
+            this.fpid = fpid;
             this.spec = spec;
         }
 
@@ -67,20 +69,22 @@ public class FeaturePackLayout {
     }
 
     public static Builder builder(FeaturePackSpec.Builder spec) {
-        return new Builder(spec);
+        return new Builder(spec.getFPID(), spec);
     }
 
+    private final FeaturePackLocation.FPID fpid;
     private final FeaturePackSpec spec;
     private final Map<String, PackageSpec> packages;
     final List<String> unresolvedLocalPkgs;
     final boolean externalPkgDeps;
 
     private FeaturePackLayout(Builder builder) throws ProvisioningDescriptionException {
+        fpid = builder.fpid;
         spec = builder.spec.build();
         this.packages = CollectionUtils.unmodifiable(builder.packages);
         for(String name : spec.getDefaultPackageNames()) {
             if(!packages.containsKey(name)) {
-                throw new ProvisioningDescriptionException(Errors.unknownPackage(spec.getFPID(), name));
+                throw new ProvisioningDescriptionException(Errors.unknownPackage(fpid, name));
             }
         }
 
@@ -100,7 +104,7 @@ public class FeaturePackLayout {
                         }
                     }
                     if(!spec.hasFeaturePackDeps() && !notFound.isEmpty()) {
-                        throw new ProvisioningDescriptionException(Errors.unsatisfiedPackageDependencies(spec.getFPID(), pkg.getName(), notFound));
+                        throw new ProvisioningDescriptionException(Errors.unsatisfiedPackageDependencies(fpid, pkg.getName(), notFound));
                     }
                 }
                 if(pkg.hasExternalPackageDeps()) {
@@ -108,7 +112,7 @@ public class FeaturePackLayout {
                         try {
                             spec.getFeaturePackDep(origin);
                         } catch(ProvisioningDescriptionException e) {
-                            throw new ProvisioningDescriptionException(Errors.unknownFeaturePackDependencyName(spec.getFPID(), pkg.getName(), origin), e);
+                            throw new ProvisioningDescriptionException(Errors.unknownFeaturePackDependencyName(fpid, pkg.getName(), origin), e);
                         }
                     }
                     externalPkgDeps = true;
@@ -120,7 +124,7 @@ public class FeaturePackLayout {
     }
 
     public FeaturePackLocation.FPID getFPID() {
-        return spec.getFPID();
+        return fpid;
     }
 
     public FeaturePackSpec getSpec() {

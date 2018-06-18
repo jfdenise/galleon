@@ -23,8 +23,6 @@ import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.jboss.galleon.ArtifactCoords;
 import org.jboss.galleon.ArtifactException;
-import org.jboss.galleon.FeaturePackLocation;
-import org.jboss.galleon.FeaturePackLocation.FPID;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.cli.CommandExecutionException;
 import org.jboss.galleon.cli.GavCompleter;
@@ -34,6 +32,8 @@ import org.jboss.galleon.cli.StreamCompleter;
 import org.jboss.galleon.cli.cmd.plugin.AbstractPluginsCommand.FPActivator;
 import org.jboss.galleon.cli.cmd.plugin.AbstractPluginsCommand.StreamNameActivator;
 import org.jboss.galleon.cli.model.state.State;
+import org.jboss.galleon.universe.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
 
 /**

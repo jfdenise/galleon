@@ -17,7 +17,7 @@
 package org.jboss.galleon.config.capability.dynamic.collection;
 
 import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
-import org.jboss.galleon.FeaturePackLocation.FPID;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.Errors;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.config.ConfigModel;
@@ -85,7 +85,7 @@ public class MissingCapProviderFromMultipleCollectionParamValuesTestCase extends
     protected String[] pmErrors() {
         return new String[] {
                 Errors.failedToBuildConfigSpec(null, null),
-                "No provider found for capability 2.b required by {org.jboss.pm.test:fp1@galleon1:1}specB:b=b1 as $p1.$p2"
+                "No provider found for capability 2.b required by {org.jboss.pm.test:fp1@universe.factory.galleon1:1}specB:b=b1 as $p1.$p2"
         };
     }
     @Override

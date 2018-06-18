@@ -20,9 +20,9 @@ package org.jboss.galleon.universe.maven;
 import java.nio.file.Path;
 import java.util.Collection;
 
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.universe.Channel;
+import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.util.StringUtils;
 
 /**
@@ -50,29 +50,29 @@ public class MavenChannel implements Channel {
     }
 
     @Override
-    public String getLatestBuild(FeaturePackLocation fpl) throws ProvisioningException {
+    public String getLatestBuild(FeaturePackLocation fps) throws ProvisioningException {
         final MavenArtifact artifact = new MavenArtifact();
         artifact.setGroupId(producer.getFeaturePackGroupId());
         artifact.setArtifactId(producer.getFeaturePackArtifactId());
         artifact.setExtension("zip");
         artifact.setVersionRange(versionRange);
-        producer.getRepo().resolveLatestVersion(artifact, getFrequency(fpl));
+        producer.getRepo().resolveLatestVersion(artifact, getFrequency(fps));
         return artifact.getVersion();
     }
 
     @Override
-    public Path resolve(FeaturePackLocation fpl) throws MavenUniverseException {
+    public Path resolve(FeaturePackLocation fps) throws MavenUniverseException {
 
         final MavenArtifact artifact = new MavenArtifact();
         artifact.setGroupId(producer.getFeaturePackGroupId());
         artifact.setArtifactId(producer.getFeaturePackArtifactId());
         artifact.setExtension("zip");
 
-        if(fpl.getBuild() == null) {
+        if(fps.getBuild() == null) {
             artifact.setVersionRange(versionRange);
-            producer.getRepo().resolveLatestVersion(artifact, getFrequency(fpl));
+            producer.getRepo().resolveLatestVersion(artifact, getFrequency(fps));
         } else {
-            artifact.setVersion(fpl.getBuild());
+            artifact.setVersion(fps.getBuild());
             producer.getRepo().resolve(artifact);
         }
         return artifact.getPath();

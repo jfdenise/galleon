@@ -21,9 +21,8 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
-import org.jboss.galleon.FeaturePackLocation.FPID;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.Errors;
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.config.FeaturePackConfig;
@@ -104,7 +103,7 @@ public class FpDepVersionConflictInFpSpecTestCase extends PmProvisionConfigTestB
 
     @Override
     protected String[] pmErrors() throws ProvisioningException {
-        final Set<FeaturePackLocation.FPID> set = new LinkedHashSet<>(2);
+        final Set<FPID> set = new LinkedHashSet<>(2);
         set.add(FP1_100_GAV);
         set.add(FP1_101_GAV);
         return new String[] {

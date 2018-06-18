@@ -19,10 +19,10 @@ package org.jboss.galleon.universe.galleon1;
 
 import java.nio.file.Path;
 
-import org.jboss.galleon.FeaturePackLocation.FPID;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.creator.UniverseFeaturePackCreator;
-import org.jboss.galleon.spec.FeaturePackSpec;
+import org.jboss.galleon.universe.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation.ChannelSpec;
 import org.jboss.galleon.universe.Universe;
 
 /**
@@ -37,12 +37,12 @@ public class LegacyGalleon1FeaturePackCreator implements UniverseFeaturePackCrea
     }
 
     @Override
-    public void install(Universe<?> universe, FeaturePackSpec spec, Path fpContentDir) throws ProvisioningException {
+    public void install(Universe<?> universe, FeaturePackLocation.FPID fpid, Path fpContentDir) throws ProvisioningException {
         final LegacyGalleon1Universe mvnUni = (LegacyGalleon1Universe) universe;
-        final FPID fpid = spec.getFPID();
-        final LegacyGalleon1Producer producer = mvnUni.getProducer(fpid.getProducer());
+        final ChannelSpec channel = fpid.getChannel();
+        final LegacyGalleon1Producer producer = mvnUni.getProducer(channel.getProducer());
         // make sure the channel exists
-        producer.getChannel(fpid.getChannelName());
+        producer.getChannel(channel.getChannel());
 
         mvnUni.artifactResolver.install(LegacyGalleon1Universe.toArtifactCoords(fpid.getLocation()), fpContentDir);
     }

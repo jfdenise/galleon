@@ -16,12 +16,12 @@
  */
 package org.jboss.galleon.test.util;
 
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.plugin.ProvisionedConfigHandler;
 import org.jboss.galleon.runtime.ResolvedFeatureId;
 import org.jboss.galleon.runtime.ResolvedFeatureSpec;
 import org.jboss.galleon.state.ProvisionedConfig;
 import org.jboss.galleon.state.ProvisionedFeature;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.junit.Assert;
 
 /**
@@ -51,7 +51,7 @@ public abstract class TestProvisionedConfigHandler implements ProvisionedConfigH
         return BRANCH_END;
     }
 
-    protected static String featurePackEvent(FeaturePackLocation.FPID fpid) {
+    protected static String featurePackEvent(FPID fpid) {
         return "feature-pack " + fpid;
     }
 
@@ -116,7 +116,7 @@ public abstract class TestProvisionedConfigHandler implements ProvisionedConfigH
     }
 
     @Override
-    public void nextFeaturePack(FeaturePackLocation.FPID fpid) {
+    public void nextFeaturePack(FPID fpid) {
         assertNextEvent(featurePackEvent(fpid));
     }
 

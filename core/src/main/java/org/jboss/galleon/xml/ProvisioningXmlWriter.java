@@ -23,8 +23,12 @@ import org.jboss.galleon.config.ConfigCustomizations;
 import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.config.ConfigModel;
 import org.jboss.galleon.config.FeaturePackConfig;
+import org.jboss.galleon.config.FeaturePackDepsConfig;
 import org.jboss.galleon.config.PackageConfig;
 import org.jboss.galleon.config.ProvisioningConfig;
+import org.jboss.galleon.config.UniverseConfig;
+import org.jboss.galleon.universe.FeaturePackLocation;
+import org.jboss.galleon.universe.UniverseSpec;
 import org.jboss.galleon.xml.ProvisioningXmlParser20.Attribute;
 import org.jboss.galleon.xml.ProvisioningXmlParser20.Element;
 import org.jboss.galleon.xml.util.ElementNode;
@@ -47,24 +51,56 @@ public class ProvisioningXmlWriter extends BaseXmlWriter<ProvisioningConfig> {
     private ProvisioningXmlWriter() {
     }
 
-    protected ElementNode toElement(ProvisioningConfig provisioningConfig) {
+    protected ElementNode toElement(ProvisioningConfig config) {
 
         final ElementNode install = addElement(null, Element.INSTALLATION);
 
-        if (provisioningConfig.hasFeaturePackDeps()) {
-            for(FeaturePackConfig fp : provisioningConfig.getFeaturePackDeps()) {
+        writeUniverseConfigs(config, install);
+
+        if (config.hasFeaturePackDeps()) {
+            for(FeaturePackConfig fp : config.getFeaturePackDeps()) {
                 final ElementNode fpElement = addElement(install, Element.FEATURE_PACK);
-                writeFeaturePackConfig(fpElement, fpElement.getNamespace(), fp, provisioningConfig.originOf(fp.getLocation().getChannel()));
+                writeFeaturePackConfig(fpElement, fpElement.getNamespace(), config.getUserConfiguredSource(fp.getLocation()), fp,
+                        config.originOf(fp.getLocation().getChannel()));
             }
         }
 
-        writeConfigCustomizations(install,Element.INSTALLATION.getNamespace(), provisioningConfig);
+        writeConfigCustomizations(install, Element.INSTALLATION.getNamespace(), config);
 
         return install;
     }
 
-    static void writeFeaturePackConfig(ElementNode fp, String ns, FeaturePackConfig featurePack, String origin) {
-        addAttribute(fp, Attribute.LOCATION, featurePack.getLocation().toString());
+    static void writeUniverseConfigs(FeaturePackDepsConfig fpDeps, final ElementNode parent) {
+        ElementNode universesEl = null;
+        if(fpDeps.hasDefaultUniverse()) {
+            universesEl = addElement(parent, Element.UNIVERSES.getLocalName(), parent.getNamespace());
+            writeUniverseConfig(universesEl, fpDeps.getDefaultUniverse());
+        }
+        if(fpDeps.hasUniverseNamedConfigs()) {
+            if(universesEl == null) {
+                universesEl = addElement(parent, Element.UNIVERSES.getLocalName(), parent.getNamespace());
+            }
+            for(UniverseConfig universeConfig : fpDeps.getUniverseNamedConfigs()) {
+                writeUniverseConfig(universesEl, universeConfig);
+            }
+        }
+    }
+
+    private static void writeUniverseConfig(ElementNode universesEl, UniverseConfig universeConfig) {
+        final ElementNode universeEl = addElement(universesEl, Element.UNIVERSE.getLocalName(), universesEl.getNamespace());
+        if(universeConfig.getName() != null) {
+            addAttribute(universeEl, Attribute.NAME, universeConfig.getName());
+        }
+        final UniverseSpec source = universeConfig.getSpec();
+        addAttribute(universeEl, Attribute.FACTORY, source.getFactory());
+        if(source.getLocation() != null) {
+            addAttribute(universeEl, Attribute.LOCATION, source.getLocation());
+        }
+    }
+
+    static void writeFeaturePackConfig(ElementNode fp, String ns, FeaturePackLocation source, FeaturePackConfig featurePack, String origin) {
+
+        addAttribute(fp, Attribute.LOCATION, source.toString());
         if(origin != null) {
             addElement(fp, Element.ORIGIN.getLocalName(), ns).addChild(new TextNode(origin));
         }

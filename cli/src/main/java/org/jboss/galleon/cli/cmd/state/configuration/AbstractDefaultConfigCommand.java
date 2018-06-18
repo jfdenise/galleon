@@ -24,7 +24,6 @@ import java.util.Map.Entry;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.jboss.galleon.ArtifactCoords;
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.cli.AbstractCompleter;
 import org.jboss.galleon.cli.CommandExecutionException;
 import org.jboss.galleon.cli.PmCompleterInvocation;
@@ -36,6 +35,7 @@ import org.jboss.galleon.cli.model.FeatureContainer;
 import org.jboss.galleon.cli.model.state.State;
 import org.jboss.galleon.cli.path.FeatureContainerPathConsumer;
 import org.jboss.galleon.cli.path.PathParser;
+import org.jboss.galleon.universe.FeaturePackLocation.ChannelSpec;
 import org.jboss.galleon.universe.galleon1.LegacyGalleon1Universe;
 
 /**
@@ -136,7 +136,7 @@ public abstract class AbstractDefaultConfigCommand extends AbstractFPProvisioned
     }
 
     @Override
-    public FeaturePackLocation.Channel getChannel(PmSession session) throws CommandExecutionException {
+    public ChannelSpec getChannel(PmSession session) throws CommandExecutionException {
         if (origin == null) {
             return null;
         }

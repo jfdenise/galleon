@@ -23,13 +23,13 @@ import java.util.List;
 import java.util.Map.Entry;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.option.Option;
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.cli.AbstractFeaturePackCommand;
 import org.jboss.galleon.cli.CommandExecutionException;
 import org.jboss.galleon.cli.PmCommandInvocation;
 import org.jboss.galleon.cli.model.ConfigInfo;
 import org.jboss.galleon.cli.model.FeatureContainer;
 import org.jboss.galleon.cli.model.FeaturePackInfo;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 
 /**
  *
@@ -90,7 +90,7 @@ public class StateInfoCommand extends AbstractFeaturePackCommand {
                 invoc.println("  NONE");
             } else {
                 boolean found = false;
-                for (FeaturePackLocation.FPID g : container.getDependencies()) {
+                for (FPID g : container.getDependencies()) {
                     if (container instanceof FeaturePackInfo) {
                         if (((FeaturePackInfo) container).getFPID().equals(g)) {
                             continue;

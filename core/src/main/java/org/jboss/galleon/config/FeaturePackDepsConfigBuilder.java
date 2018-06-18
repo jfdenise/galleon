@@ -21,9 +21,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.jboss.galleon.Errors;
-import org.jboss.galleon.FeaturePackLocation;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.util.CollectionUtils;
 
 /**
@@ -34,9 +34,30 @@ public abstract class FeaturePackDepsConfigBuilder<B extends FeaturePackDepsConf
 
     UniverseConfig defaultUniverse;
     Map<String, UniverseConfig> universeConfigs = Collections.emptyMap();
-    Map<FeaturePackLocation.Channel, FeaturePackConfig> fpDeps = Collections.emptyMap();
+    Map<FeaturePackLocation.ChannelSpec, FeaturePackConfig> fpDeps = Collections.emptyMap();
     Map<String, FeaturePackConfig> fpDepsByOrigin = Collections.emptyMap();
-    Map<FeaturePackLocation.Channel, String> channelToOrigin = Collections.emptyMap();
+    Map<FeaturePackLocation.ChannelSpec, String> channelToOrigin = Collections.emptyMap();
+
+    protected FeaturePackLocation getConfiguredSource(FeaturePackLocation source) throws ProvisioningDescriptionException {
+        if (source.getUniverse() == null) {
+            if (defaultUniverse == null) {
+                throw new ProvisioningDescriptionException(
+                        "Failed to resolve " + source + ": default universe was not configured");
+            }
+            return new FeaturePackLocation(defaultUniverse.getSpec(), source.getProducer(), source.getChannelName(),
+                    source.getFrequency(), source.getBuild());
+        }
+        final UniverseConfig resolvedConfig = universeConfigs.get(source.getUniverse().toString());
+        if (resolvedConfig != null) {
+            return new FeaturePackLocation(resolvedConfig.getSpec(), source.getProducer(), source.getChannelName(),
+                    source.getFrequency(), source.getBuild());
+        }
+        return source;
+    }
+
+    public B addFeaturePackDep(FeaturePackLocation fpl) throws ProvisioningDescriptionException {
+        return addFeaturePackDep(FeaturePackConfig.forLocation(getConfiguredSource(fpl)));
+    }
 
     public B addFeaturePackDep(FeaturePackConfig dependency) throws ProvisioningDescriptionException {
         return addFeaturePackDep(null, dependency);
@@ -59,14 +80,14 @@ public abstract class FeaturePackDepsConfigBuilder<B extends FeaturePackDepsConf
     }
 
     @SuppressWarnings("unchecked")
-    public B removeFeaturePackDep(FeaturePackLocation location) throws ProvisioningException {
-        final FeaturePackLocation.Channel channel = location.getChannel();
+    public B removeFeaturePackDep(FeaturePackLocation fpl) throws ProvisioningException {
+        final FeaturePackLocation.ChannelSpec channel = fpl.getChannel();
         final FeaturePackConfig fpDep = fpDeps.get(channel);
         if(fpDep == null) {
-            throw new ProvisioningException(Errors.unknownFeaturePack(location.getFPID()));
+            throw new ProvisioningException(Errors.unknownFeaturePack(fpl.getFPID()));
         }
-        if(!fpDep.getLocation().equals(location)) {
-            throw new ProvisioningException(Errors.unknownFeaturePack(location.getFPID()));
+        if(!fpDep.getLocation().equals(fpl)) {
+            throw new ProvisioningException(Errors.unknownFeaturePack(fpl.getFPID()));
         }
         if(fpDeps.size() == 1) {
             fpDeps = Collections.emptyMap();
@@ -90,18 +111,18 @@ public abstract class FeaturePackDepsConfigBuilder<B extends FeaturePackDepsConf
         return (B) this;
     }
 
-    public int getFeaturePackDepIndex(FeaturePackLocation location) throws ProvisioningException {
-        final FeaturePackLocation.Channel channel = location.getChannel();
+    public int getFeaturePackDepIndex(FeaturePackLocation fpl) throws ProvisioningException {
+        final FeaturePackLocation.ChannelSpec channel = fpl.getChannel();
         final FeaturePackConfig fpDep = fpDeps.get(channel);
         if (fpDep == null) {
-            throw new ProvisioningException(Errors.unknownFeaturePack(location.getFPID()));
+            throw new ProvisioningException(Errors.unknownFeaturePack(fpl.getFPID()));
         }
-        if (!fpDep.getLocation().equals(location)) {
-            throw new ProvisioningException(Errors.unknownFeaturePack(location.getFPID()));
+        if (!fpDep.getLocation().equals(fpl)) {
+            throw new ProvisioningException(Errors.unknownFeaturePack(fpl.getFPID()));
         }
         int i = 0;
-        for (FeaturePackLocation.Channel g : fpDeps.keySet()) {
-            if (g.equals(channel)) {
+        for (FeaturePackLocation.ChannelSpec depChannel : fpDeps.keySet()) {
+            if (depChannel.equals(channel)) {
                 break;
             }
             i += 1;
@@ -118,9 +139,9 @@ public abstract class FeaturePackDepsConfigBuilder<B extends FeaturePackDepsConf
                 throw new ProvisioningDescriptionException("Feature-pack already added " + dependency.getLocation().getChannel());
             }
             // reconstruct the linkedMap.
-            Map<FeaturePackLocation.Channel, FeaturePackConfig> tmp = Collections.emptyMap();
+            Map<FeaturePackLocation.ChannelSpec, FeaturePackConfig> tmp = Collections.emptyMap();
             int i = 0;
-            for (Entry<FeaturePackLocation.Channel, FeaturePackConfig> entry : fpDeps.entrySet()) {
+            for (Entry<FeaturePackLocation.ChannelSpec, FeaturePackConfig> entry : fpDeps.entrySet()) {
                 if (i == index) {
                     tmp = CollectionUtils.putLinked(tmp, dependency.getLocation().getChannel(), dependency);
                 }
@@ -130,6 +151,14 @@ public abstract class FeaturePackDepsConfigBuilder<B extends FeaturePackDepsConf
             fpDeps = tmp;
         }
         return (B) this;
+    }
+
+    public B setDefaultUniverse(String factory, String location) throws ProvisioningDescriptionException {
+        return addUniverse(new UniverseConfig(null, factory, location));
+    }
+
+    public B addUniverse(String name, String factory, String location) throws ProvisioningDescriptionException {
+        return addUniverse(new UniverseConfig(name, factory, location));
     }
 
     @SuppressWarnings("unchecked")
@@ -144,5 +173,24 @@ public abstract class FeaturePackDepsConfigBuilder<B extends FeaturePackDepsConf
         }
         universeConfigs = CollectionUtils.put(universeConfigs, universe.getName(), universe);
         return (B) this;
+    }
+
+    public boolean hasUniverse(String name) {
+        if(name == null) {
+            return hasDefaultUniverse();
+        }
+        return universeConfigs.containsKey(name);
+    }
+
+    public UniverseConfig getUniverseConfig(String name) {
+        return universeConfigs.get(name);
+    }
+
+    public boolean hasDefaultUniverse() {
+        return defaultUniverse != null;
+    }
+
+    public UniverseConfig getDefaultUniverse() {
+        return defaultUniverse;
     }
 }
