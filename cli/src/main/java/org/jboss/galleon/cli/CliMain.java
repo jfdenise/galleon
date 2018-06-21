@@ -16,6 +16,7 @@
  */
 package org.jboss.galleon.cli;
 
+import org.jboss.galleon.cli.cmd.universe.UniverseCommand;
 import org.jboss.galleon.cli.config.Configuration;
 import java.util.logging.LogManager;
 import org.aesh.command.impl.registry.AeshCommandRegistryBuilder;

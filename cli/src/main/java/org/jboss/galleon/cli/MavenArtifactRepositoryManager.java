@@ -39,14 +39,19 @@ import org.eclipse.aether.resolution.VersionRangeResult;
 import org.jboss.galleon.ArtifactCoords;
 import org.jboss.galleon.ArtifactException;
 import org.jboss.galleon.ArtifactRepositoryManager;
+import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.cli.config.mvn.MavenConfig;
 import org.jboss.galleon.maven.plugin.FpMavenErrors;
+import org.jboss.galleon.universe.maven.MavenArtifact;
+import org.jboss.galleon.universe.maven.MavenErrors;
+import org.jboss.galleon.universe.maven.MavenUniverseException;
+import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 
 /**
  *
  * @author Alexey Loubyansky
  */
-public class MavenArtifactRepositoryManager implements ArtifactRepositoryManager {
+public class MavenArtifactRepositoryManager implements ArtifactRepositoryManager, MavenRepoManager {
 
     public static final String DEFAULT_REPOSITORY_TYPE = "default";
     private final RepositorySystem repoSystem;
@@ -87,6 +92,10 @@ public class MavenArtifactRepositoryManager implements ArtifactRepositoryManager
         final ArtifactRequest request = new ArtifactRequest();
         request.setArtifact(new DefaultArtifact(coords.getGroupId(), coords.getArtifactId(), coords.getClassifier(),
                 coords.getExtension(), coords.getVersion()));
+        return doResolve(request, coords.toString());
+    }
+
+    private Path doResolve(ArtifactRequest request, String coords) throws ArtifactException {
         request.setRepositories(getSettings().getRepositories());
 
         final ArtifactResult result;
@@ -110,10 +119,14 @@ public class MavenArtifactRepositoryManager implements ArtifactRepositoryManager
         request.addArtifact(new DefaultArtifact(coords.getGroupId(), coords.getArtifactId(), coords.getClassifier(),
                 coords.getExtension(), coords.getVersion(), Collections.emptyMap(), file.toFile()));
         try {
-            repoSystem.install(getSettings().getSession(), request);
+            doInstall(request);
         } catch (InstallationException ex) {
-            Logger.getLogger(MavenArtifactRepositoryManager.class.getName()).log(Level.SEVERE, null, ex);
+            throw new ArtifactException(ex.getLocalizedMessage());
         }
+    }
+
+    private void doInstall(InstallRequest request) throws InstallationException, ArtifactException {
+        repoSystem.install(getSettings().getSession(), request);
     }
 
     @Override
@@ -149,6 +162,71 @@ public class MavenArtifactRepositoryManager implements ArtifactRepositoryManager
             throw new ArtifactException("No version retrieved for " + coords);
         }
         return version;
+    }
+
+    @Override
+    public String getRepositoryId() {
+        return MavenRepoManager.REPOSITORY_ID;
+    }
+
+    @Override
+    public Path resolve(String location) throws ProvisioningException {
+        return MavenRepoManager.super.resolve(location);
+    }
+
+    @Override
+    public void resolve(MavenArtifact artifact) throws MavenUniverseException {
+        if (artifact.isResolved()) {
+            throw new MavenUniverseException("Artifact is already resolved");
+        }
+        final ArtifactRequest request = new ArtifactRequest();
+        request.setArtifact(new DefaultArtifact(artifact.getGroupId(), artifact.getArtifactId(), artifact.getClassifier(),
+                artifact.getExtension(), artifact.getVersion()));
+        try {
+            Path path = doResolve(request, artifact.getCoordsAsString());
+            artifact.setPath(path);
+        } catch (ArtifactException ex) {
+            throw new MavenUniverseException(ex.getLocalizedMessage());
+        }
+    }
+
+    @Override
+    public void resolveLatestVersion(MavenArtifact artifact, String lowestQualifier) throws MavenUniverseException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public String getLatestVersion(MavenArtifact artifact, String lowestQualifier) throws MavenUniverseException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void install(MavenArtifact artifact, Path path) throws MavenUniverseException {
+        if (artifact.isResolved()) {
+            throw new MavenUniverseException("Artifact is already associated with a path " + path);
+        }
+        final InstallRequest request = new InstallRequest();
+        request.addArtifact(new DefaultArtifact(artifact.getGroupId(), artifact.getArtifactId(), artifact.getClassifier(),
+                artifact.getExtension(), artifact.getVersion(), Collections.emptyMap(), path.toFile()));
+        try {
+            doInstall(request);
+            artifact.setPath(getArtifactPath(artifact));
+        } catch (ArtifactException | InstallationException ex) {
+            throw new MavenUniverseException(ex.getLocalizedMessage());
+        }
+    }
+
+    private Path getArtifactPath(MavenArtifact artifact) throws MavenUniverseException, ArtifactException {
+        if (artifact.getGroupId() == null) {
+            MavenErrors.missingGroupId();
+        }
+        Path p = getSettings().getSession().getLocalRepository().getBasedir().toPath();
+        final String[] groupParts = artifact.getGroupId().split("\\.");
+        for (String part : groupParts) {
+            p = p.resolve(part);
+        }
+        final String artifactFileName = artifact.getArtifactFileName();
+        return p.resolve(artifact.getArtifactId()).resolve(artifact.getVersion()).resolve(artifactFileName);
     }
 
 }

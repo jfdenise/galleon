@@ -33,6 +33,7 @@ import org.jboss.galleon.Errors;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.cli.UniverseLocation;
 import org.jboss.galleon.cli.config.mvn.MavenConfig.MavenChangeListener;
+import org.jboss.galleon.cli.config.universe.UniverseConfiguration;
 import org.jboss.galleon.xml.XmlParsers;
 import org.jboss.galleon.xml.util.FormattingXmlStreamWriter;
 
@@ -49,17 +50,23 @@ public class Configuration implements MavenChangeListener {
     private static final String CONFIG_FILE_NAME = ".galleon-cli";
 
     private static final File DEFAULT_HISTORY_FILE = new File(System.getProperty("user.home"), ".galleon-history");
-    private final List<UniverseLocation> universes = new ArrayList<>();
+    private final List<UniverseLocation> legacyUniverses = new ArrayList<>();
     private File historyFile = DEFAULT_HISTORY_FILE;
     private final MavenConfig maven;
+    private final UniverseConfiguration universes;
 
     private Configuration() {
         maven = new MavenConfig();
         maven.addListener(this);
+        universes = new UniverseConfiguration(this);
     }
 
     public MavenConfig getMavenConfig() {
         return maven;
+    }
+
+    public UniverseConfiguration getUniverseConfig() {
+        return universes;
     }
 
     @Override
@@ -67,7 +74,7 @@ public class Configuration implements MavenChangeListener {
         needRewrite();
     }
 
-    private void needRewrite() throws XMLStreamException, IOException {
+    public void needRewrite() throws XMLStreamException, IOException {
         Path path = getStoragePath();
         Files.deleteIfExists(path);
         try (BufferedWriter bw = Files.newBufferedWriter(path,
@@ -77,6 +84,7 @@ public class Configuration implements MavenChangeListener {
                 writer.writeStartDocument();
                 writer.writeStartElement(ConfigXmlParser10.ROOT_1_0.getLocalPart());
                 writer.writeDefaultNamespace(ConfigXmlParser10.NAMESPACE_1_0);
+                universes.write(writer);
                 maven.write(writer);
                 writer.writeEndElement();
                 writer.writeEndDocument();
@@ -89,14 +97,12 @@ public class Configuration implements MavenChangeListener {
     }
 
     public List<UniverseLocation> getUniversesLocations() {
-        return Collections.unmodifiableList(universes);
+        return Collections.unmodifiableList(legacyUniverses);
     }
 
     public static Configuration parse() throws ProvisioningException {
-        // For now, no XML config for universe.
-        // TODO
         Configuration config = new Configuration();
-        config.universes.add(UniverseLocation.DEFAULT);
+        config.legacyUniverses.add(UniverseLocation.DEFAULT);
         Path configFile = getStoragePath();
         if (Files.exists(configFile)) {
             try (BufferedReader reader = Files.newBufferedReader(configFile)) {

@@ -21,6 +21,7 @@ import static org.jboss.galleon.cli.AbstractFeaturePackCommand.FP_OPTION_NAME;
 
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
+import org.aesh.utils.Config;
 import org.jboss.galleon.ArtifactCoords;
 import org.jboss.galleon.ArtifactException;
 import org.jboss.galleon.ProvisioningException;
@@ -55,6 +56,7 @@ public abstract class AbstractFPProvisioningCommand extends AbstractStateCommand
         FPID fpid = fpl.getFPID();
         if (!invoc.getPmSession().existsInLocalRepository(fpid)) {
             try {
+                invoc.getPmSession().println(Config.getLineSeparator() + "retrieving feature-pack content from remote repository...");
                 invoc.getPmSession().downloadFp(fpid);
             } catch (ArtifactException ex) {
                 throw new CommandExecutionException(ex);

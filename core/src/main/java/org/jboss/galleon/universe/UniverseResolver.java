@@ -20,6 +20,7 @@ package org.jboss.galleon.universe;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.repomanager.RepositoryArtifactResolver;
@@ -106,5 +107,9 @@ public class UniverseResolver {
             throw new ProvisioningException("Repository artifact resolver " + repositoryId + " was not configured");
         }
         return ar;
+    }
+
+    public Set<UniverseSpec> getUniverses() {
+        return resolvedUniverses.keySet();
     }
 }

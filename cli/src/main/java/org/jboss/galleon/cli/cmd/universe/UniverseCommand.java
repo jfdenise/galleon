@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.galleon.cli;
+package org.jboss.galleon.cli.cmd.universe;
 
 import org.aesh.command.Command;
 import org.aesh.command.CommandException;
@@ -27,7 +27,7 @@ import org.jboss.galleon.cli.cmd.state.NoStateCommandActivator;
  *
  * @author jdenise@redhat.com
  */
-@GroupCommandDefinition(description = "", name = "universe", groupCommands = {UniverseListCommand.class}, activator = NoStateCommandActivator.class)
+@GroupCommandDefinition(description = "", name = "universe", groupCommands = {UniverseAddCommand.class, UniverseRemoveCommand.class, UniverseListCommand.class}, activator = NoStateCommandActivator.class)
 public class UniverseCommand implements Command<CommandInvocation> {
 
     @Override

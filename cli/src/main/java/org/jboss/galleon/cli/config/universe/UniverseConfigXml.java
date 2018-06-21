@@ -14,54 +14,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.galleon.cli.config;
+package org.jboss.galleon.cli.config.universe;
 
-import org.jboss.galleon.cli.config.mvn.MavenConfigXml;
 import java.io.IOException;
-import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.cli.config.universe.UniverseConfigXml;
+import org.jboss.galleon.config.UniverseConfig;
 import org.jboss.galleon.util.ParsingUtils;
-
-import org.jboss.galleon.xml.PlugableXmlParser;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
 
-class ConfigXmlParser10 implements PlugableXmlParser<Configuration> {
+/**
+ *
+ * @author jdenise@redhat.com
+ */
+public class UniverseConfigXml {
 
-    public static final String NAMESPACE_1_0 = "urn:jboss:galleon:cli:1.0";
-    public static final QName ROOT_1_0 = new QName(NAMESPACE_1_0, "config");
+    public static final String UNIVERSES = "universes";
+    static final String UNIVERSE = "universe";
+    static final String NAME = "name";
+    static final String FACTORY = "factory";
+    static final String LOCATION = "location";
 
-    @Override
-    public QName getRoot() {
-        return ROOT_1_0;
-    }
-
-    @Override
-    public void readElement(XMLExtendedStreamReader reader, Configuration t) throws XMLStreamException {
+    public static void read(XMLExtendedStreamReader reader, UniverseConfiguration config)
+            throws ProvisioningException, XMLStreamException, IOException {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
-                    // DONE.
-                    return;
+                    if (reader.getLocalName().equals(UNIVERSES)) {
+                        return;
+                    }
+                    break;
                 }
                 case XMLStreamConstants.START_ELEMENT: {
                     switch (reader.getLocalName()) {
-                        case MavenConfigXml.MAVEN: {
-                            try {
-                                MavenConfigXml.read(reader, t.getMavenConfig());
-                            } catch (ProvisioningException | IOException ex) {
-                                throw new XMLStreamException(ex);
-                            }
-                            break;
-                        }
-                        case UniverseConfigXml.UNIVERSES: {
-                            try {
-                                UniverseConfigXml.read(reader, t.getUniverseConfig());
-                            } catch (ProvisioningException | IOException ex) {
-                                throw new XMLStreamException(ex);
-                            }
+                        case UNIVERSE: {
+                            UniverseConfig u = new UniverseConfig(reader.getAttributeValue(null, NAME),
+                                    reader.getAttributeValue(null, FACTORY), reader.getAttributeValue(null, LOCATION));
+                            config.addUniverse(u, false);
                             break;
                         }
                         default: {

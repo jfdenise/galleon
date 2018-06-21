@@ -16,10 +16,15 @@
  */
 package org.jboss.galleon.cli;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import javax.xml.stream.XMLStreamException;
 import org.aesh.command.activator.CommandActivator;
 import org.aesh.command.activator.CommandActivatorProvider;
 import org.aesh.command.activator.OptionActivator;
@@ -39,8 +44,10 @@ import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.cli.config.Configuration;
 import org.jboss.galleon.cli.model.FeatureContainer;
 import org.jboss.galleon.cli.model.state.State;
+import org.jboss.galleon.config.UniverseConfig;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.UniverseResolver;
+import org.jboss.galleon.universe.UniverseSpec;
 
 /**
  *
@@ -185,6 +192,7 @@ public class PmSession implements CommandInvocationProvider<PmCommandInvocation>
     private final MavenArtifactRepositoryManager maven;
     private final UniverseResolver universeResolver;
     private final MavenListener mavenListener;
+    private final Map<String, UniverseConfig> universeAliases = new HashMap<>();
 
     public PmSession(Configuration config) throws Exception {
         this.config = config;
@@ -193,9 +201,34 @@ public class PmSession implements CommandInvocationProvider<PmCommandInvocation>
                 mavenListener);
 
         universeResolver = UniverseResolver.builder().addArtifactResolver(maven).build();
-
+        for (UniverseConfig uc : config.getUniverseConfig().getUniverses()) {
+            universeResolver.getUniverse(uc.getSpec());
+        }
         //Build the universes
         this.universes = Universes.buildUniverses(config, maven);
+    }
+
+    public void addUniverse(String name, String factory, String location) throws ProvisioningException, XMLStreamException, IOException {
+        if (universeAliases.containsKey(name)) {
+            throw new ProvisioningException("Universe already registered: " + name);
+        }
+        // side effect is to add a universe
+        universeResolver.getUniverse(new UniverseSpec(factory, location));
+        UniverseConfig uConfig = new UniverseConfig(name, factory, location);
+        config.getUniverseConfig().addUniverse(uConfig);
+        universeAliases.put(name, uConfig);
+    }
+
+    public void removeUniverse(String name) throws ProvisioningException, XMLStreamException, IOException {
+        if (!universeAliases.containsKey(name)) {
+            throw new ProvisioningException("Universe not registered: " + name);
+        }
+        config.getUniverseConfig().removeUniverse(name);
+        universeAliases.remove(name);
+    }
+
+    public Set<String> getUniverseNames() {
+        return universeAliases.keySet();
     }
 
     public void commandStart() {
