@@ -17,6 +17,7 @@
 package org.jboss.galleon.cli;
 
 import org.aesh.utils.Config;
+import org.jboss.galleon.cli.cmd.HelpCommand;
 
 /**
  *
@@ -44,6 +45,8 @@ public interface HelpDescriptions {
     String ADD_FEATURE = "Add a new feature to a configuration";
     String ADD_UNIVERSE = "Add a universe to the current installation. Called without a universe name, set the default universe of this installation";
     String ADD_UNIVERSE_STATE = "Add a universe to the provisioning state. Called without a universe name, set the default universe of this installation";
+    String ALIAS = "Set an alias for a command. Without arguments list the active aliases.";
+    String ALIAS_HELP = "Usage: " + HelpCommand.ALIAS + " [name[=value] ... ]. " + ALIAS;
     String BOOLEAN_OPT = "true or false";
     String CHECK_UPDATES = "Get available updates for a full installation or an identified feature pack";
     String CHECK_UPDATES_DEPENDENCIES = "Include dependencies when checking for updates";
@@ -147,6 +150,8 @@ public interface HelpDescriptions {
     String SEARCH_STATE = "Search the provisioning state for content";
     String SET_HISTORY_LIMIT = "Set the history limit";
     String STATE = "Contains commands to switch to provisioning state editing mode";
+    String UNALIAS = "Unset an alias";
+    String UNALIAS_HELP = "Usage: " + HelpCommand.UNALIAS + " <alias>. " + UNALIAS;
     String UNDO = "Undo the last provisioning command";
     String UNDO_STATE = "Undo the last editing command";
     String UNINSTALL = "Un-install a feature pack from an installation.";

@@ -59,11 +59,13 @@ public class Configuration implements MavenChangeListener {
     private static final String CACHE_DIR_NAME = "cache";
 
     private static final String HISTORY_FILE_NAME = "cli-history";
+    private static final String ALIAS_FILE_NAME = "cli-alias";
 
     private final Path cacheDir;
     private final Path layoutCacheDir;
     private final Path layoutContentFile;
     private final File historyFile;
+    private final File aliasFile;
     private final MavenConfig maven;
 
     private Configuration() throws ProvisioningException {
@@ -72,6 +74,7 @@ public class Configuration implements MavenChangeListener {
             throw new ProvisioningException(CliErrors.invalidConfigDirectory(galleonDir));
         }
         historyFile = galleonDir.resolve(HISTORY_FILE_NAME).toFile();
+        aliasFile = galleonDir.resolve(ALIAS_FILE_NAME).toFile();
         cacheDir = galleonDir.resolve(CACHE_DIR_NAME);
         layoutCacheDir = cacheDir.resolve(LAYOUT_DIR_NAME);
         layoutContentFile = cacheDir.resolve(LAYOUT_CONTENT_FILE_NAME);
@@ -134,6 +137,10 @@ public class Configuration implements MavenChangeListener {
 
     public File getHistoryFile() {
         return historyFile;
+    }
+
+    public File getAliasFile() {
+        return aliasFile;
     }
 
     public static Configuration parse() throws ProvisioningException {

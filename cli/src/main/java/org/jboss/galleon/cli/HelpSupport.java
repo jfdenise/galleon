@@ -37,6 +37,7 @@ import org.aesh.command.registry.CommandRegistry;
 import org.aesh.command.shell.Shell;
 import org.aesh.utils.Config;
 import org.jboss.galleon.cli.cmd.CommandDomain;
+import org.jboss.galleon.cli.cmd.HelpCommand;
 
 /**
  *
@@ -233,6 +234,9 @@ public class HelpSupport {
                 }
             }
         }
+        // Special case for alias that is a builtin aesh readline "command"
+        domains.get(CommandDomain.OTHERS).commands.put(HelpCommand.ALIAS, HelpDescriptions.ALIAS);
+        domains.get(CommandDomain.OTHERS).commands.put(HelpCommand.UNALIAS, HelpDescriptions.UNALIAS);
     }
 
     private static String removeNL(String str) {

@@ -80,16 +80,33 @@ public interface CliErrors {
         return action + " failed.";
     }
 
-    static String resolveFeaturePackFailed() {
-        return failed("Resolve feature pack");
-    }
-
     static String getHistoryLimitFailed() {
         return failed("Get history limit");
     }
 
+    static String includeFailed() {
+        return failed("Include");
+    }
+
+    static String infoFailed() {
+        return failed("Retrieve info");
+    }
+
+    static String installFailed() {
+        return failed("Install");
+    }
+
+    static String invalidAlias(String alias, String mode) {
+        return "A command already exists with the alias name " + alias +
+                (mode == null ? "" : " in mode " + mode);
+    }
+
     static String invalidBoolean(String value) {
         return "Invalid boolean value " + value;
+    }
+
+    static String invalidCommand(String cmd) {
+        return "Invalid command " + cmd;
     }
 
     static String invalidConfigDirectory(Path galleonDir) {
@@ -114,18 +131,6 @@ public interface CliErrors {
 
     static String importFeaturePackFailed() {
         return failed("Import feature-pack");
-    }
-
-    static String includeFailed() {
-        return failed("Include");
-    }
-
-    static String infoFailed() {
-        return failed("Retrieve info");
-    }
-
-    static String installFailed() {
-        return failed("Install");
     }
 
     static String missingPattern() {
@@ -171,6 +176,10 @@ public interface CliErrors {
 
     static String resetConfigFailed() {
         return failed("Reset configuration");
+    }
+
+    static String resolveFeaturePackFailed() {
+        return failed("Resolve feature pack");
     }
 
     static String resolveLocationFailed() {

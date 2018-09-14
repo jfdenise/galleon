@@ -44,6 +44,8 @@ import org.jboss.galleon.cli.PmSessionCommand;
 @CommandDefinition(name = "help", description = HelpDescriptions.HELP)
 public class HelpCommand extends PmSessionCommand {
 
+    public static final String ALIAS = "alias";
+    public static final String UNALIAS = "unalias";
     public static class CommandCompleter implements OptionCompleter<PmCompleterInvocation> {
 
         @Override
@@ -59,6 +61,8 @@ public class HelpCommand extends PmSessionCommand {
             }
             String buff = completerInvocation.getGivenCompleteValue();
             List<String> allAvailable = HelpSupport.getAvailableCommands(cmd.registry, false, true);
+            allAvailable.add(ALIAS);
+            allAvailable.add(UNALIAS);
             List<String> candidates = new ArrayList<>();
             if (mainCommand == null) {
                 if (buff == null || buff.isEmpty()) {
@@ -118,7 +122,19 @@ public class HelpCommand extends PmSessionCommand {
             for (String str : command) {
                 builder.append(str).append(" ");
             }
-            session.println(session.getHelpInfo(builder.toString()));
+            String command = builder.toString().trim();
+            if (ALIAS.equals(command)) {
+                session.println(HelpDescriptions.ALIAS_HELP);
+            } else if (UNALIAS.equals(command)) {
+                session.println(HelpDescriptions.UNALIAS_HELP);
+            } else {
+                String msg = session.getHelpInfo(command);
+                if (msg == null || msg.isEmpty()) {
+                    throw new CommandExecutionException(CliErrors.invalidCommand(command));
+                } else {
+                    session.println(msg);
+                }
+            }
         }
     }
 

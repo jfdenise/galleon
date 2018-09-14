@@ -26,6 +26,8 @@ import org.aesh.command.impl.container.AeshCommandContainerBuilder;
 import org.aesh.command.parser.CommandLineParserException;
 import org.aesh.command.registry.MutableCommandRegistry;
 import org.aesh.extensions.clear.Clear;
+import org.aesh.readline.alias.AliasConflictException;
+import org.jboss.galleon.cli.cmd.CliErrors;
 import org.jboss.galleon.cli.cmd.HelpCommand;
 import org.jboss.galleon.cli.cmd.PmExitCommand;
 import org.jboss.galleon.cli.cmd.featurepack.FeaturePackCommand;
@@ -178,4 +180,19 @@ public class ToolModes {
             registry.removeCommand(name);
         }
     }
+
+    public void checkAlias(String alias) throws AliasConflictException {
+        check(commonCommands, alias, null);
+        check(nominalCommands, alias, null);
+        check(editCommands, alias, Mode.EDIT);
+    }
+
+    private void check(List<CommandContainer> cmds, String alias, Mode mode) throws AliasConflictException {
+        for (CommandContainer c : cmds) {
+            if (c.getParser().getProcessedCommand().name().equals(alias)) {
+                throw new AliasConflictException(CliErrors.invalidAlias(alias, mode == null ? null : mode.name()));
+            }
+        }
+    }
+
 }

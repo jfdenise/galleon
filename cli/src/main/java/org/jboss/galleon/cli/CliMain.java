@@ -16,6 +16,7 @@
  */
 package org.jboss.galleon.cli;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,6 +41,8 @@ import org.aesh.command.settings.Settings;
 import org.aesh.command.settings.SettingsBuilder;
 import org.aesh.command.validator.ValidatorInvocation;
 import org.aesh.readline.ReadlineConsole;
+import org.aesh.readline.alias.AliasConflictException;
+import org.aesh.readline.alias.AliasManager;
 import org.aesh.utils.Config;
 import org.jboss.galleon.cli.cmd.CliErrors;
 import org.jboss.galleon.cli.terminal.CliShellInvocationProvider;
@@ -53,6 +56,20 @@ import org.jboss.galleon.cli.terminal.OutputInvocationProvider;
  */
 public class CliMain {
 
+    private static class CliAliasManager extends AliasManager {
+        private final PmSession session;
+        CliAliasManager(PmSession session) throws IOException {
+            super(session.getPmConfiguration().getAliasFile(), true);
+            this.session = session;
+        }
+
+        @Override
+        public boolean verifyNoNewAliasConflict(String aliasName) throws AliasConflictException {
+            session.getToolModes().checkAlias(aliasName);
+            return true;
+        }
+
+    }
 
     public static void main(String[] args) {
         Arguments arguments = Arguments.parseArguments(args);
@@ -174,7 +191,7 @@ public class CliMain {
         ? extends ValidatorInvocation,
         ? extends OptionActivator,
         ? extends CommandActivator> buildSettings(PmSession pmSession, CliTerminalConnection connection,
-            CommandInvocationProvider<PmCommandInvocation> provider) throws CommandLineParserException {
+            CommandInvocationProvider<PmCommandInvocation> provider) throws CommandLineParserException, IOException {
         Settings<? extends Command, ? extends CommandInvocation,
                 ? extends ConverterInvocation,
                 ? extends CompleterInvocation,
@@ -189,7 +206,8 @@ public class CliMain {
                 historyFile(pmSession.getPmConfiguration().getHistoryFile()).
                 echoCtrl(false).
                 enableExport(false).
-                enableAlias(false).
+                enableAlias(true).
+                aliasManager(new CliAliasManager(pmSession)).
                 completerInvocationProvider(pmSession).
                 optionActivatorProvider(pmSession).
                 commandInvocationProvider(provider).
@@ -207,19 +225,19 @@ public class CliMain {
 
     // A runtime attached to cli terminal connection to execute a single command.
     private static CommandRuntime<? extends Command, ? extends CommandInvocation> newRuntime(PmSession session,
-            CliTerminalConnection connection) throws CommandLineParserException {
+            CliTerminalConnection connection) throws CommandLineParserException, IOException {
         return newRuntime(session, connection, connection.getOutput(), new CliShellInvocationProvider(session, connection));
     }
 
     // Used by tests. Tests don't rely on advanced output/input.
     public static CommandRuntime<? extends Command, ? extends CommandInvocation> newRuntime(PmSession session,
-            PrintStream out) throws CommandLineParserException {
+            PrintStream out) throws CommandLineParserException, IOException {
         return newRuntime(session, null, out, new OutputInvocationProvider(session));
     }
 
     private static CommandRuntime<? extends Command, ? extends CommandInvocation> newRuntime(PmSession session,
             CliTerminalConnection connection, PrintStream out,
-            CommandInvocationProvider<PmCommandInvocation> provider) throws CommandLineParserException {
+            CommandInvocationProvider<PmCommandInvocation> provider) throws CommandLineParserException, IOException {
         AeshCommandRuntimeBuilder builder = AeshCommandRuntimeBuilder.builder();
         builder.settings(buildSettings(session, connection, provider));
         session.setOut(out);
