@@ -16,9 +16,11 @@
  */
 package org.jboss.galleon.cli.cmd.maingrp;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,13 +36,16 @@ import org.aesh.command.parser.OptionParserException;
 import org.aesh.readline.AeshContext;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningManager;
+import org.jboss.galleon.cli.CliLogging;
 import org.jboss.galleon.cli.CommandExecutionException;
 import org.jboss.galleon.cli.HelpDescriptions;
 import org.jboss.galleon.cli.resolver.PluginResolver;
 import org.jboss.galleon.cli.PmCommandActivator;
 import org.jboss.galleon.cli.PmCommandInvocation;
+import org.jboss.galleon.cli.PmCompleterInvocation;
 import org.jboss.galleon.cli.PmSession;
 import org.jboss.galleon.cli.Util;
+import org.jboss.galleon.cli.cmd.AbstractCommaSeparatedCompleter;
 import org.jboss.galleon.cli.cmd.CliErrors;
 import org.jboss.galleon.cli.cmd.CommandDomain;
 import org.jboss.galleon.cli.cmd.plugin.AbstractPluginsCommand;
@@ -55,6 +60,41 @@ import org.jboss.galleon.util.PathsUtils;
  * @author jdenise@redhat.com
  */
 public class InstallCommand extends AbstractPluginsCommand {
+
+    public static class LayersCompleter extends AbstractCommaSeparatedCompleter {
+
+        @Override
+        protected List<String> getItems(PmCompleterInvocation completerInvocation) {
+            @SuppressWarnings("unchecked")
+            InstallCommand cmd = (InstallCommand) completerInvocation.getCommand();
+            try {
+                String model = cmd.getModel(completerInvocation.getPmSession());
+                String fpid = cmd.getId(completerInvocation.getPmSession());
+                if (fpid != null) {
+                    FeaturePackLocation loc = FeaturePackLocation.fromString(fpid);
+                    List<String> ret = new ArrayList<>();
+                    String buffer = completerInvocation.getGivenCompleteValue();
+                    Set<String> excluded = new HashSet<>();
+                    if (buffer != null) {
+                        String[] arr = buffer.split(",");
+                        for (String a : arr) {
+                            if (!a.isEmpty()) {
+                                excluded.add(a.trim());
+                            }
+                        }
+                    }
+                    ret.addAll(LayersConfigBuilder.getLayerNames(completerInvocation.getPmSession(), model,
+                            loc, excluded));
+
+                    return ret;
+                }
+            } catch (Exception ex) {
+                CliLogging.error(ex.toString());
+            }
+            return null;
+        }
+
+    }
 
     private class ArgOptionActivator implements OptionActivator {
 
@@ -77,6 +117,10 @@ public class InstallCommand extends AbstractPluginsCommand {
     }
     public static final String FILE_OPTION_NAME = "file";
 
+    public static final String LAYERS_OPTION_NAME = "layers";
+    public static final String CONFIG_OPTION_NAME = "config";
+    public static final String MODEL_OPTION_NAME = "model";
+
     public InstallCommand(PmSession pmSession) {
         super(pmSession);
     }
@@ -86,14 +130,19 @@ public class InstallCommand extends AbstractPluginsCommand {
         try {
             String filePath = (String) getValue(FILE_OPTION_NAME);
             final ProvisioningManager manager = getManager(session);
+            String layers = (String) getValue(LAYERS_OPTION_NAME);
             if (filePath != null) {
                 Path p = Util.resolvePath(session.getConfiguration().getAeshContext(), filePath);
-                // always install for future use.
-                manager.install(p, true);
-            } else {
-                manager.install(loc, options);
+                loc = session.getPmSession().getLayoutFactory().addLocal(p, true);
             }
-        } catch (ProvisioningException ex) {
+            if (layers == null) {
+                manager.install(loc, options);
+            } else {
+                manager.install(new LayersConfigBuilder(pmSession, layers.split(","),
+                        (String) getValue(MODEL_OPTION_NAME),
+                        (String) getValue(CONFIG_OPTION_NAME), loc).build(), options);
+            }
+        } catch (ProvisioningException | IOException ex) {
             throw new CommandExecutionException(session.getPmSession(), CliErrors.installFailed(), ex);
         }
     }
@@ -153,6 +202,28 @@ public class InstallCommand extends AbstractPluginsCommand {
                 completer(FileOptionCompleter.class).
                 build();
         options.add(file);
+        ProcessedOption layers = ProcessedOptionBuilder.builder().name(LAYERS_OPTION_NAME).
+                hasValue(true).
+                type(String.class).
+                optionType(OptionType.NORMAL).
+                completer(LayersCompleter.class).
+                description(HelpDescriptions.INSTALL_LAYERS).
+                build();
+        options.add(layers);
+        ProcessedOption model = ProcessedOptionBuilder.builder().name(MODEL_OPTION_NAME).
+                hasValue(true).
+                type(String.class).
+                optionType(OptionType.NORMAL).
+                description(HelpDescriptions.INSTALL_MODEL).
+                build();
+        options.add(model);
+        ProcessedOption config = ProcessedOptionBuilder.builder().name(CONFIG_OPTION_NAME).
+                hasValue(true).
+                type(String.class).
+                optionType(OptionType.NORMAL).
+                description(HelpDescriptions.INSTALL_CONFIG).
+                build();
+        options.add(config);
         return options;
     }
 
@@ -160,7 +231,10 @@ public class InstallCommand extends AbstractPluginsCommand {
     protected String getId(PmSession session) throws CommandExecutionException {
         String filePath = (String) getValue(FILE_OPTION_NAME);
         if (filePath == null) {
-            return super.getId(session);
+            filePath = getOptionValue(FILE_OPTION_NAME);
+            if (filePath == null) {
+                return super.getId(session);
+            }
         }
         Path path = Util.resolvePath(session.getAeshContext(), filePath);
         if (!Files.exists(path)) {
@@ -171,6 +245,14 @@ public class InstallCommand extends AbstractPluginsCommand {
         } catch (ProvisioningException ex) {
             throw new CommandExecutionException(session, CliErrors.retrieveFeaturePackID(), ex);
         }
+    }
+
+    String getModel(PmSession session) throws CommandExecutionException {
+        String model = (String) getValue(MODEL_OPTION_NAME);
+        if (model == null) {
+            model = getOptionValue(MODEL_OPTION_NAME);
+        }
+        return model;
     }
 
     @Override

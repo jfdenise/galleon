@@ -267,6 +267,7 @@ public class PmSession implements CompleterInvocationProvider<PmCompleterInvocat
     private final FeaturePackCacheManager cacheManager;
     private ToolModes toolModes;
     private String promptRoot;
+    private boolean commandRunning;
 
     public PmSession(Configuration config) throws Exception {
         this(config, true);
@@ -368,7 +369,7 @@ public class PmSession implements CompleterInvocationProvider<PmCompleterInvocat
     }
 
     public void registerTrackers() {
-        if (enableTrackers) {
+        if (enableTrackers && commandRunning) {
             ProgressTrackers.registerTrackers(this);
         }
     }
@@ -433,11 +434,7 @@ public class PmSession implements CompleterInvocationProvider<PmCompleterInvocat
             // In verbose mode, do not mix verbose content with the output from progress tracker.
             if (verbose) {
                 unregisterTrackers();
-            } else {
-                registerTrackers();
             }
-        } else {
-            unregisterTrackers();
         }
         return new DefaultMessageWriter(out, err, verbose);
     }
@@ -472,8 +469,10 @@ public class PmSession implements CompleterInvocationProvider<PmCompleterInvocat
         if (interactive) {
             policy.commandStart();
         }
+        commandRunning = true;
         maven.commandStart();
         ProgressTrackers.commandStart(session);
+        registerTrackers();
     }
 
     public void commandEnd(PmCommandInvocation session) {
@@ -482,6 +481,8 @@ public class PmSession implements CompleterInvocationProvider<PmCompleterInvocat
         }
         maven.commandEnd();
         ProgressTrackers.commandEnd(session);
+        unregisterTrackers();
+        commandRunning = false;
     }
 
     public void setState(State state) {
