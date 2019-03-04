@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -202,7 +202,12 @@ public class ProvisioningLayoutFactory implements Closeable {
             throw new ProvisioningDescriptionException(Errors.pathDoesNotExist(fpXml));
         }
         try (BufferedReader reader = Files.newBufferedReader(fpXml)) {
-            return factory.newFeaturePack(location, FeaturePackXmlParser.getInstance().parse(reader), fpDir, type);
+            final FeaturePackSpec fpSpec = FeaturePackXmlParser.getInstance().parse(reader);
+            if(location.isMavenCoordinates()) {
+                final FPID specId = fpSpec.getFPID();
+                location = new FeaturePackLocation(specId.getUniverse(), specId.getProducer().getName(), specId.getChannel().getName(), location.getFrequency(), specId.getBuild());
+            }
+            return factory.newFeaturePack(location, fpSpec, fpDir, type);
         } catch (IOException | XMLStreamException e) {
             throw new ProvisioningException(Errors.parseXml(fpXml), e);
         }
