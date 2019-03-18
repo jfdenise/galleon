@@ -60,8 +60,17 @@ if [[ -n $BUILD ]]; then
     mvn clean install
 fi
 
+# Setup the JVM
+if [ "x$JAVA" = "x" ]; then
+    if [ "x$JAVA_HOME" != "x" ]; then
+        JAVA="$JAVA_HOME/bin/java"
+    else
+        JAVA="java"
+    fi
+fi
+
 # Set default modular JVM options
-java --add-modules=java.se -version > /dev/null 2>&1 && MODULAR_JDK=true || MODULAR_JDK=false
+$JAVA --add-modules=java.se -version > /dev/null 2>&1 && MODULAR_JDK=true || MODULAR_JDK=false
 if [ "$MODULAR_JDK" = "true" ]; then
   DEFAULT_MODULAR_JVM_OPTIONS=`echo $* | $GREP "\-\-add\-modules"`
   if [ "x$DEFAULT_MODULAR_JVM_OPTIONS" = "x" ]; then
@@ -76,9 +85,9 @@ JAVA_OPTS="$JAVA_OPTS $DEFAULT_MODULAR_JVM_OPTIONS"
 if [[ -n $RUN ]]; then
   LOG_CONF=`echo $JAVA_OPTS | grep "logging.configuration"`
   if [ "x$LOG_CONF" = "x" ]; then
-    java $JAVA_OPTS -Dlogging.configuration=file:"./content/bin/galleon-cli-logging.properties" -jar ./cli/target/galleon-cli-4.0.0.Alpha1-SNAPSHOT.jar $ARGS
+    $JAVA $JAVA_OPTS -Dlogging.configuration=file:"./content/bin/galleon-cli-logging.properties" -jar ./cli/target/galleon-cli-4.0.0.Alpha1-SNAPSHOT.jar $ARGS
   else
     echo "logging.configuration already set in JAVA_OPTS"
-    java $JAVA_OPTS -jar ./cli/target/galleon-cli-4.0.0.Alpha1-SNAPSHOT.jar $ARGS
+    $JAVA $JAVA_OPTS -jar ./cli/target/galleon-cli-4.0.0.Alpha1-SNAPSHOT.jar $ARGS
   fi
 fi

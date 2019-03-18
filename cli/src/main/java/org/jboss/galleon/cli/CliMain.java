@@ -41,6 +41,7 @@ import org.aesh.command.shell.Shell;
 import org.aesh.command.validator.ValidatorInvocation;
 import org.aesh.readline.ReadlineConsole;
 import org.aesh.utils.Config;
+import org.jboss.galleon.Constants;
 import org.jboss.galleon.cli.cmd.CliErrors;
 import org.jboss.galleon.cli.terminal.CliShellInvocationProvider;
 import org.jboss.galleon.cli.terminal.CliTerminalConnection;
@@ -60,6 +61,12 @@ public class CliMain {
     }
 
     public static void main(String[] args) {
+        // Convey classpath to plugins (eg: plugin needing to retrieve the CLI classpath.
+        String cp = System.getProperty("java.class.path");
+        if (cp != null) {
+            System.setProperty(Constants.PROP_CLASS_PATH, cp);
+        }
+
         Arguments arguments = Arguments.parseArguments(args);
         boolean interactive = arguments.getCommand() == null && arguments.getScriptFile() == null;
         PmSession pmSession = null;

@@ -62,6 +62,7 @@ public interface Constants {
     String BUILT_IN_TYPE_STRING = "String";
 
     // SYSTEM PROPERTIES
+    String PROP_CLASS_PATH = "galleon.class.path";
     String PROP_CONFIG_ARRANGER = "galleon.config.arranger";
 
     // CONFIG ARRANGERS
