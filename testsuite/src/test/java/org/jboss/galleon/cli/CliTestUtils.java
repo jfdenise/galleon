@@ -138,6 +138,33 @@ public abstract class CliTestUtils {
         creator.install();
     }
 
+    public static void installLayersSameContent(CliWrapper cli, UniverseSpec universeSpec,
+            String producer, String version) throws ProvisioningException {
+        FeaturePackCreator creator = FeaturePackCreator.getInstance().addArtifactResolver(cli.getSession().getMavenRepoManager());
+        FeaturePackLocation fp1 = new FeaturePackLocation(universeSpec,
+                producer, "1", null, version);
+        creator.newFeaturePack(fp1.getFPID())
+                .addFeatureSpec(FeatureSpec.builder(producer + "-FeatureA")
+                        .addParam(FeatureParameterSpec.createId("id"))
+                        .build())
+                .addConfigLayer(ConfigLayerSpec.builder()
+                        .setModel("testmodel").setName("layerA-" + producer)
+                        .addPackageDep("p1")
+                        .build())
+                .addConfigLayer(ConfigLayerSpec.builder()
+                        .setModel("testmodel").setName("layerB-" + producer)
+                        .addPackageDep("p2")
+                        .build())
+                .addConfig(ConfigModel.builder("testmodel", "config1.xml").
+                        includeLayer("layerA-" + producer).includeLayer("layerB-" + producer).build(), true)
+                .newPackage("p1", false)
+                        .writeContent(producer + "/p1.txt", "fp1 p1")
+                        .getFeaturePack().newPackage("p2", false)
+                        .writeContent(producer + "/p1.txt", "fp2 p2").getFeaturePack();
+
+        creator.install();
+    }
+
     public static void install(CliWrapper cli, UniverseSpec universeSpec,
             String producer, String version, Class<? extends InstallPlugin> plugin) throws ProvisioningException {
         FeaturePackCreator creator = FeaturePackCreator.getInstance().addArtifactResolver(cli.getSession().getMavenRepoManager());
