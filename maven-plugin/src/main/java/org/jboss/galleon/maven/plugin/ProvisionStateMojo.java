@@ -148,6 +148,15 @@ public class ProvisionStateMojo extends AbstractMojo {
     @Parameter(alias = "resolve-locals")
     private List<ResolveLocalItem> resolveLocals = Collections.emptyList();
 
+    /**
+    * Path to a zip file in which resolved artifacts are copied. If the
+    * file exists, it is first deleted.
+    * The zip file contains artifacts as well as maven pom files.
+    * The layout inside the zip file is compliant with maven repository layout.
+    */
+    @Parameter(alias = "provisioning-repo-zip-file", required = false)
+    private File provisioningRepoZipFile;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if(featurePacks.isEmpty()) {
@@ -172,9 +181,24 @@ public class ProvisionStateMojo extends AbstractMojo {
     private void doProvision() throws MojoExecutionException, ProvisioningException {
         final ProvisioningConfig.Builder state = ProvisioningConfig.builder();
 
-        final RepositoryArtifactResolver artifactResolver = offline ? new MavenArtifactRepositoryManager(repoSystem, repoSession)
-                : new MavenArtifactRepositoryManager(repoSystem, repoSession, repositories);
-
+        RepositoryArtifactResolver artifactResolver = null;
+        MavenArtifactCollectorRepositoryManager collector = null;
+        if (provisioningRepoZipFile == null) {
+            artifactResolver = offline ? new MavenArtifactRepositoryManager(repoSystem, repoSession)
+                    : new MavenArtifactRepositoryManager(repoSystem, repoSession, repositories);
+        } else {
+            Path targetPath = provisioningRepoZipFile.toPath();
+            if (Files.exists(targetPath)) {
+                IoUtils.recursiveDelete(targetPath);
+            }
+            try {
+                artifactResolver = collector = offline ? new MavenArtifactCollectorRepositoryManager(targetPath, repoSystem, repoSession)
+                        : new MavenArtifactCollectorRepositoryManager(targetPath, repoSystem, repoSession, repositories);
+            } catch (IOException ex) {
+                throw new MojoExecutionException("Exception creating artifacts collector", ex);
+            }
+        }
+        try {
         final Path home = installDir.toPath();
         if(!recordState) {
             IoUtils.recursiveDelete(home);
@@ -288,6 +312,15 @@ public class ProvisionStateMojo extends AbstractMojo {
             }
 
             pm.provision(state.build(), pluginOptions);
+        }
+        } finally {
+            if (collector != null) {
+                try {
+                    collector.done();
+                } catch (IOException ex) {
+                    throw new MojoExecutionException("Error zipping artifacts", ex);
+                }
+            }
         }
     }
 
