@@ -1087,6 +1087,11 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
         if(branchId == null) {
             return normalize(fpl);
         }
+
+        if (fpl.isMavenCoordinates() && branchId.getLocation().isMavenCoordinates()) {
+            return branchId.getBuild().equals(fpl.getBuild()) ? fpl : fpl.replaceBuild(branchId.getBuild());
+        }
+
         if(branchId.getChannel().getName() == null || branchId.getChannel().getName().equals(fpl.getChannelName())) {
             if(branchId.getBuild() == null) {
                 return normalize(fpl);
