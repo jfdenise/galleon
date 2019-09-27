@@ -1014,6 +1014,13 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
                 }
                 final FPID effectiveFpid = branch.get(fpid.getProducer());
                 if (effectiveFpid != null) {
+                    if(effectiveFpid.getLocation().isMavenCoordinates() && fpid.getLocation().isMavenCoordinates()) {
+                        if(!effectiveFpid.getBuild().equals(fpid.getBuild())) {
+                            addConflict(fpid, effectiveFpid);
+                        } else {
+                            continue;
+                        }
+                    }
                     if (!effectiveFpid.getChannel().getName().equals(fpid.getChannel().getName())) {
                         addConflict(fpid, effectiveFpid);
                     }
