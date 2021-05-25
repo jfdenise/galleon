@@ -488,7 +488,7 @@ public class ProvisioningRuntimeBuilder {
             if(configStack.isFilteredOut(feature.getSpecId(), feature.getId())) {
                 continue;
             }
-            if (layersExcluded.contains(feature.id)) {
+            if (layersExcluded != null && layersExcluded.contains(feature.id)) {
                 continue;
             }
             configStack.includeFeature(feature.id, feature.spec, feature.params,
