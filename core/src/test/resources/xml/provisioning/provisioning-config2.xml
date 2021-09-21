@@ -19,6 +19,11 @@
 -->
 <installation xmlns="urn:jboss:galleon:provisioning:3.0">
   <feature-pack location="fp1@maven(org.jboss.universe:community-universe):1#1.0.0.Final">
+    <origin>foo</origin>
+    <patches>
+      <patch id="fp1@maven(org.jboss.universe:community-universe):1#1.0.0-patch.Final"/>
+      <patch id="fp1@maven(org.jboss.universe:community-universe):1#1.0.1-patch.Final"/>
+    </patches>
     <default-configs inherit="false">
       <include model="model1"/>
       <exclude name="name1" model="model1"/>
@@ -26,6 +31,21 @@
       <exclude model="model2"/>
     </default-configs>
     <config name="main">
+      <props>
+        <prop name="prop1" value="value1"/>
+        <prop name="prop2" value="value2"/>     
+      </props>
+      <config-deps>
+        <config-dep id="id1" name="name1" model="model1"/>
+        <config-dep id="id2" model="model2"/>
+        <config-dep id="id3" name="name3"/>
+      </config-deps>
+      <layers inherit="false" >
+        <include name="layer1"/>
+        <exclude name="layer2"/>
+        <include name="layer3"/>
+        <exclude name="layer4"/>
+      </layers>
       <feature-group name="dep1"/>
       <feature-group name="dep2" inherit-features="false"/>
       <feature-group name="dep3" inherit-features="false">
