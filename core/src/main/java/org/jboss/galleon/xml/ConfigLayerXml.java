@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,9 @@ package org.jboss.galleon.xml;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -46,7 +48,8 @@ public class ConfigLayerXml {
         DEPENDENCIES("dependencies"),
         LAYER("layer"),
         LAYER_SPEC("layer-spec"),
-
+        PROPS("props"),
+        PROP("prop"),
         // default unknown element
         UNKNOWN(null);
 
@@ -57,6 +60,8 @@ public class ConfigLayerXml {
             elementsByLocal.put(DEPENDENCIES.name, DEPENDENCIES);
             elementsByLocal.put(LAYER.name, LAYER);
             elementsByLocal.put(LAYER_SPEC.name, LAYER_SPEC);
+            elementsByLocal.put(PROPS.name, PROPS);
+            elementsByLocal.put(PROP.name, PROP);
             elementsByLocal.put(null, UNKNOWN);
         }
 
@@ -92,7 +97,7 @@ public class ConfigLayerXml {
 
         NAME("name"),
         OPTIONAL("optional"),
-
+        VALUE("value"),
         // default unknown attribute
         UNKNOWN(null);
 
@@ -101,6 +106,7 @@ public class ConfigLayerXml {
         static {
             attributes = new HashMap<>(3);
             attributes.put(new QName(NAME.getLocalName()), NAME);
+            attributes.put(new QName(VALUE.getLocalName()), VALUE);
             attributes.put(new QName(OPTIONAL.getLocalName()), OPTIONAL);
             attributes.put(null, UNKNOWN);
         }
@@ -163,6 +169,9 @@ public class ConfigLayerXml {
                             case DEPENDENCIES:
                                 readDeps(reader, builder);
                                 break;
+                            case PROPS:
+                                readProps(reader, builder);
+                                break;
                             default:
                                 throw ParsingUtils.unexpectedContent(reader);
                         }
@@ -175,6 +184,64 @@ public class ConfigLayerXml {
             }
         }
         throw ParsingUtils.endOfDocument(reader.getLocation());
+    }
+
+    private static void readProps(XMLExtendedStreamReader reader, ConfigLayerSpec.Builder builder) throws XMLStreamException {
+        ParsingUtils.parseNoAttributes(reader);
+        while (reader.hasNext()) {
+            switch (reader.nextTag()) {
+                case XMLStreamConstants.END_ELEMENT: {
+                    return;
+                }
+                case XMLStreamConstants.START_ELEMENT: {
+                    final Element element = Element.of(reader.getName().getLocalPart());
+                    switch (element) {
+                        case PROP:
+                            readProp(reader, builder);
+                            break;
+                        default:
+                            throw ParsingUtils.unexpectedContent(reader);
+                    }
+                    break;
+                }
+                default: {
+                    throw ParsingUtils.unexpectedContent(reader);
+                }
+            }
+        }
+        throw ParsingUtils.endOfDocument(reader.getLocation());
+    }
+
+    private static void readProp(XMLExtendedStreamReader reader, ConfigLayerSpec.Builder builder) throws XMLStreamException {
+        String name = null;
+        String value = null;
+        final int count = reader.getAttributeCount();
+        for (int i = 0; i < count; i++) {
+            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            switch (attribute) {
+                case NAME:
+                    name = reader.getAttributeValue(i);
+                    break;
+                case VALUE:
+                    value = reader.getAttributeValue(i);
+                    break;
+                default:
+                    throw ParsingUtils.unexpectedContent(reader);
+            }
+        }
+        if (name == null) {
+            if (value == null) {
+                final Set<Attribute> attrs = new HashSet<>();
+                attrs.add(Attribute.NAME);
+                attrs.add(Attribute.VALUE);
+                throw ParsingUtils.missingAttributes(reader.getLocation(), attrs);
+            }
+            throw ParsingUtils.missingAttributes(reader.getLocation(), Collections.singleton(Attribute.NAME));
+        } else if (value == null) {
+            throw ParsingUtils.missingAttributes(reader.getLocation(), Collections.singleton(Attribute.VALUE));
+        }
+        builder.setProperty(name, value);
+        ParsingUtils.parseNoContent(reader);
     }
 
     private static void readDeps(XMLExtendedStreamReader reader, ConfigLayerSpec.Builder builder) throws XMLStreamException {
