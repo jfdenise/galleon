@@ -455,6 +455,7 @@ limitations under the License.</inlineHeader>
             <exclude>mvnw</exclude>
             <exclude>mvnw.cmd</exclude>
             <exclude>**/help/*.txt</exclude>
+            <exclude>**/galleon.properties</exclude>
             <exclude>**/pom.xml.releaseBackup</exclude>
             <exclude>**/pom.xml.tag</exclude>
             <exclude>CODEOWNERS</exclude>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,6 +44,7 @@ import org.jboss.galleon.Errors;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningOption;
+import org.jboss.galleon.Version;
 import org.jboss.galleon.config.FeaturePackConfig;
 import org.jboss.galleon.config.FeaturePackDepsConfig;
 import org.jboss.galleon.config.ProvisioningConfig;
@@ -1150,6 +1151,13 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
         if(!queue.isEmpty()) {
             for(F p : queue) {
                 final FeaturePackSpec spec = p.getSpec();
+                System.out.println("FP TO PROVISION " + spec.getFPID() + " requires " + spec.getGalleonMinVersion());
+                if (spec.getGalleonMinVersion() != null) {
+                    if (!Version.isSupportedVersion(spec.getGalleonMinVersion())) {
+                        throw new RuntimeException("Feature-pack " + spec.getFPID() + " requires minimal Galleon version " + spec.getGalleonMinVersion()
+                                + " You must upgrade your provisioning tooling to a version that depends at least on Galleon " + spec.getGalleonMinVersion());
+                    }
+                }
                 layout(spec, branch, FeaturePackLayout.TRANSITIVE_DEP);
                 if(spec.hasPlugins()) {
                     pluginLocations = CollectionUtils.putAll(pluginLocations, spec.getPlugins());
@@ -1263,6 +1271,7 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
             throws ProvisioningDescriptionException {
         FeaturePackSpec.Builder rebuilder;
         rebuilder = FeaturePackSpec.builder(fpid)
+                .setGalleonMinVersion(fpSpec.getGalleonMinVersion())
                 .initUniverses(fpSpec)
                 .initConfigs(fpSpec);
         rebuilder.addDefaultPackages(fpSpec.getDefaultPackageNames());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,9 +31,11 @@ import org.jboss.galleon.Constants;
 import org.jboss.galleon.Errors;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.spec.ConfigLayerSpec;
 import org.jboss.galleon.spec.FeaturePackSpec;
 import org.jboss.galleon.spec.PackageSpec;
 import org.jboss.galleon.util.ZipUtils;
+import org.jboss.galleon.xml.ConfigLayerSpecXmlParser;
 import org.jboss.galleon.xml.FeaturePackXmlParser;
 import org.jboss.galleon.xml.PackageXmlParser;
 import org.jboss.galleon.xml.XmlParsers;
@@ -96,9 +98,24 @@ public class FeaturePackDescriber {
         if(Files.exists(packagesDir)) {
             processPackages(layoutBuilder, packagesDir, encoding);
         }
+        final Path layersDir = fpDir.resolve(Constants.LAYERS).resolve("standalone");
+        if(Files.exists(layersDir)) {
+            processLayers(layoutBuilder, layersDir, encoding);
+        }
+
         return layoutBuilder.build();
     }
 
+    private static void processLayers(FeaturePackDescription.Builder fpBuilder, Path layersDir, String encoding) throws ProvisioningDescriptionException {
+        assertDirectory(layersDir);
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(layersDir)) {
+            for(Path path : stream) {
+                fpBuilder.addLayer(processLayer(path, encoding));
+            }
+        } catch (IOException e) {
+            failedToReadDirectory(layersDir, e);
+        }
+    }
     private static void processPackages(FeaturePackDescription.Builder fpBuilder, Path packagesDir, String encoding) throws ProvisioningDescriptionException {
         assertDirectory(packagesDir);
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(packagesDir)) {
@@ -107,6 +124,21 @@ public class FeaturePackDescriber {
             }
         } catch (IOException e) {
             failedToReadDirectory(packagesDir, e);
+        }
+    }
+
+    private static ConfigLayerSpec processLayer(Path layerDir, String encoding) throws ProvisioningDescriptionException {
+        assertDirectory(layerDir);
+        final Path layerXml = layerDir.resolve(Constants.LAYER_SPEC_XML);
+        if(!Files.exists(layerXml)) {
+            throw new ProvisioningDescriptionException(Errors.pathDoesNotExist(layerXml));
+        }
+        try (Reader in = Files.newBufferedReader(layerXml, Charset.forName(encoding))) {
+            return ConfigLayerSpecXmlParser.getInstance().parse(in);
+        } catch (IOException e) {
+            throw new ProvisioningDescriptionException(Errors.openFile(layerXml), e);
+        } catch (XMLStreamException e) {
+            throw new ProvisioningDescriptionException(Errors.parseXml(layerXml), e);
         }
     }
 
