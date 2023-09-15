@@ -48,6 +48,7 @@ import org.jboss.galleon.tooling.api.Configuration;
 import org.jboss.galleon.tooling.api.GalleonArtifactCoordinate;
 import org.jboss.galleon.tooling.api.GalleonFeaturePack;
 import org.jboss.galleon.tooling.api.GalleonLocalItem;
+import org.jboss.galleon.tooling.api.ProvisioningContext;
 import org.jboss.galleon.tooling.api.ProvisioningDescription;
 import org.jboss.galleon.universe.maven.MavenArtifact;
 import org.jboss.galleon.universe.maven.MavenUniverseException;
@@ -230,7 +231,9 @@ public class ProvisionStateMojo extends AbstractMojo {
                     setCustomConfig(customConfig == null ? null : customConfig.toPath()).
                     setFeaturePacks(featurePacks).
                     setLocalItems(resolveLocals).setOptions(pluginOptions).build();
-            pm.buildProvisioningContext(config).provision();
+            ProvisioningContext ctx = pm.buildProvisioningContext(config);
+            System.out.println("Galleon core version " + ctx.getCoreVersion() + " API used to retrieve it " + APIVersion.getVersion());
+            ctx.provision();
         }
     }
 

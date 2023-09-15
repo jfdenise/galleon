@@ -22,6 +22,8 @@ public interface ProvisioningContext extends AutoCloseable {
 
     public void provision() throws ProvisioningException;
 
+    public String getCoreVersion();
+
     @Override
     public void close();
 }

@@ -17,6 +17,7 @@
 package org.jboss.galleon.caller;
 
 import java.util.Map;
+import org.jboss.galleon.CoreVersion;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningManager;
 import org.jboss.galleon.config.ProvisioningConfig;
@@ -43,6 +44,11 @@ public class ProvisioningContextImpl implements ProvisioningContext {
         } finally {
             Thread.currentThread().setContextClassLoader(loader);
         }
+    }
+
+    @Override
+    public String getCoreVersion() {
+        return CoreVersion.getVersion();
     }
 
     @Override
