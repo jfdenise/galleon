@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +31,7 @@ import org.jboss.galleon.universe.Channel;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.Producer;
 import org.jboss.galleon.universe.UniverseRepoTestBase;
-import org.jboss.galleon.universe.UniverseResolver;
+import org.jboss.galleon.universe.BaseUniverseResolver;
 import org.jboss.galleon.universe.UniverseSpec;
 import org.jboss.galleon.universe.maven.MavenArtifact;
 import org.jboss.galleon.universe.maven.MavenProducerInstaller;
@@ -53,7 +53,7 @@ public class ProducerRefreshOnNotFoundChannelTestCase extends UniverseRepoTestBa
 
     private static final String PRODUCER1 = "producer1";
 
-    private UniverseResolver resolver;
+    private BaseUniverseResolver resolver;
     private MavenArtifact universeArt;
     private SimplisticMavenRepoManager fakeRemoteRepo;
 
@@ -78,7 +78,7 @@ public class ProducerRefreshOnNotFoundChannelTestCase extends UniverseRepoTestBa
         setupUniverse(repo, PRODUCER1, 1, 4);
         setupUniverse(fakeRemoteRepo, PRODUCER1, 2, 3, 4);
 
-        resolver = UniverseResolver.builder().addArtifactResolver(repo).build();
+        resolver = BaseUniverseResolver.builder().addArtifactResolver(repo).build();
 
         // it's important to init the fake one first due to how FeaturePackCreator works with UniverseFactoryLoader
         installFp(fakeRemoteRepo, PRODUCER1, "2", "2.0.0.Final");

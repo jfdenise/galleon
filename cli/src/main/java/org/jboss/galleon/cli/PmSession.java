@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,9 +47,9 @@ import org.jboss.galleon.cli.resolver.ResourceResolver;
 import org.jboss.galleon.cli.tracking.ProgressTrackers;
 import org.jboss.galleon.layout.ProvisioningLayoutFactory;
 import org.jboss.galleon.cli.cmd.CliErrors;
+import org.jboss.galleon.universe.BaseUniverseResolver;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
-import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.UniverseSpec;
 import org.jboss.galleon.universe.galleon1.LegacyGalleon1UniverseFactory;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
@@ -234,7 +234,7 @@ public class PmSession implements CompleterInvocationProvider<PmCompleterInvocat
         this.mavenListener = new MavenListener();
         this.maven = new CliMavenArtifactRepositoryManager(config.getMavenConfig(),
                 mavenListener);
-        UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(maven).build();
+        BaseUniverseResolver universeResolver = BaseUniverseResolver.builder().addArtifactResolver(maven).build();
         universe = new UniverseManager(this, config, maven, universeResolver, builtin);
         this.interactive = interactive;
         layoutFactory = ProvisioningLayoutFactory.getInstance(universeResolver);

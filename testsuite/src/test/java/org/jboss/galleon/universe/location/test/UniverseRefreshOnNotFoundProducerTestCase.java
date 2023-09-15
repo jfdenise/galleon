@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +31,7 @@ import org.jboss.galleon.repo.RepositoryArtifactResolver;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.Producer;
 import org.jboss.galleon.universe.UniverseRepoTestBase;
-import org.jboss.galleon.universe.UniverseResolver;
+import org.jboss.galleon.universe.BaseUniverseResolver;
 import org.jboss.galleon.universe.UniverseSpec;
 import org.jboss.galleon.universe.maven.MavenArtifact;
 import org.jboss.galleon.universe.maven.MavenProducerInstaller;
@@ -56,7 +56,7 @@ public class UniverseRefreshOnNotFoundProducerTestCase extends UniverseRepoTestB
     private static final String PRODUCER3 = "producer3";
     private static final String PRODUCER4 = "producer4";
 
-    private UniverseResolver resolver;
+    private BaseUniverseResolver resolver;
     private MavenArtifact universeArt;
     private SimplisticMavenRepoManager fakeRemoteRepo;
 
@@ -81,7 +81,7 @@ public class UniverseRefreshOnNotFoundProducerTestCase extends UniverseRepoTestB
         setupUniverse(repo, PRODUCER1, PRODUCER4);
         setupUniverse(fakeRemoteRepo, PRODUCER2, PRODUCER3, PRODUCER4);
 
-        resolver = UniverseResolver.builder().addArtifactResolver(repo).build();
+        resolver = BaseUniverseResolver.builder().addArtifactResolver(repo).build();
 
         // it's important to init the fake one first due to how FeaturePackCreator works with UniverseFactoryLoader
         installFp(fakeRemoteRepo, PRODUCER2, "1", "1.0.0.Final");

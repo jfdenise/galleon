@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,6 +41,7 @@ import org.aesh.command.shell.Shell;
 import org.aesh.command.validator.ValidatorInvocation;
 import org.aesh.readline.ReadlineConsole;
 import org.aesh.utils.Config;
+import org.jboss.galleon.Version;
 import org.jboss.galleon.cli.cmd.CliErrors;
 import org.jboss.galleon.cli.terminal.CliShellInvocationProvider;
 import org.jboss.galleon.cli.terminal.CliTerminalConnection;
@@ -60,6 +61,15 @@ public class CliMain {
     }
 
     public static void main(String[] args) {
+
+        // If a FP has a greater dependency fails at provisioning time.
+        System.setProperty("org.jboss.galleon.version.check", "true");
+        // Check for latest version at startup
+        String url = Version.checkForLatestVersionURL();
+        if (url != null) {
+            System.out.println("A new version of Galleon is available at " + url);
+        }
+
         Arguments arguments = Arguments.parseArguments(args);
         boolean interactive = arguments.getCommand() == null && arguments.getScriptFile() == null;
         PmSession pmSession = null;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,7 @@ import java.nio.file.Path;
 import org.jboss.galleon.creator.FeaturePackCreator;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.UniverseRepoTestBase;
-import org.jboss.galleon.universe.UniverseResolver;
+import org.jboss.galleon.universe.BaseUniverseResolver;
 import org.jboss.galleon.universe.maven.MavenArtifact;
 import org.jboss.galleon.universe.maven.MavenProducerInstaller;
 import org.jboss.galleon.universe.maven.MavenUniverseFactory;
@@ -64,7 +64,7 @@ public class MavenUniverseFeaturePackCreatorTestCase extends UniverseRepoTestBas
 
     @Test
     public void testMain() throws Exception {
-        final UniverseResolver universeResolver = UniverseResolver.builder()
+        final BaseUniverseResolver universeResolver = BaseUniverseResolver.builder()
                 .addArtifactResolver(SimplisticMavenRepoManager.getInstance(repoHome))
                 .build();
         Path path = universeResolver.resolve(FeaturePackLocation.fromString("producer1@" + MavenUniverseFactory.ID + "(universe.maven.test:maven-universe1:[1.0,2.0-alpha)):1.0"));

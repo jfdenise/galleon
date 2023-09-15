@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,8 +46,6 @@ import org.jboss.galleon.state.ProvisionedState;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.FeaturePackLocation.ProducerSpec;
 import org.jboss.galleon.universe.UniverseFactoryLoader;
-import org.jboss.galleon.universe.UniverseResolver;
-import org.jboss.galleon.universe.UniverseResolverBuilder;
 import org.jboss.galleon.universe.UniverseSpec;
 import org.jboss.galleon.util.StateHistoryUtils;
 import org.jboss.galleon.util.HashUtils;
@@ -59,6 +57,8 @@ import org.jboss.galleon.xml.ProvisioningXmlParser;
 import org.jboss.galleon.xml.ProvisioningXmlWriter;
 
 import static org.jboss.galleon.Constants.PRINT_ONLY_CONFLICTS;
+import org.jboss.galleon.universe.BaseUniverseResolver;
+import org.jboss.galleon.universe.BaseUniverseResolverBuilder;
 
 /**
  *
@@ -66,11 +66,11 @@ import static org.jboss.galleon.Constants.PRINT_ONLY_CONFLICTS;
  */
 public class ProvisioningManager implements AutoCloseable {
 
-    public static class Builder extends UniverseResolverBuilder<Builder> {
+    public static class Builder extends BaseUniverseResolverBuilder<Builder> {
         private Path installationHome;
         private ProvisioningLayoutFactory layoutFactory;
         private MessageWriter messageWriter;
-        private UniverseResolver resolver;
+        private BaseUniverseResolver resolver;
         private boolean logTime;
         private boolean recordState = true;
 
@@ -109,7 +109,7 @@ public class ProvisioningManager implements AutoCloseable {
             return this;
         }
 
-        public Builder setUniverseResolver(UniverseResolver resolver) throws ProvisioningException {
+        public Builder setUniverseResolver(BaseUniverseResolver resolver) throws ProvisioningException {
             if(ufl != null) {
                 throw new ProvisioningException("Universe factory loader has already been initialized which conflicts with the initialization of universe resolver");
             }
@@ -134,7 +134,7 @@ public class ProvisioningManager implements AutoCloseable {
             return new ProvisioningManager(this);
         }
 
-        protected UniverseResolver getUniverseResolver() throws ProvisioningException {
+        protected BaseUniverseResolver getUniverseResolver() throws ProvisioningException {
             return resolver == null ? buildUniverseResolver() : resolver;
         }
     }
@@ -147,7 +147,7 @@ public class ProvisioningManager implements AutoCloseable {
     private final MessageWriter log;
     private boolean logTime;
 
-    private final UniverseResolver universeResolver;
+    private final BaseUniverseResolver universeResolver;
     private ProvisioningLayoutFactory layoutFactory;
     private boolean closeLayoutFactory;
     private ProvisioningConfig provisioningConfig;
@@ -701,7 +701,7 @@ public class ProvisioningManager implements AutoCloseable {
                             IoUtils.recursiveDelete(p);
                         }
                     } catch (IOException e) {
-                        throw new ProvisioningException(Errors.readDirectory(home), e);
+                        throw new ProvisioningException(BaseErrors.readDirectory(home), e);
                     }
                 } else {
                     IoUtils.recursiveDelete(home);

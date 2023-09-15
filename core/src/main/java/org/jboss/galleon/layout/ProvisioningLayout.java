@@ -38,6 +38,7 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.jboss.galleon.BaseErrors;
 
 import org.jboss.galleon.Constants;
 import org.jboss.galleon.Errors;
@@ -54,12 +55,12 @@ import org.jboss.galleon.progresstracking.ProgressTracker;
 import org.jboss.galleon.repo.RepositoryArtifactResolver;
 import org.jboss.galleon.spec.FeaturePackPlugin;
 import org.jboss.galleon.spec.FeaturePackSpec;
+import org.jboss.galleon.universe.BaseUniverseResolver;
 import org.jboss.galleon.universe.Channel;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.FeaturePackLocation.ProducerSpec;
 import org.jboss.galleon.universe.Universe;
-import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.util.CollectionUtils;
 import org.jboss.galleon.util.IoUtils;
 import org.jboss.galleon.util.LayoutUtils;
@@ -154,11 +155,11 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
                 try {
                     Files.createDirectory(pluginsDir);
                 } catch (IOException e) {
-                    throw new ProvisioningException(Errors.mkdirs(pluginsDir), e);
+                    throw new ProvisioningException(BaseErrors.mkdirs(pluginsDir), e);
                 }
             }
 
-            final UniverseResolver universeResolver = layoutFactory.getUniverseResolver();
+            final BaseUniverseResolver universeResolver = layoutFactory.getUniverseResolver();
             for(FeaturePackPlugin plugin : plugins) {
                 String pluginId = plugin.getId();
                 if(!pluginId.endsWith(".jar")) {
@@ -184,7 +185,7 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
                 try {
                     Files.createDirectories(stagedDir);
                 } catch (IOException e) {
-                    throw new ProvisioningException(Errors.mkdirs(stagedDir), e);
+                    throw new ProvisioningException(BaseErrors.mkdirs(stagedDir), e);
                 }
             }
             return stagedDir;
@@ -234,7 +235,7 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
                         urls.add(i.next().toUri().toURL());
                     }
                 } catch (IOException e) {
-                    throw new ProvisioningException(Errors.readDirectory(pluginsDir), e);
+                    throw new ProvisioningException(BaseErrors.readDirectory(pluginsDir), e);
                 }
                 if (!urls.isEmpty()) {
                     closePluginsCl = true;
@@ -1151,10 +1152,10 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
         if(!queue.isEmpty()) {
             for(F p : queue) {
                 final FeaturePackSpec spec = p.getSpec();
-                System.out.println("FP TO PROVISION " + spec.getFPID() + " requires " + spec.getGalleonMinVersion());
-                if (spec.getGalleonMinVersion() != null) {
+                System.out.println("BABAR");
+                if (spec.getGalleonMinVersion() != null && Boolean.getBoolean("org.jboss.galleon.version.check")) {
                     if (!Version.isSupportedVersion(spec.getGalleonMinVersion())) {
-                        throw new RuntimeException("Feature-pack " + spec.getFPID() + " requires minimal Galleon version " + spec.getGalleonMinVersion()
+                        throw new ProvisioningException("Feature-pack " + spec.getFPID() + " requires minimal Galleon version " + spec.getGalleonMinVersion()
                                 + " You must upgrade your provisioning tooling to a version that depends at least on Galleon " + spec.getGalleonMinVersion());
                     }
                 }

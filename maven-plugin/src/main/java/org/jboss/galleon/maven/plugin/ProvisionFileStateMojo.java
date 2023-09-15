@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,10 +34,10 @@ import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.ProvisioningManager;
+import org.jboss.galleon.Version;
+import org.jboss.galleon.bootstrap.Provisioning;
 import org.jboss.galleon.maven.plugin.util.MavenArtifactRepositoryManager;
 import org.jboss.galleon.maven.plugin.util.MvnMessageWriter;
-import org.jboss.galleon.repo.RepositoryArtifactResolver;
 import org.jboss.galleon.util.IoUtils;
 
 /**
@@ -116,6 +116,11 @@ public class ProvisionFileStateMojo extends AbstractMojo {
         if (!provisioningFile.exists()) {
             throw new MojoExecutionException("Provisioning file " + provisioningFile + " doesn't exist.");
         }
+        // Check for latest version at startup
+        String vers = Version.checkForLatestVersion();
+        if (vers != null) {
+            getLog().warn("A new version of Galleon is available, you should update your dependency to " + vers);
+        }
         try {
             doProvision();
         } catch (ProvisioningException e) {
@@ -124,13 +129,13 @@ public class ProvisionFileStateMojo extends AbstractMojo {
     }
 
     private void doProvision() throws MojoExecutionException, ProvisioningException {
-        final RepositoryArtifactResolver artifactResolver = offline ? new MavenArtifactRepositoryManager(repoSystem, repoSession)
+        final MavenArtifactRepositoryManager artifactResolver = offline ? new MavenArtifactRepositoryManager(repoSystem, repoSession)
                 : new MavenArtifactRepositoryManager(repoSystem, repoSession, repositories);
         final Path home = installDir.toPath();
         if (!recordState) {
             IoUtils.recursiveDelete(home);
         }
-        try (ProvisioningManager pm = ProvisioningManager.builder().addArtifactResolver(artifactResolver)
+        try (Provisioning pm = Provisioning.builder().addArtifactResolver(artifactResolver)
                 .setInstallationHome(home)
                 .setMessageWriter(new MvnMessageWriter(getLog()))
                 .setLogTime(logTime)

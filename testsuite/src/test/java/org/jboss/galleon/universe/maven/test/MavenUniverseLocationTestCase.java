@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@ import java.nio.file.Path;
 import org.jboss.galleon.creator.FeaturePackCreator;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.UniverseRepoTestBase;
-import org.jboss.galleon.universe.UniverseResolver;
+import org.jboss.galleon.universe.BaseUniverseResolver;
 import org.jboss.galleon.universe.maven.MavenArtifact;
 import org.jboss.galleon.universe.maven.MavenErrors;
 import org.jboss.galleon.universe.maven.MavenProducerInstaller;
@@ -45,7 +45,7 @@ public class MavenUniverseLocationTestCase extends UniverseRepoTestBase {
     private static final String PRODUCER1_FP_ARTIFACT_ID = "producer1-feature-pack-artifact";
     private static final String FP_GROUP_ID = "test.group";
 
-    private UniverseResolver resolver;
+    private BaseUniverseResolver resolver;
     private MavenArtifact fpArt;
 
     @Override
@@ -86,7 +86,7 @@ public class MavenUniverseLocationTestCase extends UniverseRepoTestBase {
         universeInstaller.addProducer("producer2", GROUP_ID, "producer2-artifact", "[1.0.0,2.0.0)");
         universeInstaller.install();
 
-        resolver = UniverseResolver.builder().addArtifactResolver(repo).build();
+        resolver = BaseUniverseResolver.builder().addArtifactResolver(repo).build();
 
         fpArt = new MavenArtifact().
                 setGroupId(FP_GROUP_ID).

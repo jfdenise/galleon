@@ -1,0 +1,170 @@
+/*
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
+ * and other contributors as indicated by the @author tags.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.jboss.galleon.caller;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import javax.xml.stream.XMLStreamException;
+import org.jboss.galleon.Constants;
+import org.jboss.galleon.MessageWriter;
+import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.ProvisioningManager;
+import org.jboss.galleon.config.ConfigModel;
+import org.jboss.galleon.config.FeaturePackConfig;
+import org.jboss.galleon.config.ProvisioningConfig;
+import org.jboss.galleon.repo.RepositoryArtifactResolver;
+import org.jboss.galleon.tooling.Configuration;
+import org.jboss.galleon.tooling.ConfigurationId;
+import org.jboss.galleon.tooling.GalleonFeaturePack;
+import org.jboss.galleon.tooling.GalleonLocalItem;
+import org.jboss.galleon.universe.FeaturePackLocation;
+import org.jboss.galleon.xml.ConfigXmlParser;
+
+public class Provision {
+
+    public static void provision(Path home, Path provisioningFile, Map<String, String> pluginOptions,
+            MessageWriter msgWriter, boolean logTime,
+            boolean recordState,
+            RepositoryArtifactResolver artifactResolver) throws ProvisioningException {
+        try (ProvisioningManager pm = ProvisioningManager.builder().addArtifactResolver(artifactResolver)
+                .setInstallationHome(home)
+                .setMessageWriter(msgWriter)
+                .setLogTime(logTime)
+                .setRecordState(recordState)
+                .build()) {
+            pm.provision(provisioningFile, pluginOptions);
+        }
+    }
+
+    public static void provision(Path home,
+            List<GalleonFeaturePack> packs,
+            List<Configuration> configs,
+            List<GalleonLocalItem> localItems,
+            Path customConfig,
+            Map<String, String> options,
+            MessageWriter msgWriter,
+            boolean logTime,
+            boolean recordState,
+            RepositoryArtifactResolver artifactResolver) throws ProvisioningException {
+        final ProvisioningConfig.Builder state = ProvisioningConfig.builder();
+        try (ProvisioningManager pm = ProvisioningManager.builder().addArtifactResolver(artifactResolver)
+                .setInstallationHome(home)
+                .setMessageWriter(msgWriter)
+                .setLogTime(logTime)
+                .setRecordState(recordState)
+                .build()) {
+            for (GalleonFeaturePack fp : packs) {
+
+                final FeaturePackLocation fpl;
+                if (fp.getNormalizedPath() != null) {
+                    fpl = pm.getLayoutFactory().addLocal(fp.getNormalizedPath(), false);
+                } else {
+                    fpl = FeaturePackLocation.fromString(fp.getLocation());
+                }
+
+                final FeaturePackConfig.Builder fpConfig = fp.isTransitive() ? FeaturePackConfig.transitiveBuilder(fpl)
+                        : FeaturePackConfig.builder(fpl);
+                if(fp.isInheritConfigs() != null) {
+                    fpConfig.setInheritConfigs(fp.isInheritConfigs());
+                }
+                if(fp.isInheritPackages() != null) {
+                    fpConfig.setInheritPackages(fp.isInheritPackages());
+                }
+
+                if (!fp.getExcludedConfigs().isEmpty()) {
+                    for (ConfigurationId configId : fp.getExcludedConfigs()) {
+                        if (configId.isModelOnly()) {
+                            fpConfig.excludeConfigModel(configId.getId().getModel());
+                        } else {
+                            fpConfig.excludeDefaultConfig(configId.getId());
+                        }
+                    }
+                }
+                if (!fp.getIncludedConfigs().isEmpty()) {
+                    for (ConfigurationId configId : fp.getIncludedConfigs()) {
+                        if (configId.isModelOnly()) {
+                            fpConfig.includeConfigModel(configId.getId().getModel());
+                        } else {
+                            fpConfig.includeDefaultConfig(configId.getId());
+                        }
+                    }
+                }
+
+                if (!fp.getIncludedPackages().isEmpty()) {
+                    for (String includedPackage : fp.getIncludedPackages()) {
+                        fpConfig.includePackage(includedPackage);
+                    }
+                }
+                if (!fp.getExcludedPackages().isEmpty()) {
+                    for (String excludedPackage : fp.getExcludedPackages()) {
+                        fpConfig.excludePackage(excludedPackage);
+                    }
+                }
+
+                state.addFeaturePackDep(fpConfig.build());
+            }
+
+            boolean hasLayers = false;
+            for (Configuration config : configs) {
+                ConfigModel.Builder configBuilder = ConfigModel.
+                        builder(config.getModel(), config.getName());
+                for (String layer : config.getLayers()) {
+                    hasLayers = true;
+                    configBuilder.includeLayer(layer);
+                }
+                if (config.getExcludedLayers() != null) {
+                    for (String layer : config.getExcludedLayers()) {
+                        configBuilder.excludeLayer(layer);
+                    }
+                }
+                state.addConfig(configBuilder.build());
+            }
+
+            if (hasLayers) {
+                if (options.isEmpty()) {
+                    options = Collections.
+                            singletonMap(Constants.OPTIONAL_PACKAGES, Constants.PASSIVE_PLUS);
+                } else if (!options.containsKey(Constants.OPTIONAL_PACKAGES)) {
+                    options.put(Constants.OPTIONAL_PACKAGES, Constants.PASSIVE_PLUS);
+                }
+            }
+
+            if (customConfig != null && customConfig.toFile().exists()) {
+                try (BufferedReader reader = Files.newBufferedReader(customConfig)) {
+                    state.addConfig(ConfigXmlParser.getInstance().parse(reader));
+                } catch (XMLStreamException | IOException ex) {
+                    throw new IllegalArgumentException("Couldn't load the customization configuration " + customConfig, ex);
+                }
+            }
+
+            for (GalleonLocalItem localResolverItem : localItems) {
+                if (localResolverItem.getNormalizedPath() != null) {
+                    pm.getLayoutFactory().addLocal(localResolverItem.getNormalizedPath(),
+                            localResolverItem.getInstallInUniverse());
+                }
+            }
+
+            pm.provision(state.build(), options);
+        }
+
+    }
+}

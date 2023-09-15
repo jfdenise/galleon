@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,12 +37,12 @@ import org.jboss.galleon.cli.config.Configuration;
 import org.jboss.galleon.cli.config.mvn.MavenConfig;
 import org.jboss.galleon.cli.config.mvn.MavenConfig.MavenChangeListener;
 import org.jboss.galleon.config.ProvisioningConfig;
+import org.jboss.galleon.universe.BaseUniverseResolver;
 import org.jboss.galleon.universe.Channel;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.Producer;
 import org.jboss.galleon.universe.Universe;
 import org.jboss.galleon.universe.UniverseFactoryLoader;
-import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.UniverseSpec;
 import org.jboss.galleon.universe.maven.MavenProducer;
 import org.jboss.galleon.universe.maven.MavenUniverse;
@@ -75,7 +75,7 @@ public class UniverseManager implements MavenChangeListener {
     });
     private MavenUniverse builtinUniverse;
     private final UniverseSpec builtinUniverseSpec;
-    private final UniverseResolver universeResolver;
+    private final BaseUniverseResolver universeResolver;
     private final PmSession pmSession;
     private final List<Future<?>> submited = new ArrayList<>();
     private volatile boolean closed;
@@ -83,7 +83,7 @@ public class UniverseManager implements MavenChangeListener {
     private boolean bckResolution = true;
 
     UniverseManager(PmSession pmSession, Configuration config, CliMavenArtifactRepositoryManager maven,
-            UniverseResolver universeResolver, UniverseSpec builtin) throws ProvisioningException {
+            BaseUniverseResolver universeResolver, UniverseSpec builtin) throws ProvisioningException {
         this.pmSession = pmSession;
         config.getMavenConfig().addListener(this);
         UniverseFactoryLoader.getInstance().addArtifactResolver(maven);

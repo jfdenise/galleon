@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.xml.stream.XMLStreamException;
+import org.jboss.galleon.BaseErrors;
 
 import org.jboss.galleon.Constants;
 import org.jboss.galleon.Errors;
@@ -38,11 +39,11 @@ import org.jboss.galleon.progresstracking.NoOpProgressCallback;
 import org.jboss.galleon.progresstracking.ProgressCallback;
 import org.jboss.galleon.progresstracking.ProgressTracker;
 import org.jboss.galleon.spec.FeaturePackSpec;
+import org.jboss.galleon.universe.BaseUniverseResolver;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.Universe;
 import org.jboss.galleon.universe.UniverseFeaturePackInstaller;
-import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.util.ZipUtils;
 import org.jboss.galleon.xml.FeaturePackXmlParser;
 
@@ -60,10 +61,10 @@ public class ProvisioningLayoutFactory implements Closeable {
     public static final String TRACK_CONFIGS = "CONFIGS";
 
     public static ProvisioningLayoutFactory getInstance() throws ProvisioningException {
-        return getInstance(UniverseResolver.builder().build());
+        return getInstance(BaseUniverseResolver.builder().build());
     }
 
-    public static ProvisioningLayoutFactory getInstance(UniverseResolver universeResolver) {
+    public static ProvisioningLayoutFactory getInstance(BaseUniverseResolver universeResolver) {
         return new ProvisioningLayoutFactory(universeResolver);
     }
 
@@ -74,13 +75,13 @@ public class ProvisioningLayoutFactory implements Closeable {
                     NO_OP_PROGRESS_TRACKER);
     }
 
-    private final UniverseResolver universeResolver;
+    private final BaseUniverseResolver universeResolver;
     private AtomicInteger openHandles = new AtomicInteger();
     private Map<String, UniverseFeaturePackInstaller> universeInstallers;
     private Map<String, ProgressTracker<?>> progressTrackers = new HashMap<>();
     private final Map<FPID, FileSystem> cachedPacks = new HashMap<>();
 
-    private ProvisioningLayoutFactory(UniverseResolver universeResolver) {
+    private ProvisioningLayoutFactory(BaseUniverseResolver universeResolver) {
         this.universeResolver = universeResolver;
     }
 
@@ -110,7 +111,7 @@ public class ProvisioningLayoutFactory implements Closeable {
         return progressTrackers.containsKey(id);
     }
 
-    public UniverseResolver getUniverseResolver() {
+    public BaseUniverseResolver getUniverseResolver() {
         return universeResolver;
     }
 
@@ -180,7 +181,7 @@ public class ProvisioningLayoutFactory implements Closeable {
         final Path fpDir = resolveFeaturePackDir(location);
         final Path fpXml = fpDir.resolve(Constants.FEATURE_PACK_XML);
         if (!Files.exists(fpXml)) {
-            throw new ProvisioningDescriptionException(Errors.pathDoesNotExist(fpXml));
+            throw new ProvisioningDescriptionException(BaseErrors.pathDoesNotExist(fpXml));
         }
         try (BufferedReader reader = Files.newBufferedReader(fpXml)) {
             final FeaturePackSpec fpSpec = FeaturePackXmlParser.getInstance().parse(reader);

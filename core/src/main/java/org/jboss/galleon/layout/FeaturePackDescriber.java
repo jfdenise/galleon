@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import javax.xml.stream.XMLStreamException;
+import org.jboss.galleon.BaseErrors;
 
 import org.jboss.galleon.Constants;
 import org.jboss.galleon.Errors;
@@ -81,7 +82,7 @@ public class FeaturePackDescriber {
         assertDirectory(fpDir);
         final Path fpXml = fpDir.resolve(Constants.FEATURE_PACK_XML);
         if(!Files.exists(fpXml)) {
-            throw new ProvisioningDescriptionException(Errors.pathDoesNotExist(fpXml));
+            throw new ProvisioningDescriptionException(BaseErrors.pathDoesNotExist(fpXml));
         }
         final FeaturePackDescription.Builder layoutBuilder;
         try (Reader is = Files.newBufferedReader(fpXml, Charset.forName(encoding))) {
@@ -131,7 +132,7 @@ public class FeaturePackDescriber {
         assertDirectory(layerDir);
         final Path layerXml = layerDir.resolve(Constants.LAYER_SPEC_XML);
         if(!Files.exists(layerXml)) {
-            throw new ProvisioningDescriptionException(Errors.pathDoesNotExist(layerXml));
+            throw new ProvisioningDescriptionException(BaseErrors.pathDoesNotExist(layerXml));
         }
         try (Reader in = Files.newBufferedReader(layerXml, Charset.forName(encoding))) {
             return ConfigLayerSpecXmlParser.getInstance().parse(in);
@@ -146,7 +147,7 @@ public class FeaturePackDescriber {
         assertDirectory(pkgDir);
         final Path pkgXml = pkgDir.resolve(Constants.PACKAGE_XML);
         if(!Files.exists(pkgXml)) {
-            throw new ProvisioningDescriptionException(Errors.pathDoesNotExist(pkgXml));
+            throw new ProvisioningDescriptionException(BaseErrors.pathDoesNotExist(pkgXml));
         }
         try (Reader in = Files.newBufferedReader(pkgXml, Charset.forName(encoding))) {
             return PackageXmlParser.getInstance().parse(in);
@@ -159,11 +160,11 @@ public class FeaturePackDescriber {
 
     private static void assertDirectory(Path dir) throws ProvisioningDescriptionException {
         if(!Files.isDirectory(dir)) {
-            throw new ProvisioningDescriptionException(Errors.notADir(dir));
+            throw new ProvisioningDescriptionException(BaseErrors.notADir(dir));
         }
     }
 
     private static void failedToReadDirectory(Path p, IOException e) throws ProvisioningDescriptionException {
-        throw new ProvisioningDescriptionException(Errors.readDirectory(p), e);
+        throw new ProvisioningDescriptionException(BaseErrors.readDirectory(p), e);
     }
 }

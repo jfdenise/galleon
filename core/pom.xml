@@ -44,8 +44,8 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.jboss</groupId>
-      <artifactId>staxmapper</artifactId>
+      <groupId>org.jboss.galleon</groupId>
+      <artifactId>galleon-common</artifactId>
     </dependency>
   </dependencies>
 

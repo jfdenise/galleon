@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,9 +36,8 @@ import org.apache.maven.shared.artifact.ArtifactCoordinate;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.jboss.galleon.maven.plugin.util.ArtifactItem;
-import org.jboss.galleon.maven.plugin.util.ConfigurationId;
-import org.jboss.galleon.maven.plugin.util.FeaturePackInstaller;
 import org.jboss.galleon.maven.plugin.util.MavenArtifactRepositoryManager;
+import org.jboss.galleon.tooling.ConfigurationId;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.maven.MavenArtifact;
 import org.jboss.galleon.universe.maven.MavenUniverseException;
@@ -167,32 +166,32 @@ public class FeaturePackInstallMojo extends AbstractMojo {
             throw new MojoExecutionException("Either 'location' or 'feature-pack' must be configured");
         }
 
-        final FeaturePackInstaller fpInstaller = FeaturePackInstaller.newInstance(
-                repoSession.getLocalRepository().getBasedir().toPath(),
-                installDir.toPath())
-                .setFpl(fpl)
-                .setLocalArtifact(localPath)
-                .setInheritConfigs(inheritConfigs)
-                .includeConfigs(includedConfigs)
-                .setInheritPackages(inheritPackages)
-                .includePackages(includedPackages)
-                .excludePackages(excludedPackages)
-                .setPluginOptions(pluginOptions);
-        if(customConfig != null) {
-            fpInstaller.setCustomConfig(customConfig.toPath().toAbsolutePath());
-        }
-
-        final String originalMavenRepoLocal = System.getProperty(MAVEN_REPO_LOCAL);
-        System.setProperty(MAVEN_REPO_LOCAL, session.getSettings().getLocalRepository());
-        try {
-            fpInstaller.install();
-        } finally {
-            if(originalMavenRepoLocal == null) {
-                System.clearProperty(MAVEN_REPO_LOCAL);
-            } else {
-                System.setProperty(MAVEN_REPO_LOCAL, originalMavenRepoLocal);
-            }
-        }
+//        final FeaturePackInstaller fpInstaller = FeaturePackInstaller.newInstance(
+//                repoSession.getLocalRepository().getBasedir().toPath(),
+//                installDir.toPath())
+//                .setFpl(fpl)
+//                .setLocalArtifact(localPath)
+//                .setInheritConfigs(inheritConfigs)
+//                .includeConfigs(includedConfigs)
+//                .setInheritPackages(inheritPackages)
+//                .includePackages(includedPackages)
+//                .excludePackages(excludedPackages)
+//                .setPluginOptions(pluginOptions);
+//        if(customConfig != null) {
+//            //fpInstaller.setCustomConfig(customConfig.toPath().toAbsolutePath());
+//        }
+//
+//        final String originalMavenRepoLocal = System.getProperty(MAVEN_REPO_LOCAL);
+//        System.setProperty(MAVEN_REPO_LOCAL, session.getSettings().getLocalRepository());
+//        try {
+//            fpInstaller.install();
+//        } finally {
+//            if(originalMavenRepoLocal == null) {
+//                System.clearProperty(MAVEN_REPO_LOCAL);
+//            } else {
+//                System.setProperty(MAVEN_REPO_LOCAL, originalMavenRepoLocal);
+//            }
+//        }
     }
 
     private Path resolveMaven(ArtifactCoordinate coordinate, MavenRepoManager resolver) throws MojoExecutionException {

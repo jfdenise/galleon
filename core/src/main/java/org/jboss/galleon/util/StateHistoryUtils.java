@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.jboss.galleon.Constants;
+import org.jboss.galleon.BaseErrors;
 import org.jboss.galleon.Errors;
 import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
@@ -98,7 +99,7 @@ public class StateHistoryUtils {
         try {
             Files.createDirectory(stateDir);
         } catch (IOException e) {
-            throw new ProvisioningException(Errors.mkdirs(stateDir));
+            throw new ProvisioningException(BaseErrors.mkdirs(stateDir));
         }
         try {
             IoUtils.copy(installedConfig, stateDir.resolve(Constants.PROVISIONING_XML));
@@ -179,7 +180,7 @@ public class StateHistoryUtils {
         try {
             Files.createDirectories(stagedHistoryDir);
         } catch (IOException e) {
-            throw new ProvisioningException(Errors.mkdirs(stagedHistoryDir), e);
+            throw new ProvisioningException(BaseErrors.mkdirs(stagedHistoryDir), e);
         }
     }
 
@@ -362,7 +363,7 @@ public class StateHistoryUtils {
                 }
             }
         } catch (IOException ex) {
-            throw new ProvisioningException(Errors.readDirectory(installedHistoryDir), ex);
+            throw new ProvisioningException(BaseErrors.readDirectory(installedHistoryDir), ex);
         }
     }
 }

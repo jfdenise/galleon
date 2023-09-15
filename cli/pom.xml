@@ -112,7 +112,7 @@
       <groupId>org.jboss.slf4j</groupId>
       <artifactId>slf4j-jboss-logging</artifactId>
     </dependency>
-
+  
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
