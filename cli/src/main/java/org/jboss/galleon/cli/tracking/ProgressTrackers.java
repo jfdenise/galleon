@@ -19,9 +19,9 @@ package org.jboss.galleon.cli.tracking;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import org.jboss.galleon.Constants;
 import org.jboss.galleon.cli.PmCommandInvocation;
 import org.jboss.galleon.cli.PmSession;
-import org.jboss.galleon.layout.ProvisioningLayoutFactory;
 import org.jboss.galleon.progresstracking.DefaultProgressTracker;
 import org.jboss.galleon.progresstracking.ProgressTracker;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
@@ -66,18 +66,18 @@ public abstract class ProgressTrackers {
     private static void init(PmSession session) {
         if (trackers.isEmpty()) {
             BuildLayoutTracker layout = new BuildLayoutTracker(session);
-            trackers.put(ProvisioningLayoutFactory.TRACK_LAYOUT_BUILD, layout);
+            trackers.put(Constants.TRACK_LAYOUT_BUILD, layout);
 
             PackagesTracker packages = new PackagesTracker(session);
-            trackers.put(ProvisioningLayoutFactory.TRACK_PACKAGES, packages);
+            trackers.put(Constants.TRACK_PACKAGES, packages);
 
             trackers.put("JBMODULES", new JBossModulesTracker(session));
             trackers.put("JBEXTRACONFIGS", new ExtraConfigsTracker(session));
             ConfigsTracker configs = new ConfigsTracker(session);
-            trackers.put(ProvisioningLayoutFactory.TRACK_CONFIGS, configs);
+            trackers.put(Constants.TRACK_CONFIGS, configs);
 
             UpdatesTracker updates = new UpdatesTracker(session);
-            trackers.put(ProvisioningLayoutFactory.TRACK_UPDATES, updates);
+            trackers.put(Constants.TRACK_UPDATES, updates);
         }
     }
 

@@ -48,6 +48,7 @@ import org.jboss.galleon.tooling.Configuration;
 import org.jboss.galleon.tooling.GalleonArtifactCoordinate;
 import org.jboss.galleon.tooling.GalleonFeaturePack;
 import org.jboss.galleon.tooling.GalleonLocalItem;
+import org.jboss.galleon.tooling.ProvisioningDescription;
 import org.jboss.galleon.universe.maven.MavenArtifact;
 import org.jboss.galleon.universe.maven.MavenUniverseException;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
@@ -225,8 +226,11 @@ public class ProvisionStateMojo extends AbstractMojo {
                     throw new MojoExecutionException("resolve-local element appears to be neither path not maven artifact");
                 }
             }
-
-            pm.provision(featurePacks, configs, resolveLocals, customConfig == null ? null : customConfig.toPath(), pluginOptions);
+            ProvisioningDescription config = ProvisioningDescription.builder().setConfigs(configs).
+                    setCustomConfig(customConfig == null ? null : customConfig.toPath()).
+                    setFeaturePacks(featurePacks).
+                    setLocalItems(resolveLocals).setOptions(pluginOptions).build();
+            pm.provision(config);
         }
     }
 

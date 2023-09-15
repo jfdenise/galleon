@@ -38,6 +38,7 @@ import org.jboss.galleon.Version;
 import org.jboss.galleon.bootstrap.Provisioning;
 import org.jboss.galleon.maven.plugin.util.MavenArtifactRepositoryManager;
 import org.jboss.galleon.maven.plugin.util.MvnMessageWriter;
+import org.jboss.galleon.tooling.ProvisioningDescription;
 import org.jboss.galleon.util.IoUtils;
 
 /**
@@ -141,7 +142,7 @@ public class ProvisionFileStateMojo extends AbstractMojo {
                 .setLogTime(logTime)
                 .setRecordState(recordState)
                 .build()) {
-            pm.provision(provisioningFile.toPath(), pluginOptions);
+            pm.provision(ProvisioningDescription.builder().setProvisioningFile(provisioningFile.toPath()).setOptions(pluginOptions).build());
         }
     }
 }

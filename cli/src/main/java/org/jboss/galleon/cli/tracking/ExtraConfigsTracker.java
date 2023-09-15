@@ -18,9 +18,9 @@ package org.jboss.galleon.cli.tracking;
 
 import java.nio.file.Path;
 import java.util.List;
+import org.jboss.galleon.Constants;
 import org.jboss.galleon.cli.PmSession;
 import static org.jboss.galleon.cli.tracking.ConfigsTracker.DELAYED_EXECUTION_MSG;
-import org.jboss.galleon.layout.ProvisioningLayoutFactory;
 import org.jboss.galleon.progresstracking.ProgressTracker;
 import org.jboss.galleon.state.ProvisionedConfig;
 
@@ -42,7 +42,7 @@ public class ExtraConfigsTracker extends CliProgressTracker<List<Object>> {
             content = "Generating " + ((ProvisionedConfig) tracker.getItem().get(1)).getName();
         } else if (tracker.getItem().get(1) instanceof Path) {
             content = "Installing config "+ ((Path) tracker.getItem().get(1)).getFileName();
-        } else if (tracker.getItem().get(1) == null&& ProvisioningLayoutFactory.TRACK_CONFIGS.equals(phase)) {
+        } else if (tracker.getItem().get(1) == null&& Constants.TRACK_CONFIGS.equals(phase)) {
             content = DELAYED_EXECUTION_MSG;
         }
         return content;

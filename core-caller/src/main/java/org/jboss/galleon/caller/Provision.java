@@ -20,17 +20,16 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import javax.xml.stream.XMLStreamException;
-import org.jboss.galleon.Constants;
 import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningManager;
 import org.jboss.galleon.config.ConfigModel;
 import org.jboss.galleon.config.FeaturePackConfig;
 import org.jboss.galleon.config.ProvisioningConfig;
+import org.jboss.galleon.progresstracking.ProgressTracker;
 import org.jboss.galleon.repo.RepositoryArtifactResolver;
 import org.jboss.galleon.tooling.Configuration;
 import org.jboss.galleon.tooling.ConfigurationId;
@@ -41,30 +40,13 @@ import org.jboss.galleon.xml.ConfigXmlParser;
 
 public class Provision {
 
-    public static void provision(Path home, Path provisioningFile, Map<String, String> pluginOptions,
-            MessageWriter msgWriter, boolean logTime,
-            boolean recordState,
-            RepositoryArtifactResolver artifactResolver) throws ProvisioningException {
-        try (ProvisioningManager pm = ProvisioningManager.builder().addArtifactResolver(artifactResolver)
-                .setInstallationHome(home)
-                .setMessageWriter(msgWriter)
-                .setLogTime(logTime)
-                .setRecordState(recordState)
-                .build()) {
-            pm.provision(provisioningFile, pluginOptions);
-        }
-    }
-
     public static void provision(Path home,
-            List<GalleonFeaturePack> packs,
-            List<Configuration> configs,
-            List<GalleonLocalItem> localItems,
-            Path customConfig,
-            Map<String, String> options,
+            org.jboss.galleon.tooling.ProvisioningDescription pConfig,
             MessageWriter msgWriter,
             boolean logTime,
             boolean recordState,
-            RepositoryArtifactResolver artifactResolver) throws ProvisioningException {
+            RepositoryArtifactResolver artifactResolver,
+            Map<String, ProgressTracker<?>> progressTrackers) throws ProvisioningException {
         final ProvisioningConfig.Builder state = ProvisioningConfig.builder();
         try (ProvisioningManager pm = ProvisioningManager.builder().addArtifactResolver(artifactResolver)
                 .setInstallationHome(home)
@@ -72,7 +54,14 @@ public class Provision {
                 .setLogTime(logTime)
                 .setRecordState(recordState)
                 .build()) {
-            for (GalleonFeaturePack fp : packs) {
+            for (Entry<String, ProgressTracker<?>> entry : progressTrackers.entrySet()) {
+                pm.getLayoutFactory().setProgressTracker(entry.getKey(), entry.getValue());
+            }
+            if (pConfig.getProvisioningFile() != null) {
+                pm.provision(pConfig.getProvisioningFile(), pConfig.getOptions());
+                return;
+            }
+            for (GalleonFeaturePack fp : pConfig.getFeaturePacks()) {
 
                 final FeaturePackLocation fpl;
                 if (fp.getNormalizedPath() != null) {
@@ -83,10 +72,10 @@ public class Provision {
 
                 final FeaturePackConfig.Builder fpConfig = fp.isTransitive() ? FeaturePackConfig.transitiveBuilder(fpl)
                         : FeaturePackConfig.builder(fpl);
-                if(fp.isInheritConfigs() != null) {
+                if (fp.isInheritConfigs() != null) {
                     fpConfig.setInheritConfigs(fp.isInheritConfigs());
                 }
-                if(fp.isInheritPackages() != null) {
+                if (fp.isInheritPackages() != null) {
                     fpConfig.setInheritPackages(fp.isInheritPackages());
                 }
 
@@ -123,12 +112,10 @@ public class Provision {
                 state.addFeaturePackDep(fpConfig.build());
             }
 
-            boolean hasLayers = false;
-            for (Configuration config : configs) {
+            for (Configuration config : pConfig.getConfigs()) {
                 ConfigModel.Builder configBuilder = ConfigModel.
                         builder(config.getModel(), config.getName());
                 for (String layer : config.getLayers()) {
-                    hasLayers = true;
                     configBuilder.includeLayer(layer);
                 }
                 if (config.getExcludedLayers() != null) {
@@ -139,31 +126,22 @@ public class Provision {
                 state.addConfig(configBuilder.build());
             }
 
-            if (hasLayers) {
-                if (options.isEmpty()) {
-                    options = Collections.
-                            singletonMap(Constants.OPTIONAL_PACKAGES, Constants.PASSIVE_PLUS);
-                } else if (!options.containsKey(Constants.OPTIONAL_PACKAGES)) {
-                    options.put(Constants.OPTIONAL_PACKAGES, Constants.PASSIVE_PLUS);
-                }
-            }
-
-            if (customConfig != null && customConfig.toFile().exists()) {
-                try (BufferedReader reader = Files.newBufferedReader(customConfig)) {
+            if (pConfig.getCustomConfig() != null && pConfig.getCustomConfig().toFile().exists()) {
+                try (BufferedReader reader = Files.newBufferedReader(pConfig.getCustomConfig())) {
                     state.addConfig(ConfigXmlParser.getInstance().parse(reader));
                 } catch (XMLStreamException | IOException ex) {
-                    throw new IllegalArgumentException("Couldn't load the customization configuration " + customConfig, ex);
+                    throw new IllegalArgumentException("Couldn't load the customization configuration " + pConfig.getCustomConfig(), ex);
                 }
             }
 
-            for (GalleonLocalItem localResolverItem : localItems) {
+            for (GalleonLocalItem localResolverItem : pConfig.getLocalItems()) {
                 if (localResolverItem.getNormalizedPath() != null) {
                     pm.getLayoutFactory().addLocal(localResolverItem.getNormalizedPath(),
                             localResolverItem.getInstallInUniverse());
                 }
             }
 
-            pm.provision(state.build(), options);
+            pm.provision(state.build(), pConfig.getOptions());
         }
 
     }

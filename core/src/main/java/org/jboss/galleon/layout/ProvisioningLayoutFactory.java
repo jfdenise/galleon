@@ -55,11 +55,6 @@ public class ProvisioningLayoutFactory implements Closeable {
 
     private static ProgressTracker<?> NO_OP_PROGRESS_TRACKER;
 
-    public static final String TRACK_LAYOUT_BUILD = "LAYOUT_BUILD";
-    public static final String TRACK_UPDATES = "UPDATES";
-    public static final String TRACK_PACKAGES = "PACKAGES";
-    public static final String TRACK_CONFIGS = "CONFIGS";
-
     public static ProvisioningLayoutFactory getInstance() throws ProvisioningException {
         return getInstance(BaseUniverseResolver.builder().build());
     }

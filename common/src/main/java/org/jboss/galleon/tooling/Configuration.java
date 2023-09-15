@@ -45,4 +45,20 @@ public class Configuration {
     public List<String> getExcludedLayers() {
         return excludedLayers;
     }
+
+    public void setModel(String model) {
+        this.model = model;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setLayers(List<String> layers) {
+        this.layers = layers;
+    }
+
+    public void setExcludedLayers(List<String> excludedLayers) {
+        this.excludedLayers = excludedLayers;
+    }
 }

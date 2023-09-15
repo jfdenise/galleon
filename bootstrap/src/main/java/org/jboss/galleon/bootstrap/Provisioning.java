@@ -16,12 +16,13 @@
  */
 package org.jboss.galleon.bootstrap;
 
+import org.jboss.galleon.tooling.ProvisioningDescription;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.jboss.galleon.Constants;
@@ -33,10 +34,11 @@ import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.Version;
 import org.jboss.galleon.impl.FeaturePackLightXmlParser;
 import org.jboss.galleon.impl.ProvisioningLightXmlParser;
+import org.jboss.galleon.progresstracking.DefaultProgressTracker;
+import org.jboss.galleon.progresstracking.ProgressCallback;
+import org.jboss.galleon.progresstracking.ProgressTracker;
 import org.jboss.galleon.repo.RepositoryArtifactResolver;
-import org.jboss.galleon.tooling.Configuration;
 import org.jboss.galleon.tooling.GalleonFeaturePack;
-import org.jboss.galleon.tooling.GalleonLocalItem;
 import org.jboss.galleon.universe.BaseUniverseResolver;
 import org.jboss.galleon.universe.BaseUniverseResolverBuilder;
 import org.jboss.galleon.universe.FeaturePackLocation;
@@ -103,6 +105,7 @@ public class Provisioning implements AutoCloseable {
 
     private final BaseUniverseResolver universeResolver;
     private boolean recordState;
+    private final Map<String, ProgressTracker<?>> progressTrackers = new HashMap<>();
 
     private Provisioning(Builder builder) throws ProvisioningException {
         PathsUtils.assertInstallationDir(builder.installationHome);
@@ -155,43 +158,53 @@ public class Provisioning implements AutoCloseable {
         this.recordState = recordState;
     }
 
-    /**
-     * Provision the state described in the specified XML file.
-     *
-     * @param provisioningXml file describing the desired provisioned state
-     * @throws ProvisioningException in case provisioning fails
-     */
-    public void provision(Path provisioningXml) throws ProvisioningException {
-        provision(provisioningXml, Collections.emptyMap());
+    public void setProgressCallback(String id, ProgressCallback<?> callback) {
+        if (callback == null) {
+            progressTrackers.remove(id);
+        } else {
+            progressTrackers.put(id, new DefaultProgressTracker<>(callback));
+        }
     }
 
-    public void provision(List<GalleonFeaturePack> packs, List<Configuration> configs, List<GalleonLocalItem> localItems, Path customConfig,
-            Map<String, String> options) throws ProvisioningException {
+    public void setProgressTracker(String id, ProgressTracker<?> tracker) {
+        if (tracker == null) {
+            progressTrackers.remove(id);
+        } else {
+            progressTrackers.put(id, tracker);
+        }
+    }
+
+    public void provision(ProvisioningDescription config) throws ProvisioningException {
         MavenRepoManager repoManager = (MavenRepoManager) universeResolver.getArtifactResolver(MavenRepoManager.REPOSITORY_ID);
         String coreVersion = Version.getVersion();
         Path tmp = null;
         try {
             tmp = Files.createTempDirectory("galleon-tmp");
-            for (GalleonFeaturePack fp : packs) {
-                if (fp.getNormalizedPath() != null) {
-                    coreVersion = getCoreVersion(fp.getNormalizedPath(), tmp, coreVersion);
-                } else if (fp.getGroupId() != null && fp.getArtifactId() != null) {
-                    String coords = getMavenCoords(fp);
-                    FeaturePackLocation fpl = FeaturePackLocation.fromString(coords);
-                    Path resolvedFP = universeResolver.resolve(fpl);
-                    coreVersion = getCoreVersion(resolvedFP, tmp, coreVersion);
-                } else {
-                    // Special case for G:A that conflicts with producer:channel that we can't have in the plugin.
-                    String location = fp.getLocation();
-                    if (!FeaturePackLocation.fromString(location).hasUniverse()) {
-                        long numSeparators = location.chars().filter(ch -> ch == ':').count();
-                        if (numSeparators <= 1) {
-                            location += ":";
+            if (config.getProvisioningFile() != null) {
+                List<FPID> featurePacks = ProvisioningLightXmlParser.parse(config.getProvisioningFile());
+                coreVersion = getCoreVersion(featurePacks, Version.getVersion(), tmp);
+            } else {
+                for (GalleonFeaturePack fp : config.getFeaturePacks()) {
+                    if (fp.getNormalizedPath() != null) {
+                        coreVersion = getCoreVersion(fp.getNormalizedPath(), tmp, coreVersion);
+                    } else if (fp.getGroupId() != null && fp.getArtifactId() != null) {
+                        String coords = getMavenCoords(fp);
+                        FeaturePackLocation fpl = FeaturePackLocation.fromString(coords);
+                        Path resolvedFP = universeResolver.resolve(fpl);
+                        coreVersion = getCoreVersion(resolvedFP, tmp, coreVersion);
+                    } else {
+                        // Special case for G:A that conflicts with producer:channel that we can't have in the plugin.
+                        String location = fp.getLocation();
+                        if (!FeaturePackLocation.fromString(location).hasUniverse()) {
+                            long numSeparators = location.chars().filter(ch -> ch == ':').count();
+                            if (numSeparators <= 1) {
+                                location += ":";
+                            }
                         }
+                        FeaturePackLocation fpl = FeaturePackLocation.fromString(location);
+                        Path resolvedFP = universeResolver.resolve(fpl);
+                        coreVersion = getCoreVersion(resolvedFP, tmp, coreVersion);
                     }
-                    FeaturePackLocation fpl = FeaturePackLocation.fromString(location);
-                    Path resolvedFP = universeResolver.resolve(fpl);
-                    coreVersion = getCoreVersion(resolvedFP, tmp, coreVersion);
                 }
             }
             System.out.println("REQUIRED CORE VERSION is " + coreVersion);
@@ -200,18 +213,15 @@ public class Provisioning implements AutoCloseable {
 
             Method m = callerClass.getDeclaredMethod("provision",
                     Path.class,
-                    List.class,
-                    List.class,
-                    List.class,
-                    Path.class,
-                    Map.class,
+                    ProvisioningDescription.class,
                     MessageWriter.class,
                     Boolean.TYPE,
                     Boolean.TYPE,
-                    RepositoryArtifactResolver.class);
+                    RepositoryArtifactResolver.class,
+                    Map.class);
             Thread.currentThread().setContextClassLoader(callerClass.getClassLoader());
-            m.invoke(null, home, packs, configs, localItems, customConfig, options,
-                    log, logTime, recordState, repoManager);
+            m.invoke(null, home, config,
+                    log, logTime, recordState, repoManager, progressTrackers);
         } catch (Exception ex) {
             throw new ProvisioningException(ex);
         } finally {
@@ -244,37 +254,6 @@ public class Provisioning implements AutoCloseable {
             builder.append(":").append(fp.getVersion());
         }
         return builder.toString();
-    }
-
-    /**
-     * Provision the state described in the specified XML file.
-     *
-     * @param provisioningXml file describing the desired provisioned state
-     * @param options feature-pack plug-ins options
-     * @throws ProvisioningException in case provisioning fails
-     */
-    public void provision(Path provisioningXml, Map<String, String> options) throws ProvisioningException {
-        MavenRepoManager repoManager = (MavenRepoManager) universeResolver.getArtifactResolver(MavenRepoManager.REPOSITORY_ID);
-        List<FPID> featurePacks = ProvisioningLightXmlParser.parse(provisioningXml);
-        Path tmp = null;
-        try {
-            tmp = Files.createTempDirectory("galleon-tmp");
-            String version = getCoreVersion(featurePacks, Version.getVersion(), tmp);
-            System.out.println("REQUIRED CORE VERSION is " + version);
-            Class<?> callerClass = getCallerClass(version, repoManager);
-
-            Method m = callerClass.getDeclaredMethod("provision", Path.class, Path.class, Map.class,
-                    MessageWriter.class, Boolean.TYPE,
-                    Boolean.TYPE,
-                    RepositoryArtifactResolver.class);
-            Thread.currentThread().setContextClassLoader(callerClass.getClassLoader());
-            m.invoke(null, home, provisioningXml, options,
-                    log, logTime, recordState, repoManager);
-        } catch (Exception ex) {
-            throw new ProvisioningException(ex);
-        } finally {
-            IoUtils.recursiveDelete(tmp);
-        }
     }
 
     private Class<?> getCallerClass(String version, MavenRepoManager repoManager) throws ProvisioningException {

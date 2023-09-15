@@ -1406,7 +1406,7 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
 
     private ProgressTracker<ProducerSpec> getUpdatesTracker() {
         return updatesTracker == null
-                ? updatesTracker = layoutFactory.getProgressTracker(ProvisioningLayoutFactory.TRACK_UPDATES)
+                ? updatesTracker = layoutFactory.getProgressTracker(Constants.TRACK_UPDATES)
                 : updatesTracker;
     }
 
@@ -1415,7 +1415,7 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
             return ProvisioningLayoutFactory.getNoOpProgressTracker();
         }
         return buildTracker == null
-                ? buildTracker = layoutFactory.getProgressTracker(ProvisioningLayoutFactory.TRACK_LAYOUT_BUILD)
+                ? buildTracker = layoutFactory.getProgressTracker(Constants.TRACK_LAYOUT_BUILD)
                 : buildTracker;
     }
 

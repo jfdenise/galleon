@@ -86,4 +86,9 @@ public interface Constants {
     String FAIL = "fail";
 
     String PRINT_ONLY_CONFLICTS = "print-only-conflicts";
+
+    String TRACK_LAYOUT_BUILD = "LAYOUT_BUILD";
+    String TRACK_UPDATES = "UPDATES";
+    String TRACK_PACKAGES = "PACKAGES";
+    String TRACK_CONFIGS = "CONFIGS";
 }
