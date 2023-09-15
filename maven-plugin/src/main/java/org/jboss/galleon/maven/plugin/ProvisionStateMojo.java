@@ -39,16 +39,16 @@ import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.Version;
-import org.jboss.galleon.bootstrap.Provisioning;
+import org.jboss.galleon.tooling.api.APIVersion;
+import org.jboss.galleon.tooling.api.Provisioning;
 import org.jboss.galleon.maven.plugin.util.MavenArtifactRepositoryManager;
 import org.jboss.galleon.maven.plugin.util.MvnMessageWriter;
 import org.jboss.galleon.repo.RepositoryArtifactResolver;
-import org.jboss.galleon.tooling.Configuration;
-import org.jboss.galleon.tooling.GalleonArtifactCoordinate;
-import org.jboss.galleon.tooling.GalleonFeaturePack;
-import org.jboss.galleon.tooling.GalleonLocalItem;
-import org.jboss.galleon.tooling.ProvisioningDescription;
+import org.jboss.galleon.tooling.api.Configuration;
+import org.jboss.galleon.tooling.api.GalleonArtifactCoordinate;
+import org.jboss.galleon.tooling.api.GalleonFeaturePack;
+import org.jboss.galleon.tooling.api.GalleonLocalItem;
+import org.jboss.galleon.tooling.api.ProvisioningDescription;
 import org.jboss.galleon.universe.maven.MavenArtifact;
 import org.jboss.galleon.universe.maven.MavenUniverseException;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
@@ -156,7 +156,7 @@ public class ProvisionStateMojo extends AbstractMojo {
             return;
         }
         // Check for latest version at startup
-        String vers = Version.checkForLatestVersion();
+        String vers = APIVersion.checkForLatestVersion();
         if (vers != null) {
             getLog().warn("A new version of Galleon is available, you should update your dependency to " + vers);
         }

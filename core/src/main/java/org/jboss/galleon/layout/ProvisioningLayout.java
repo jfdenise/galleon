@@ -45,7 +45,7 @@ import org.jboss.galleon.Errors;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningOption;
-import org.jboss.galleon.Version;
+import org.jboss.galleon.CoreVersion;
 import org.jboss.galleon.config.FeaturePackConfig;
 import org.jboss.galleon.config.FeaturePackDepsConfig;
 import org.jboss.galleon.config.ProvisioningConfig;
@@ -1154,7 +1154,7 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
                 final FeaturePackSpec spec = p.getSpec();
                 System.out.println("BABAR");
                 if (spec.getGalleonMinVersion() != null && Boolean.getBoolean("org.jboss.galleon.version.check")) {
-                    if (!Version.isSupportedVersion(spec.getGalleonMinVersion())) {
+                    if (!CoreVersion.isSupportedVersion(spec.getGalleonMinVersion())) {
                         throw new ProvisioningException("Feature-pack " + spec.getFPID() + " requires minimal Galleon version " + spec.getGalleonMinVersion()
                                 + " You must upgrade your provisioning tooling to a version that depends at least on Galleon " + spec.getGalleonMinVersion());
                     }

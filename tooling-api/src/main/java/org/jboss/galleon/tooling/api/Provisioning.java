@@ -14,9 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.galleon.bootstrap;
+package org.jboss.galleon.tooling.api;
 
-import org.jboss.galleon.tooling.ProvisioningDescription;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -31,13 +30,11 @@ import org.jboss.galleon.util.PathsUtils;
 import org.jboss.galleon.DefaultMessageWriter;
 import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.Version;
 import org.jboss.galleon.impl.FeaturePackLightXmlParser;
 import org.jboss.galleon.impl.ProvisioningLightXmlParser;
 import org.jboss.galleon.progresstracking.DefaultProgressTracker;
 import org.jboss.galleon.progresstracking.ProgressCallback;
 import org.jboss.galleon.progresstracking.ProgressTracker;
-import org.jboss.galleon.tooling.GalleonFeaturePack;
 import org.jboss.galleon.universe.BaseUniverseResolver;
 import org.jboss.galleon.universe.BaseUniverseResolverBuilder;
 import org.jboss.galleon.universe.FeaturePackLocation;
@@ -47,7 +44,6 @@ import org.jboss.galleon.universe.maven.MavenUniverseException;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 import org.jboss.galleon.util.IoUtils;
 import org.jboss.galleon.util.ZipUtils;
-import org.jboss.galleon.tooling.spi.ProvisioningContext;
 import org.jboss.galleon.tooling.spi.ProvisioningContextBuilder;
 
 public class Provisioning implements AutoCloseable {
@@ -175,13 +171,13 @@ public class Provisioning implements AutoCloseable {
 
     public ProvisioningContext buildProvisioningContext(ProvisioningDescription config) throws ProvisioningException {
         MavenRepoManager repoManager = (MavenRepoManager) universeResolver.getArtifactResolver(MavenRepoManager.REPOSITORY_ID);
-        String coreVersion = Version.getVersion();
+        String coreVersion = APIVersion.getVersion();
         Path tmp = null;
         try {
             tmp = Files.createTempDirectory("galleon-tmp");
             if (config.getProvisioningFile() != null) {
                 List<FPID> featurePacks = ProvisioningLightXmlParser.parse(config.getProvisioningFile());
-                coreVersion = getCoreVersion(featurePacks, Version.getVersion(), tmp);
+                coreVersion = getCoreVersion(featurePacks, APIVersion.getVersion(), tmp);
             } else {
                 for (GalleonFeaturePack fp : config.getFeaturePacks()) {
                     if (fp.getNormalizedPath() != null) {
@@ -268,7 +264,7 @@ public class Provisioning implements AutoCloseable {
         callerArtifact.setGroupId("org.jboss.galleon");
         callerArtifact.setArtifactId("galleon-core-caller");
         // This one is always the one from the tooling.
-        callerArtifact.setVersion(Version.getVersion());
+        callerArtifact.setVersion(APIVersion.getVersion());
         callerArtifact.setExtension("jar");
         repoManager.resolve(callerArtifact);
 

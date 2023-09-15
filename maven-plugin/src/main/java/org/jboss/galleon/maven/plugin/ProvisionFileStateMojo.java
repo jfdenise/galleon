@@ -34,11 +34,11 @@ import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.Version;
-import org.jboss.galleon.bootstrap.Provisioning;
+import org.jboss.galleon.tooling.api.APIVersion;
+import org.jboss.galleon.tooling.api.Provisioning;
 import org.jboss.galleon.maven.plugin.util.MavenArtifactRepositoryManager;
 import org.jboss.galleon.maven.plugin.util.MvnMessageWriter;
-import org.jboss.galleon.tooling.ProvisioningDescription;
+import org.jboss.galleon.tooling.api.ProvisioningDescription;
 import org.jboss.galleon.util.IoUtils;
 
 /**
@@ -118,7 +118,7 @@ public class ProvisionFileStateMojo extends AbstractMojo {
             throw new MojoExecutionException("Provisioning file " + provisioningFile + " doesn't exist.");
         }
         // Check for latest version at startup
-        String vers = Version.checkForLatestVersion();
+        String vers = APIVersion.checkForLatestVersion();
         if (vers != null) {
             getLog().warn("A new version of Galleon is available, you should update your dependency to " + vers);
         }

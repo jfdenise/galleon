@@ -20,7 +20,7 @@ import java.util.Map;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningManager;
 import org.jboss.galleon.config.ProvisioningConfig;
-import org.jboss.galleon.tooling.spi.ProvisioningContext;
+import org.jboss.galleon.tooling.api.ProvisioningContext;
 
 public class ProvisioningContextImpl implements ProvisioningContext {
 

@@ -29,7 +29,7 @@
   <artifactId>galleon-core-caller</artifactId>
   <packaging>jar</packaging>
 
-  <name>Galleon: Multi versions Core caller</name>
+  <name>Galleon Core caller</name>
   <url>http://maven.apache.org</url>
 
   <dependencies>

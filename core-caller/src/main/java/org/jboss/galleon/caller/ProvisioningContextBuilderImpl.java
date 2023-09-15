@@ -31,15 +31,15 @@ import org.jboss.galleon.config.FeaturePackConfig;
 import org.jboss.galleon.config.ProvisioningConfig;
 import org.jboss.galleon.progresstracking.ProgressTracker;
 import org.jboss.galleon.repo.RepositoryArtifactResolver;
-import org.jboss.galleon.tooling.Configuration;
-import org.jboss.galleon.tooling.ConfigurationId;
-import org.jboss.galleon.tooling.GalleonFeaturePack;
-import org.jboss.galleon.tooling.GalleonLocalItem;
-import org.jboss.galleon.tooling.ProvisioningDescription;
+import org.jboss.galleon.tooling.api.Configuration;
+import org.jboss.galleon.tooling.api.ConfigurationId;
+import org.jboss.galleon.tooling.api.GalleonFeaturePack;
+import org.jboss.galleon.tooling.api.GalleonLocalItem;
+import org.jboss.galleon.tooling.api.ProvisioningContext;
+import org.jboss.galleon.tooling.api.ProvisioningDescription;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.xml.ConfigXmlParser;
 import org.jboss.galleon.xml.ProvisioningXmlParser;
-import org.jboss.galleon.tooling.spi.ProvisioningContext;
 import org.jboss.galleon.tooling.spi.ProvisioningContextBuilder;
 
 public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilder {

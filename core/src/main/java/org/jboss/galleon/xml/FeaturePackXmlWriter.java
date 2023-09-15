@@ -17,7 +17,7 @@
 package org.jboss.galleon.xml;
 
 import java.util.Arrays;
-import org.jboss.galleon.Version;
+import org.jboss.galleon.CoreVersion;
 
 import org.jboss.galleon.config.FeaturePackConfig;
 import org.jboss.galleon.spec.FeaturePackPlugin;
@@ -44,7 +44,7 @@ public class FeaturePackXmlWriter extends BaseXmlWriter<FeaturePackSpec> {
     protected ElementNode toElement(FeaturePackSpec fpSpec) {
         final ElementNode fp = addElement(null, Element.FEATURE_PACK);
         addAttribute(fp, Attribute.LOCATION, fpSpec.getFPID().toString());
-        addAttribute(fp, "galleon-min-version", Version.getVersion());
+        addAttribute(fp, "galleon-min-version", CoreVersion.getVersion());
         ProvisioningXmlWriter.writeUniverseSpecs(fpSpec, fp);
 
         if(fpSpec.isPatch()) {

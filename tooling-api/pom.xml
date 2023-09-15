@@ -26,10 +26,10 @@
     <version>5.2.1.Final-SNAPSHOT</version>
   </parent>
 
-  <artifactId>galleon-bootstrap</artifactId>
+  <artifactId>galleon-tooling-api</artifactId>
   <packaging>jar</packaging>
 
-  <name>Galleon: Bootstrap provisioning</name>
+  <name>Galleon Tooling API</name>
   <url>http://maven.apache.org</url>
 
   <dependencies>

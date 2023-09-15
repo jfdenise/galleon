@@ -37,7 +37,7 @@ import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.jboss.galleon.maven.plugin.util.ArtifactItem;
 import org.jboss.galleon.maven.plugin.util.MavenArtifactRepositoryManager;
-import org.jboss.galleon.tooling.ConfigurationId;
+import org.jboss.galleon.tooling.api.ConfigurationId;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.maven.MavenArtifact;
 import org.jboss.galleon.universe.maven.MavenUniverseException;

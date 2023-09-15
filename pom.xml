@@ -42,7 +42,7 @@
   </licenses>
 
   <modules>
-    <module>bootstrap</module>
+    <module>tooling-api</module>
     <module>common</module>
     <module>core-caller</module>
     <module>core</module>
@@ -144,7 +144,7 @@
       <!-- Modules in this project -->
       <dependency>
         <groupId>${project.groupId}</groupId>
-        <artifactId>galleon-bootstrap</artifactId>
+        <artifactId>galleon-tooling-api</artifactId>
         <version>${project.version}</version>
       </dependency>
 

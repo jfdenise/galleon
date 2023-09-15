@@ -41,7 +41,7 @@ import org.aesh.command.shell.Shell;
 import org.aesh.command.validator.ValidatorInvocation;
 import org.aesh.readline.ReadlineConsole;
 import org.aesh.utils.Config;
-import org.jboss.galleon.Version;
+import org.jboss.galleon.tooling.api.APIVersion;
 import org.jboss.galleon.cli.cmd.CliErrors;
 import org.jboss.galleon.cli.terminal.CliShellInvocationProvider;
 import org.jboss.galleon.cli.terminal.CliTerminalConnection;
@@ -65,7 +65,7 @@ public class CliMain {
         // If a FP has a greater dependency fails at provisioning time.
         System.setProperty("org.jboss.galleon.version.check", "true");
         // Check for latest version at startup
-        String url = Version.checkForLatestVersionURL();
+        String url = APIVersion.checkForLatestVersionURL();
         if (url != null) {
             System.out.println("A new version of Galleon is available at " + url);
         }

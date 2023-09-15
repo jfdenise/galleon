@@ -22,7 +22,8 @@ import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.progresstracking.ProgressTracker;
 import org.jboss.galleon.repo.RepositoryArtifactResolver;
-import org.jboss.galleon.tooling.ProvisioningDescription;
+import org.jboss.galleon.tooling.api.ProvisioningContext;
+import org.jboss.galleon.tooling.api.ProvisioningDescription;
 
 public interface ProvisioningContextBuilder {
 
