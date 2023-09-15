@@ -17,11 +17,11 @@
 package org.jboss.galleon.bootstrap;
 
 import org.jboss.galleon.tooling.ProvisioningDescription;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +37,6 @@ import org.jboss.galleon.impl.ProvisioningLightXmlParser;
 import org.jboss.galleon.progresstracking.DefaultProgressTracker;
 import org.jboss.galleon.progresstracking.ProgressCallback;
 import org.jboss.galleon.progresstracking.ProgressTracker;
-import org.jboss.galleon.repo.RepositoryArtifactResolver;
 import org.jboss.galleon.tooling.GalleonFeaturePack;
 import org.jboss.galleon.universe.BaseUniverseResolver;
 import org.jboss.galleon.universe.BaseUniverseResolverBuilder;
@@ -48,11 +47,9 @@ import org.jboss.galleon.universe.maven.MavenUniverseException;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 import org.jboss.galleon.util.IoUtils;
 import org.jboss.galleon.util.ZipUtils;
+import org.jboss.galleon.tooling.spi.ProvisioningContext;
+import org.jboss.galleon.tooling.spi.ProvisioningContextBuilder;
 
-/**
- *
- * @author Alexey Loubyansky
- */
 public class Provisioning implements AutoCloseable {
 
     public static class Builder extends BaseUniverseResolverBuilder<Builder> {
@@ -106,6 +103,8 @@ public class Provisioning implements AutoCloseable {
     private final BaseUniverseResolver universeResolver;
     private boolean recordState;
     private final Map<String, ProgressTracker<?>> progressTrackers = new HashMap<>();
+
+    private final List<ProvisioningContext> contexts = new ArrayList<>();
 
     private Provisioning(Builder builder) throws ProvisioningException {
         PathsUtils.assertInstallationDir(builder.installationHome);
@@ -174,7 +173,7 @@ public class Provisioning implements AutoCloseable {
         }
     }
 
-    public void provision(ProvisioningDescription config) throws ProvisioningException {
+    public ProvisioningContext buildProvisioningContext(ProvisioningDescription config) throws ProvisioningException {
         MavenRepoManager repoManager = (MavenRepoManager) universeResolver.getArtifactResolver(MavenRepoManager.REPOSITORY_ID);
         String coreVersion = Version.getVersion();
         Path tmp = null;
@@ -211,17 +210,15 @@ public class Provisioning implements AutoCloseable {
 
             Class<?> callerClass = getCallerClass(coreVersion, repoManager);
 
-            Method m = callerClass.getDeclaredMethod("provision",
-                    Path.class,
-                    ProvisioningDescription.class,
-                    MessageWriter.class,
-                    Boolean.TYPE,
-                    Boolean.TYPE,
-                    RepositoryArtifactResolver.class,
-                    Map.class);
-            Thread.currentThread().setContextClassLoader(callerClass.getClassLoader());
-            m.invoke(null, home, config,
-                    log, logTime, recordState, repoManager, progressTrackers);
+            try {
+                ProvisioningContextBuilder provisioner = (ProvisioningContextBuilder) callerClass.getConstructor().newInstance();
+                ProvisioningContext ctx = provisioner.buildProvisioningContext(home, config, log, logTime, recordState, repoManager, progressTrackers);
+                contexts.add(ctx);
+                return ctx;
+            } catch (Exception ex) {
+                throw new ProvisioningException(ex);
+            }
+
         } catch (Exception ex) {
             throw new ProvisioningException(ex);
         } finally {
@@ -280,7 +277,7 @@ public class Provisioning implements AutoCloseable {
             cp[0] = coreArtifact.getPath().toFile().toURI().toURL();
             cp[1] = callerArtifact.getPath().toFile().toURI().toURL();
             URLClassLoader cl = new URLClassLoader(cp, Thread.currentThread().getContextClassLoader());
-            return Class.forName("org.jboss.galleon.caller.Provision", true, cl);
+            return Class.forName("org.jboss.galleon.caller.ProvisioningContextBuilderImpl", true, cl);
         } catch (Exception ex) {
             throw new ProvisioningException(ex);
         }
@@ -316,6 +313,9 @@ public class Provisioning implements AutoCloseable {
 
     @Override
     public void close() {
+        for (ProvisioningContext ctx : contexts) {
+            ctx.close();
+        }
     }
 
 }

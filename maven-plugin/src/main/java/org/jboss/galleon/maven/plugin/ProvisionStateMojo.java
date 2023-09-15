@@ -230,7 +230,7 @@ public class ProvisionStateMojo extends AbstractMojo {
                     setCustomConfig(customConfig == null ? null : customConfig.toPath()).
                     setFeaturePacks(featurePacks).
                     setLocalItems(resolveLocals).setOptions(pluginOptions).build();
-            pm.provision(config);
+            pm.buildProvisioningContext(config).provision();
         }
     }
 

@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.jboss.galleon.Constants;
 import org.jboss.galleon.ProvisioningException;
 
 public class ProvisioningDescription {
@@ -30,9 +29,6 @@ public class ProvisioningDescription {
     public static class Builder {
 
         private List<GalleonFeaturePack> packs = Collections.emptyList();
-        private List<String> layers = Collections.emptyList();
-        private List<String> excludedLayers = Collections.emptyList();
-        private String layersConfigName = "standalone.xml";
         private Map<String, String> options = Collections.emptyMap();
 
         private List<Configuration> configs = Collections.emptyList();
@@ -66,21 +62,6 @@ public class ProvisioningDescription {
 
         public Builder setFeaturePacks(List<GalleonFeaturePack> packs) {
             this.packs = packs;
-            return this;
-        }
-
-        public Builder setLayers(List<String> layers) {
-            this.layers = layers;
-            return this;
-        }
-
-        public Builder setExcludedLayers(List<String> excludedLayers) {
-            this.excludedLayers = excludedLayers;
-            return this;
-        }
-
-        public Builder setLayersConfigName(String layersConfigName) {
-            this.layersConfigName = layersConfigName;
             return this;
         }
 
@@ -119,18 +100,6 @@ public class ProvisioningDescription {
         this.localItems = builder.localItems;
         this.customConfig = builder.customConfig;
         this.options.putAll(builder.options);
-
-        if (!builder.layers.isEmpty()) {
-            Configuration config = new Configuration();
-            config.setModel("standalone");
-            config.setName(builder.layersConfigName);
-            config.setExcludedLayers(builder.excludedLayers);
-            config.setLayers(builder.layers);
-            configs.add(config);
-            if (!options.containsKey(Constants.OPTIONAL_PACKAGES)) {
-                options.put(Constants.OPTIONAL_PACKAGES, Constants.PASSIVE_PLUS);
-            }
-        }
 
         configs.addAll(builder.configs);
     }

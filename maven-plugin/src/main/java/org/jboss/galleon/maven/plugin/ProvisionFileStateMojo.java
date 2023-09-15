@@ -142,7 +142,9 @@ public class ProvisionFileStateMojo extends AbstractMojo {
                 .setLogTime(logTime)
                 .setRecordState(recordState)
                 .build()) {
-            pm.provision(ProvisioningDescription.builder().setProvisioningFile(provisioningFile.toPath()).setOptions(pluginOptions).build());
+            pm.buildProvisioningContext(ProvisioningDescription.builder().
+                    setProvisioningFile(provisioningFile.toPath()).
+                    setOptions(pluginOptions).build()).provision();
         }
     }
 }
