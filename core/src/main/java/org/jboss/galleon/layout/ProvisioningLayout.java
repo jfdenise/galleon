@@ -1152,7 +1152,6 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
         if(!queue.isEmpty()) {
             for(F p : queue) {
                 final FeaturePackSpec spec = p.getSpec();
-                System.out.println("BABAR");
                 if (spec.getGalleonMinVersion() != null && Boolean.getBoolean("org.jboss.galleon.version.check")) {
                     if (!CoreVersion.isSupportedVersion(spec.getGalleonMinVersion())) {
                         throw new ProvisioningException("Feature-pack " + spec.getFPID() + " requires minimal Galleon version " + spec.getGalleonMinVersion()

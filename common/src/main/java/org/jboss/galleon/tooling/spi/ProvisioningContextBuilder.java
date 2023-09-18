@@ -34,4 +34,13 @@ public interface ProvisioningContextBuilder {
             boolean recordState,
             RepositoryArtifactResolver artifactResolver,
             Map<String, ProgressTracker<?>> progressTrackers) throws ProvisioningException;
+
+    public ProvisioningContext buildProvisioningContext(Path home,
+            Path provisioning,
+            Map<String, String> options,
+            MessageWriter msgWriter,
+            boolean logTime,
+            boolean recordState,
+            RepositoryArtifactResolver artifactResolver,
+            Map<String, ProgressTracker<?>> progressTrackers) throws ProvisioningException;
 }

@@ -16,13 +16,24 @@
  */
 package org.jboss.galleon.tooling.api;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Map;
+import javax.xml.stream.XMLStreamException;
 import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.universe.FeaturePackLocation;
 
 public interface ProvisioningContext extends AutoCloseable {
 
     public void provision() throws ProvisioningException;
 
     public String getCoreVersion();
+
+    public void storeProvisioningConfig(Path target) throws XMLStreamException, IOException;
+
+    public Map<FeaturePackLocation.FPID, Map<String, GalleonLayer>> getAllLayers() throws ProvisioningException, IOException;
+
+    public ProvisioningDescription getProvisioningDescription() throws ProvisioningException;
 
     @Override
     public void close();

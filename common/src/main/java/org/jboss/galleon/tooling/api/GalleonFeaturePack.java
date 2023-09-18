@@ -19,7 +19,7 @@ package org.jboss.galleon.tooling.api;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 import org.jboss.galleon.util.StringUtils;
 
@@ -40,12 +40,12 @@ public class GalleonFeaturePack implements GalleonArtifactCoordinate {
     private String location;
 
     private Boolean inheritConfigs;
-    private List<ConfigurationId> includedConfigs = Collections.emptyList();
-    private List<ConfigurationId> excludedConfigs = Collections.emptyList();
+    private Set<ConfigurationId> includedConfigs = Collections.emptySet();
+    private Set<ConfigurationId> excludedConfigs = Collections.emptySet();
 
     private Boolean inheritPackages;
-    private List<String> excludedPackages = Collections.emptyList();
-    private List<String> includedPackages = Collections.emptyList();
+    private Set<String> excludedPackages = Collections.emptySet();
+    private Set<String> includedPackages = Collections.emptySet();
 
     private Path path;
 
@@ -129,7 +129,7 @@ public class GalleonFeaturePack implements GalleonArtifactCoordinate {
         return inheritPackages;
     }
 
-    public void setInheritPackages(boolean inheritPackages) {
+    public void setInheritPackages(Boolean inheritPackages) {
         this.inheritPackages = inheritPackages;
     }
 
@@ -137,39 +137,39 @@ public class GalleonFeaturePack implements GalleonArtifactCoordinate {
         return inheritConfigs;
     }
 
-    public void setInheritConfigs(boolean inheritConfigs) {
+    public void setInheritConfigs(Boolean inheritConfigs) {
         this.inheritConfigs = inheritConfigs;
     }
 
-    public List<ConfigurationId> getIncludedConfigs() {
+    public Set<ConfigurationId> getIncludedConfigs() {
         return includedConfigs;
     }
 
-    public void setIncludedConfigs(List<ConfigurationId> includedConfigs) {
+    public void setIncludedConfigs(Set<ConfigurationId> includedConfigs) {
         this.includedConfigs = includedConfigs;
     }
 
-    public List<ConfigurationId> getExcludedConfigs() {
+    public Set<ConfigurationId> getExcludedConfigs() {
         return excludedConfigs;
     }
 
-    public void setExcludedConfigs(List<ConfigurationId> excludedConfigs) {
+    public void setExcludedConfigs(Set<ConfigurationId> excludedConfigs) {
         this.excludedConfigs = excludedConfigs;
     }
 
-    public List<String> getExcludedPackages() {
+    public Set<String> getExcludedPackages() {
         return excludedPackages;
     }
 
-    public void setExcludedPackages(List<String> excludedPackages) {
+    public void setExcludedPackages(Set<String> excludedPackages) {
         this.excludedPackages = excludedPackages;
     }
 
-    public List<String> getIncludedPackages() {
+    public Set<String> getIncludedPackages() {
         return includedPackages;
     }
 
-    public void setIncludedPackages(List<String> includedPackages) {
+    public void setIncludedPackages(Set<String> includedPackages) {
         this.includedPackages = includedPackages;
     }
 
@@ -182,35 +182,49 @@ public class GalleonFeaturePack implements GalleonArtifactCoordinate {
         return path;
     }
 
+    public static String toMavenCoords(String groupId, String artifactId, String extension, String classifier, String version) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(groupId).append(":").append(artifactId);
+        String type = extension;
+        if (classifier != null || type != null) {
+            builder.append(":").append(classifier == null ? "" : classifier).append(":")
+                    .append(type == null ? "" : type);
+        }
+        if (version != null) {
+            builder.append(":").append(version);
+        }
+        return builder.toString();
+    }
+
     @Override
     public String toString() {
         final StringBuilder buf = new StringBuilder();
         buf.append('{');
-        if(transitiveDep) {
+        if (transitiveDep) {
             buf.append("transitive ");
         }
-        if(location != null) {
+        if (location != null) {
             buf.append(location);
         } else {
             buf.append(groupId).append(':').append(artifactId).append(':').append(version);
         }
         buf.append(" inherit-packages=").append(inheritPackages);
-        if(!includedPackages.isEmpty()) {
+        if (!includedPackages.isEmpty()) {
             buf.append(" included-packages=");
-            StringUtils.appendList(buf, includedPackages);
+            StringUtils.append(buf, includedPackages);
         }
-        if(!excludedPackages.isEmpty()) {
+        if (!excludedPackages.isEmpty()) {
             buf.append(" excluded-packages=");
-            StringUtils.appendList(buf, excludedPackages);
+            StringUtils.append(buf, excludedPackages);
         }
         buf.append(" inherit-configs=").append(inheritConfigs);
-        if(!includedConfigs.isEmpty()) {
+        if (!includedConfigs.isEmpty()) {
             buf.append(" included-configs=");
-            StringUtils.appendList(buf, includedConfigs);
+            StringUtils.append(buf, includedConfigs);
         }
-        if(!excludedConfigs.isEmpty()) {
+        if (!excludedConfigs.isEmpty()) {
             buf.append(" excluded-configs=");
-            StringUtils.appendList(buf, excludedConfigs);
+            StringUtils.append(buf, excludedConfigs);
         }
         return buf.append('}').toString();
     }
@@ -225,7 +239,7 @@ public class GalleonFeaturePack implements GalleonArtifactCoordinate {
     }
 
     private void assertGalleon2Location() {
-        if(groupId != null || artifactId != null || version != null) {
+        if (groupId != null || artifactId != null || version != null) {
             throw new IllegalStateException("Galleon 2.x location cannot be used: feature-pack Maven coordinates have already been initialized");
         }
         if (path != null) {
@@ -234,7 +248,7 @@ public class GalleonFeaturePack implements GalleonArtifactCoordinate {
     }
 
     private void assertGalleon1Location() {
-        if(location != null) {
+        if (location != null) {
             throw new IllegalStateException("Galleon 1.x feature-pack Maven coordinates cannot be used: Galleon 2.x feature-pack location has already been initialized");
         }
         if (path != null) {

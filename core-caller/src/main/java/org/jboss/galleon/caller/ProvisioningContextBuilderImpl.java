@@ -44,6 +44,36 @@ import org.jboss.galleon.tooling.spi.ProvisioningContextBuilder;
 
 public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilder {
 
+    @Override
+    public ProvisioningContext buildProvisioningContext(Path home,
+            Path provisioning,
+            Map<String, String> options,
+            MessageWriter msgWriter,
+            boolean logTime,
+            boolean recordState,
+            RepositoryArtifactResolver artifactResolver,
+            Map<String, ProgressTracker<?>> progressTrackers) throws ProvisioningException {
+        boolean noHome = home == null;
+        if (home == null) {
+            try {
+                home = Files.createTempDirectory("gallon-no-installation");
+            } catch (IOException ex) {
+                throw new ProvisioningException(ex);
+            }
+        }
+        ProvisioningManager pm = ProvisioningManager.builder().addArtifactResolver(artifactResolver)
+                .setInstallationHome(home)
+                .setMessageWriter(msgWriter)
+                .setLogTime(logTime)
+                .setRecordState(recordState)
+                .build();
+        for (Entry<String, ProgressTracker<?>> entry : progressTrackers.entrySet()) {
+            pm.getLayoutFactory().setProgressTracker(entry.getKey(), entry.getValue());
+        }
+
+        return new ProvisioningContextImpl(noHome, pm, ProvisioningXmlParser.parse(provisioning),
+                options);
+    }
 
     @Override
     public ProvisioningContext buildProvisioningContext(Path home,
@@ -53,6 +83,14 @@ public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilde
             boolean recordState,
             RepositoryArtifactResolver artifactResolver,
             Map<String, ProgressTracker<?>> progressTrackers) throws ProvisioningException {
+        boolean noHome = home == null;
+        if (home == null) {
+            try {
+                home = Files.createTempDirectory("gallon-no-installation");
+            } catch (IOException ex) {
+                throw new ProvisioningException(ex);
+            }
+        }
         final ProvisioningConfig.Builder state = ProvisioningConfig.builder();
         ProvisioningManager pm = ProvisioningManager.builder().addArtifactResolver(artifactResolver)
                 .setInstallationHome(home)
@@ -63,17 +101,21 @@ public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilde
         for (Entry<String, ProgressTracker<?>> entry : progressTrackers.entrySet()) {
             pm.getLayoutFactory().setProgressTracker(entry.getKey(), entry.getValue());
         }
-        if (pConfig.getProvisioningFile() != null) {
-            return new ProvisioningContextImpl(pm, ProvisioningXmlParser.parse(pConfig.getProvisioningFile()),
-                    pConfig.getOptions());
-        }
         for (GalleonFeaturePack fp : pConfig.getFeaturePacks()) {
 
             final FeaturePackLocation fpl;
             if (fp.getNormalizedPath() != null) {
                 fpl = pm.getLayoutFactory().addLocal(fp.getNormalizedPath(), false);
             } else {
-                fpl = FeaturePackLocation.fromString(fp.getLocation());
+                if (fp.getGroupId() != null && fp.getArtifactId() != null) {
+                    String coords = GalleonFeaturePack.toMavenCoords(fp.getGroupId(),
+                            fp.getArtifactId(),
+                            fp.getExtension(), fp.getClassifier(),
+                            fp.getVersion());
+                    fpl = FeaturePackLocation.fromString(coords);
+                } else {
+                    fpl = FeaturePackLocation.fromString(fp.getLocation());
+                }
             }
 
             final FeaturePackConfig.Builder fpConfig = fp.isTransitive() ? FeaturePackConfig.transitiveBuilder(fpl)
@@ -147,7 +189,7 @@ public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilde
             }
         }
 
-        return new ProvisioningContextImpl(pm, state.build(), pConfig.getOptions());
+        return new ProvisioningContextImpl(noHome, pm, state.build(), pConfig.getOptions());
 
     }
 }

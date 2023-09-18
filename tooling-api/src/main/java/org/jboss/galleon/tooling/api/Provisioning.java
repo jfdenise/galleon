@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import org.jboss.galleon.Constants;
 
-import org.jboss.galleon.util.PathsUtils;
 import org.jboss.galleon.DefaultMessageWriter;
 import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
@@ -103,7 +102,6 @@ public class Provisioning implements AutoCloseable {
     private final List<ProvisioningContext> contexts = new ArrayList<>();
 
     private Provisioning(Builder builder) throws ProvisioningException {
-        PathsUtils.assertInstallationDir(builder.installationHome);
         this.home = builder.installationHome;
         this.log = builder.messageWriter == null ? DefaultMessageWriter.getDefaultInstance() : builder.messageWriter;
 
@@ -169,40 +167,62 @@ public class Provisioning implements AutoCloseable {
         }
     }
 
+    public ProvisioningContext buildProvisioningContext(Path provisioning, Map<String, String> options) throws ProvisioningException {
+        MavenRepoManager repoManager = (MavenRepoManager) universeResolver.getArtifactResolver(MavenRepoManager.REPOSITORY_ID);
+        Path tmp = null;
+        try {
+            tmp = Files.createTempDirectory("galleon-tmp");
+            List<FPID> featurePacks = ProvisioningLightXmlParser.parse(provisioning);
+            String coreVersion = getCoreVersion(featurePacks, APIVersion.getVersion(), tmp);
+            //System.out.println("REQUIRED CORE VERSION is " + coreVersion);
+
+            Class<?> callerClass = getCallerClass(coreVersion, repoManager);
+
+            try {
+                ProvisioningContextBuilder provisioner = (ProvisioningContextBuilder) callerClass.getConstructor().newInstance();
+                ProvisioningContext ctx = provisioner.buildProvisioningContext(home, provisioning, options, log, logTime, recordState, repoManager, progressTrackers);
+                contexts.add(ctx);
+                return ctx;
+            } catch (Exception ex) {
+                throw new ProvisioningException(ex);
+            }
+
+        } catch (Exception ex) {
+            throw new ProvisioningException(ex);
+        } finally {
+            IoUtils.recursiveDelete(tmp);
+        }
+    }
+
     public ProvisioningContext buildProvisioningContext(ProvisioningDescription config) throws ProvisioningException {
         MavenRepoManager repoManager = (MavenRepoManager) universeResolver.getArtifactResolver(MavenRepoManager.REPOSITORY_ID);
         String coreVersion = APIVersion.getVersion();
         Path tmp = null;
         try {
             tmp = Files.createTempDirectory("galleon-tmp");
-            if (config.getProvisioningFile() != null) {
-                List<FPID> featurePacks = ProvisioningLightXmlParser.parse(config.getProvisioningFile());
-                coreVersion = getCoreVersion(featurePacks, APIVersion.getVersion(), tmp);
-            } else {
-                for (GalleonFeaturePack fp : config.getFeaturePacks()) {
-                    if (fp.getNormalizedPath() != null) {
-                        coreVersion = getCoreVersion(fp.getNormalizedPath(), tmp, coreVersion);
-                    } else if (fp.getGroupId() != null && fp.getArtifactId() != null) {
-                        String coords = getMavenCoords(fp);
-                        FeaturePackLocation fpl = FeaturePackLocation.fromString(coords);
-                        Path resolvedFP = universeResolver.resolve(fpl);
-                        coreVersion = getCoreVersion(resolvedFP, tmp, coreVersion);
-                    } else {
-                        // Special case for G:A that conflicts with producer:channel that we can't have in the plugin.
-                        String location = fp.getLocation();
-                        if (!FeaturePackLocation.fromString(location).hasUniverse()) {
-                            long numSeparators = location.chars().filter(ch -> ch == ':').count();
-                            if (numSeparators <= 1) {
-                                location += ":";
-                            }
+            for (GalleonFeaturePack fp : config.getFeaturePacks()) {
+                if (fp.getNormalizedPath() != null) {
+                    coreVersion = getCoreVersion(fp.getNormalizedPath(), tmp, coreVersion);
+                } else if (fp.getGroupId() != null && fp.getArtifactId() != null) {
+                    String coords = getMavenCoords(fp);
+                    FeaturePackLocation fpl = FeaturePackLocation.fromString(coords);
+                    Path resolvedFP = universeResolver.resolve(fpl);
+                    coreVersion = getCoreVersion(resolvedFP, tmp, coreVersion);
+                } else {
+                    // Special case for G:A that conflicts with producer:channel that we can't have in the plugin.
+                    String location = fp.getLocation();
+                    if (!FeaturePackLocation.fromString(location).hasUniverse()) {
+                        long numSeparators = location.chars().filter(ch -> ch == ':').count();
+                        if (numSeparators <= 1) {
+                            location += ":";
                         }
-                        FeaturePackLocation fpl = FeaturePackLocation.fromString(location);
-                        Path resolvedFP = universeResolver.resolve(fpl);
-                        coreVersion = getCoreVersion(resolvedFP, tmp, coreVersion);
                     }
+                    FeaturePackLocation fpl = FeaturePackLocation.fromString(location);
+                    Path resolvedFP = universeResolver.resolve(fpl);
+                    coreVersion = getCoreVersion(resolvedFP, tmp, coreVersion);
                 }
             }
-            System.out.println("REQUIRED CORE VERSION is " + coreVersion);
+            //System.out.println("REQUIRED CORE VERSION is " + coreVersion);
 
             Class<?> callerClass = getCallerClass(coreVersion, repoManager);
 
@@ -222,10 +242,23 @@ public class Provisioning implements AutoCloseable {
         }
     }
 
+    public static boolean isFeaturePack(Path path) {
+        Path tmp = null;
+        try {
+            tmp = Files.createTempDirectory("galleon-tmp");
+            Path spec = getFeaturePackSpec(path, tmp);
+            return Files.exists(spec);
+        } catch (Exception ex) {
+            return false;
+        } finally {
+            IoUtils.recursiveDelete(tmp);
+        }
+    }
+
     private String getCoreVersion(Path resolvedFP, Path tmp, String currentVersion) throws Exception {
-        Path spec = getFeaturePackSpec(null, resolvedFP, tmp);
+        Path spec = getFeaturePackSpec(resolvedFP, tmp);
         String fpVersion = FeaturePackLightXmlParser.parseVersion(spec);
-        System.out.println("Found a version in FP " + resolvedFP + " version is " + fpVersion);
+        //System.out.println("Found a version in FP " + resolvedFP + " version is " + fpVersion);
         if (fpVersion != null) {
             if (fpVersion.compareTo(currentVersion) > 0) {
                 currentVersion = fpVersion;
@@ -236,17 +269,10 @@ public class Provisioning implements AutoCloseable {
     }
 
     private static String getMavenCoords(GalleonFeaturePack fp) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(fp.getGroupId()).append(":").append(fp.getArtifactId());
-        String type = fp.getExtension() == null ? fp.getType() : fp.getExtension();
-        if (fp.getClassifier() != null || type != null) {
-            builder.append(":").append(fp.getClassifier() == null ? "" : fp.getClassifier()).append(":")
-                    .append(type == null ? "" : type);
-        }
-        if (fp.getVersion() != null) {
-            builder.append(":").append(fp.getVersion());
-        }
-        return builder.toString();
+        return GalleonFeaturePack.toMavenCoords(fp.getGroupId(),
+                fp.getArtifactId(),
+                fp.getExtension(),
+                fp.getClassifier(), fp.getVersion());
     }
 
     private Class<?> getCallerClass(String version, MavenRepoManager repoManager) throws ProvisioningException {
@@ -284,9 +310,9 @@ public class Provisioning implements AutoCloseable {
             String version = currentMax;
             for (FPID fpid : featurePacks) {
                 Path resolvedFP = universeResolver.resolve(fpid.getLocation());
-                Path spec = getFeaturePackSpec(fpid, resolvedFP, tmp);
+                Path spec = getFeaturePackSpec(resolvedFP, tmp);
                 String fpVersion = FeaturePackLightXmlParser.parseVersion(spec);
-                System.out.println("Found a version in FP " + fpid + " version is " + fpVersion);
+                //System.out.println("Found a version in FP " + fpid + " version is " + fpVersion);
                 if (fpVersion != null) {
                     if (fpVersion.compareTo(version) > 0) {
                         version = fpVersion;
@@ -301,7 +327,7 @@ public class Provisioning implements AutoCloseable {
         }
     }
 
-    private Path getFeaturePackSpec(FPID fpid, Path resolvedFP, Path tmp) throws Exception {
+    private static Path getFeaturePackSpec(Path resolvedFP, Path tmp) throws Exception {
         Path fpDir = tmp.resolve(resolvedFP.getFileName());
         ZipUtils.unzip(resolvedFP, fpDir);
         return fpDir.resolve(Constants.FEATURE_PACK_XML);

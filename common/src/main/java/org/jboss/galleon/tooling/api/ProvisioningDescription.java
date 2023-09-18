@@ -35,14 +35,7 @@ public class ProvisioningDescription {
         private List<GalleonLocalItem> localItems = Collections.emptyList();
         private Path customConfig;
 
-        private Path provisioningFile;
-
         private Builder() {
-        }
-
-        public Builder setProvisioningFile(Path provisioningFile) {
-            this.provisioningFile = provisioningFile;
-            return this;
         }
 
         public Builder setConfigs(List<Configuration> configs) {
@@ -71,11 +64,6 @@ public class ProvisioningDescription {
         }
 
         public ProvisioningDescription build() throws ProvisioningException {
-            if (provisioningFile != null) {
-                if (packs != null && !packs.isEmpty()) {
-                    throw new ProvisioningException("A provisioning file has been set, FeaturePacks can't be set.");
-                }
-            }
             return new ProvisioningDescription(this);
         }
     }
@@ -89,11 +77,9 @@ public class ProvisioningDescription {
     private final List<Configuration> configs = new ArrayList<>();
     private final List<GalleonLocalItem> localItems;
     private final Path customConfig;
-    private final Path provisioningFile;
 
     private ProvisioningDescription(Builder builder) throws ProvisioningException {
 
-        this.provisioningFile = builder.provisioningFile;
 
         this.packs = builder.packs;
 
@@ -137,13 +123,6 @@ public class ProvisioningDescription {
      */
     public Path getCustomConfig() {
         return customConfig;
-    }
-
-    /**
-     * @return the provisioningFile
-     */
-    public Path getProvisioningFile() {
-        return provisioningFile;
     }
 
 }

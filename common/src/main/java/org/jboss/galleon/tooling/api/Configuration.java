@@ -17,7 +17,7 @@
 package org.jboss.galleon.tooling.api;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 /**
  *
@@ -27,8 +27,8 @@ public class Configuration {
 
     private String model;
     private String name;
-    private List<String> layers = Collections.emptyList();
-    private List<String> excludedLayers = Collections.emptyList();
+    private Set<String> layers = Collections.emptySet();
+    private Set<String> excludedLayers = Collections.emptySet();
 
     public String getModel() {
         return model;
@@ -38,11 +38,11 @@ public class Configuration {
         return name;
     }
 
-    public List<String> getLayers() {
+    public Set<String> getLayers() {
         return layers;
     }
 
-    public List<String> getExcludedLayers() {
+    public Set<String> getExcludedLayers() {
         return excludedLayers;
     }
 
@@ -54,11 +54,11 @@ public class Configuration {
         this.name = name;
     }
 
-    public void setLayers(List<String> layers) {
+    public void setLayers(Set<String> layers) {
         this.layers = layers;
     }
 
-    public void setExcludedLayers(List<String> excludedLayers) {
+    public void setExcludedLayers(Set<String> excludedLayers) {
         this.excludedLayers = excludedLayers;
     }
 }
