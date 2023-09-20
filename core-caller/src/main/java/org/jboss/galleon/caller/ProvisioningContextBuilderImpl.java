@@ -192,6 +192,7 @@ public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilde
         for(String transitive : pConfig.getTransitiveLocations()) {
             state.addTransitiveDep(FeaturePackLocation.fromString(transitive));
         }
+        state.addOptions(pConfig.getOptions());
         return new ProvisioningContextImpl(loader, noHome, pm, state.build(), pConfig.getOptions());
 
     }
