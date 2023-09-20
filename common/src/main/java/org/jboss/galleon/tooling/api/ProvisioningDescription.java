@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 
 public class ProvisioningDescription {
@@ -34,12 +35,28 @@ public class ProvisioningDescription {
         private List<Configuration> configs = Collections.emptyList();
         private List<GalleonLocalItem> localItems = Collections.emptyList();
         private Path customConfig;
+        private List<String> transitiveLocations = Collections.emptyList();
 
         private Builder() {
         }
 
+        private Builder(ProvisioningDescription original) throws ProvisioningDescriptionException {
+            if (original == null) {
+                return;
+            }
+            setOptions(original.getOptions());
+            setFeaturePacks(original.getFeaturePacks());
+            setConfigs(original.getConfigs());
+            setTransitiveDependencies(original.getTransitiveLocations());
+        }
+
         public Builder setConfigs(List<Configuration> configs) {
             this.configs = configs;
+            return this;
+        }
+
+        public Builder setTransitiveDependencies(List<String> transitiveLocations) {
+            this.transitiveLocations = transitiveLocations;
             return this;
         }
 
@@ -72,21 +89,24 @@ public class ProvisioningDescription {
         return new Builder();
     }
 
+    public static Builder builder(ProvisioningDescription config) throws ProvisioningDescriptionException {
+        return new Builder(config);
+    }
+
     private final List<GalleonFeaturePack> packs;
     private final Map<String, String> options = new HashMap<>();
     private final List<Configuration> configs = new ArrayList<>();
     private final List<GalleonLocalItem> localItems;
     private final Path customConfig;
-
+    private final List<String> transitiveLocations;
     private ProvisioningDescription(Builder builder) throws ProvisioningException {
-
 
         this.packs = builder.packs;
 
         this.localItems = builder.localItems;
         this.customConfig = builder.customConfig;
         this.options.putAll(builder.options);
-
+        transitiveLocations = builder.transitiveLocations;
         configs.addAll(builder.configs);
     }
 
@@ -123,6 +143,13 @@ public class ProvisioningDescription {
      */
     public Path getCustomConfig() {
         return customConfig;
+    }
+
+    /**
+     * @return the transitiveLocations
+     */
+    public List<String> getTransitiveLocations() {
+        return transitiveLocations;
     }
 
 }

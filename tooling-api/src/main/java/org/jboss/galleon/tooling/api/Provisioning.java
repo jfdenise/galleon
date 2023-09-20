@@ -16,11 +16,12 @@
  */
 package org.jboss.galleon.tooling.api;
 
+import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -99,7 +100,7 @@ public class Provisioning implements AutoCloseable {
     private boolean recordState;
     private final Map<String, ProgressTracker<?>> progressTrackers = new HashMap<>();
 
-    private final List<ProvisioningContext> contexts = new ArrayList<>();
+    private final Path tmp;
 
     private Provisioning(Builder builder) throws ProvisioningException {
         this.home = builder.installationHome;
@@ -108,6 +109,11 @@ public class Provisioning implements AutoCloseable {
         universeResolver = builder.getUniverseResolver();
         this.logTime = builder.logTime;
         this.recordState = builder.recordState;
+        try {
+            tmp = Files.createTempDirectory("galleon-tmp");
+        } catch (IOException ex) {
+            throw new ProvisioningException(ex);
+        }
     }
 
     /**
@@ -169,19 +175,18 @@ public class Provisioning implements AutoCloseable {
 
     public ProvisioningContext buildProvisioningContext(Path provisioning, Map<String, String> options) throws ProvisioningException {
         MavenRepoManager repoManager = (MavenRepoManager) universeResolver.getArtifactResolver(MavenRepoManager.REPOSITORY_ID);
-        Path tmp = null;
         try {
-            tmp = Files.createTempDirectory("galleon-tmp");
             List<FPID> featurePacks = ProvisioningLightXmlParser.parse(provisioning);
-            String coreVersion = getCoreVersion(featurePacks, APIVersion.getVersion(), tmp);
+            String coreVersion = getCoreVersion(featurePacks, APIVersion.getVersion());
             //System.out.println("REQUIRED CORE VERSION is " + coreVersion);
 
-            Class<?> callerClass = getCallerClass(coreVersion, repoManager);
+            URLClassLoader loader = getCallerClassLoader(coreVersion, repoManager);
+            Class<?> callerClass = getCallerClass(loader);
+
 
             try {
                 ProvisioningContextBuilder provisioner = (ProvisioningContextBuilder) callerClass.getConstructor().newInstance();
-                ProvisioningContext ctx = provisioner.buildProvisioningContext(home, provisioning, options, log, logTime, recordState, repoManager, progressTrackers);
-                contexts.add(ctx);
+                ProvisioningContext ctx = provisioner.buildProvisioningContext(loader, home, provisioning, options, log, logTime, recordState, repoManager, progressTrackers);
                 return ctx;
             } catch (Exception ex) {
                 throw new ProvisioningException(ex);
@@ -197,17 +202,15 @@ public class Provisioning implements AutoCloseable {
     public ProvisioningContext buildProvisioningContext(ProvisioningDescription config) throws ProvisioningException {
         MavenRepoManager repoManager = (MavenRepoManager) universeResolver.getArtifactResolver(MavenRepoManager.REPOSITORY_ID);
         String coreVersion = APIVersion.getVersion();
-        Path tmp = null;
         try {
-            tmp = Files.createTempDirectory("galleon-tmp");
             for (GalleonFeaturePack fp : config.getFeaturePacks()) {
                 if (fp.getNormalizedPath() != null) {
-                    coreVersion = getCoreVersion(fp.getNormalizedPath(), tmp, coreVersion);
+                    coreVersion = getCoreVersion(fp.getNormalizedPath(), coreVersion);
                 } else if (fp.getGroupId() != null && fp.getArtifactId() != null) {
                     String coords = getMavenCoords(fp);
                     FeaturePackLocation fpl = FeaturePackLocation.fromString(coords);
                     Path resolvedFP = universeResolver.resolve(fpl);
-                    coreVersion = getCoreVersion(resolvedFP, tmp, coreVersion);
+                    coreVersion = getCoreVersion(resolvedFP, coreVersion);
                 } else {
                     // Special case for G:A that conflicts with producer:channel that we can't have in the plugin.
                     String location = fp.getLocation();
@@ -219,17 +222,16 @@ public class Provisioning implements AutoCloseable {
                     }
                     FeaturePackLocation fpl = FeaturePackLocation.fromString(location);
                     Path resolvedFP = universeResolver.resolve(fpl);
-                    coreVersion = getCoreVersion(resolvedFP, tmp, coreVersion);
+                    coreVersion = getCoreVersion(resolvedFP, coreVersion);
                 }
             }
             //System.out.println("REQUIRED CORE VERSION is " + coreVersion);
-
-            Class<?> callerClass = getCallerClass(coreVersion, repoManager);
+            URLClassLoader loader = getCallerClassLoader(coreVersion, repoManager);
+            Class<?> callerClass = getCallerClass(loader);
 
             try {
                 ProvisioningContextBuilder provisioner = (ProvisioningContextBuilder) callerClass.getConstructor().newInstance();
-                ProvisioningContext ctx = provisioner.buildProvisioningContext(home, config, log, logTime, recordState, repoManager, progressTrackers);
-                contexts.add(ctx);
+                ProvisioningContext ctx = provisioner.buildProvisioningContext(loader, home, config, log, logTime, recordState, repoManager, progressTrackers);
                 return ctx;
             } catch (Exception ex) {
                 throw new ProvisioningException(ex);
@@ -255,7 +257,7 @@ public class Provisioning implements AutoCloseable {
         }
     }
 
-    private String getCoreVersion(Path resolvedFP, Path tmp, String currentVersion) throws Exception {
+    private String getCoreVersion(Path resolvedFP, String currentVersion) throws Exception {
         Path spec = getFeaturePackSpec(resolvedFP, tmp);
         String fpVersion = FeaturePackLightXmlParser.parseVersion(spec);
         //System.out.println("Found a version in FP " + resolvedFP + " version is " + fpVersion);
@@ -264,18 +266,23 @@ public class Provisioning implements AutoCloseable {
                 currentVersion = fpVersion;
             }
         }
-        List<FPID> deps = FeaturePackLightXmlParser.parseDependencies(spec);
-        return getCoreVersion(deps, currentVersion, tmp);
+        FeaturePackDependencies deps = FeaturePackLightXmlParser.parseDependencies(spec);
+        return getCoreVersion(deps.getDependencies(), currentVersion);
     }
 
     private static String getMavenCoords(GalleonFeaturePack fp) {
-        return GalleonFeaturePack.toMavenCoords(fp.getGroupId(),
-                fp.getArtifactId(),
-                fp.getExtension(),
-                fp.getClassifier(), fp.getVersion());
+        return fp.getMavenCoords();
     }
 
-    private Class<?> getCallerClass(String version, MavenRepoManager repoManager) throws ProvisioningException {
+    private Class<?> getCallerClass(URLClassLoader loader) throws ProvisioningException {
+        try {
+            return Class.forName("org.jboss.galleon.caller.ProvisioningContextBuilderImpl", true, loader);
+        } catch (Exception ex) {
+            throw new ProvisioningException(ex);
+        }
+    }
+
+    private URLClassLoader getCallerClassLoader(String version, MavenRepoManager repoManager) throws ProvisioningException {
         MavenArtifact coreArtifact = new MavenArtifact();
         coreArtifact.setGroupId("org.jboss.galleon");
         coreArtifact.setArtifactId("galleon-core");
@@ -298,14 +305,13 @@ public class Provisioning implements AutoCloseable {
         try {
             cp[0] = coreArtifact.getPath().toFile().toURI().toURL();
             cp[1] = callerArtifact.getPath().toFile().toURI().toURL();
-            URLClassLoader cl = new URLClassLoader(cp, Thread.currentThread().getContextClassLoader());
-            return Class.forName("org.jboss.galleon.caller.ProvisioningContextBuilderImpl", true, cl);
+            return new URLClassLoader(cp, Thread.currentThread().getContextClassLoader());
         } catch (Exception ex) {
             throw new ProvisioningException(ex);
         }
     }
 
-    private String getCoreVersion(List<FPID> featurePacks, String currentMax, Path tmp) throws ProvisioningException {
+    private String getCoreVersion(List<FPID> featurePacks, String currentMax) throws ProvisioningException {
         try {
             String version = currentMax;
             for (FPID fpid : featurePacks) {
@@ -318,8 +324,8 @@ public class Provisioning implements AutoCloseable {
                         version = fpVersion;
                     }
                 }
-                List<FPID> deps = FeaturePackLightXmlParser.parseDependencies(spec);
-                version = getCoreVersion(deps, version, tmp);
+                FeaturePackDependencies deps = FeaturePackLightXmlParser.parseDependencies(spec);
+                version = getCoreVersion(deps.getDependencies(), version);
             }
             return version;
         } catch (Exception ex) {
@@ -327,17 +333,31 @@ public class Provisioning implements AutoCloseable {
         }
     }
 
+    public FeaturePackDependencies getFeaturePackDependencies(Path fp) throws ProvisioningException {
+        try {
+            Path spec = getFeaturePackSpec(fp, tmp);
+            return FeaturePackLightXmlParser.parseDependencies(spec);
+        } catch (Exception ex) {
+            throw new ProvisioningException(ex);
+        }
+    }
+
     private static Path getFeaturePackSpec(Path resolvedFP, Path tmp) throws Exception {
         Path fpDir = tmp.resolve(resolvedFP.getFileName());
-        ZipUtils.unzip(resolvedFP, fpDir);
-        return fpDir.resolve(Constants.FEATURE_PACK_XML);
+        Files.createDirectories(fpDir);
+        Path target = fpDir.resolve("fp-spec.xml");
+        if (!Files.exists(target)) {
+            try (FileSystem fs = ZipUtils.newFileSystem(resolvedFP)) {
+                Path spec = fs.getPath(Constants.FEATURE_PACK_XML);
+                ZipUtils.copyFromZip(spec, target);
+            }
+        }
+        return target;
     }
 
     @Override
     public void close() {
-        for (ProvisioningContext ctx : contexts) {
-            ctx.close();
-        }
+        IoUtils.recursiveDelete(tmp);
     }
 
 }

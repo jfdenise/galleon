@@ -182,16 +182,15 @@ public class GalleonFeaturePack implements GalleonArtifactCoordinate {
         return path;
     }
 
-    public static String toMavenCoords(String groupId, String artifactId, String extension, String classifier, String version) {
+    public String getMavenCoords() {
         StringBuilder builder = new StringBuilder();
-        builder.append(groupId).append(":").append(artifactId);
-        String type = extension;
-        if (classifier != null || type != null) {
-            builder.append(":").append(classifier == null ? "" : classifier).append(":")
-                    .append(type == null ? "" : type);
+        builder.append(getGroupId()).append(":").append(getArtifactId());
+        String type = getExtension() == null ? getType() : getExtension();
+        if (getClassifier() != null || type != null) {
+            builder.append(":").append(getClassifier() == null ? "" : getClassifier()).append(":").append(type == null ? "" : type);
         }
-        if (version != null) {
-            builder.append(":").append(version);
+        if (getVersion() != null) {
+            builder.append(":").append(getVersion());
         }
         return builder.toString();
     }

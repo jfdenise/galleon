@@ -17,7 +17,8 @@
 package org.jboss.galleon.tooling.api;
 
 import java.util.Collections;
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -27,8 +28,9 @@ public class Configuration {
 
     private String model;
     private String name;
-    private Set<String> layers = Collections.emptySet();
-    private Set<String> excludedLayers = Collections.emptySet();
+    private List<String> layers = Collections.emptyList();
+    private List<String> excludedLayers = Collections.emptyList();
+    private Map<String, String> props = Collections.emptyMap();
 
     public String getModel() {
         return model;
@@ -38,11 +40,11 @@ public class Configuration {
         return name;
     }
 
-    public Set<String> getLayers() {
+    public List<String> getLayers() {
         return layers;
     }
 
-    public Set<String> getExcludedLayers() {
+    public List<String> getExcludedLayers() {
         return excludedLayers;
     }
 
@@ -54,11 +56,25 @@ public class Configuration {
         this.name = name;
     }
 
-    public void setLayers(Set<String> layers) {
+    public void setLayers(List<String> layers) {
         this.layers = layers;
     }
 
-    public void setExcludedLayers(Set<String> excludedLayers) {
+    public void setExcludedLayers(List<String> excludedLayers) {
         this.excludedLayers = excludedLayers;
+    }
+
+    /**
+     * @return the props
+     */
+    public Map<String, String> getProps() {
+        return props;
+    }
+
+    /**
+     * @param props the props to set
+     */
+    public void setProps(Map<String, String> props) {
+        this.props = props;
     }
 }

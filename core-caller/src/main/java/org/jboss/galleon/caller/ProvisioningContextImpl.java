@@ -18,6 +18,7 @@ package org.jboss.galleon.caller;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,8 +44,10 @@ import org.jboss.galleon.tooling.api.Configuration;
 import org.jboss.galleon.tooling.api.ConfigurationId;
 import org.jboss.galleon.tooling.api.GalleonFeaturePack;
 import org.jboss.galleon.tooling.api.GalleonLayer;
+import org.jboss.galleon.tooling.api.GalleonProvisioningRuntime;
 import org.jboss.galleon.tooling.api.ProvisioningContext;
 import org.jboss.galleon.tooling.api.ProvisioningDescription;
+import org.jboss.galleon.universe.BaseUniverseResolver;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.xml.ProvisioningXmlWriter;
 
@@ -54,9 +57,11 @@ public class ProvisioningContextImpl implements ProvisioningContext {
     private final ProvisioningConfig config;
     private final Map<String, String> options;
     private final boolean noHome;
-
-    ProvisioningContextImpl(boolean noHome,
+    private final URLClassLoader loader;
+    ProvisioningContextImpl(URLClassLoader loader,
+            boolean noHome,
             ProvisioningManager manager, ProvisioningConfig config, Map<String, String> options) {
+        this.loader = loader;
         this.noHome = noHome;
         this.manager = manager;
         this.config = config;
@@ -68,12 +73,12 @@ public class ProvisioningContextImpl implements ProvisioningContext {
         if (noHome) {
             throw new ProvisioningException("No installation set, can't provision.");
         }
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        Thread.currentThread().setContextClassLoader(ProvisioningContextImpl.class.getClassLoader());
+        ClassLoader originalLoader = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(loader);
         try {
             manager.provision(config, options);
         } finally {
-            Thread.currentThread().setContextClassLoader(loader);
+            Thread.currentThread().setContextClassLoader(originalLoader);
         }
     }
 
@@ -125,12 +130,16 @@ public class ProvisioningContextImpl implements ProvisioningContext {
             Configuration config = new Configuration();
             config.setModel(model.getModel());
             config.setName(model.getName());
-            config.setExcludedLayers(model.getExcludedLayers());
-            config.setLayers(model.getIncludedLayers());
+            List<String> excluded = new ArrayList<>();
+            excluded.addAll(model.getExcludedLayers());
+            config.setExcludedLayers(excluded);
+            List<String> included = new ArrayList<>();
+            included.addAll(model.getIncludedLayers());
+            config.setLayers(included);
             configs.add(config);
         }
         builder.setConfigs(configs);
-
+        builder.setOptions(options);
         return builder.build();
     }
 
@@ -173,7 +182,28 @@ public class ProvisioningContextImpl implements ProvisioningContext {
     }
 
     @Override
+    public GalleonProvisioningRuntime getProvisioningRuntime() throws ProvisioningException {
+        ClassLoader originalLoader = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(loader);
+        try {
+             return manager.getRuntime(config);
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalLoader);
+        }
+    }
+
+    @Override
+    public BaseUniverseResolver getUniverseResolver() {
+        return manager.getLayoutFactory().getUniverseResolver();
+    }
+
+    @Override
     public void close() {
+        try {
+            loader.close();
+        } catch (IOException ex) {
+            System.err.println("Error closing core classloader");
+        }
         manager.close();
     }
 }

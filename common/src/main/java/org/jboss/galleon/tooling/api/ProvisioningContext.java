@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import javax.xml.stream.XMLStreamException;
 import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.universe.BaseUniverseResolver;
 import org.jboss.galleon.universe.FeaturePackLocation;
 
 public interface ProvisioningContext extends AutoCloseable {
@@ -34,6 +35,10 @@ public interface ProvisioningContext extends AutoCloseable {
     public Map<FeaturePackLocation.FPID, Map<String, GalleonLayer>> getAllLayers() throws ProvisioningException, IOException;
 
     public ProvisioningDescription getProvisioningDescription() throws ProvisioningException;
+
+    public GalleonProvisioningRuntime getProvisioningRuntime() throws ProvisioningException;
+
+    BaseUniverseResolver getUniverseResolver();
 
     @Override
     public void close();

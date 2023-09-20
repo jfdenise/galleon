@@ -23,6 +23,7 @@ import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.tooling.api.FeaturePackDependencies;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.w3c.dom.Document;
@@ -34,15 +35,18 @@ public class FeaturePackLightXmlParser {
 
     private static final String DEPENDENCIES = "dependencies";
     private static final String DEPENDENCY = "dependency";
+    private static final String TRANSITIVE = "transitive";
 
-    public static List<FPID> parseDependencies(Path featurePack) throws ProvisioningException {
+    public static FeaturePackDependencies parseDependencies(Path featurePack) throws ProvisioningException {
         try {
             try (FileInputStream fileInputStream = new FileInputStream(featurePack.toFile())) {
                 DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
                 DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
                 Document document = documentBuilder.parse(fileInputStream);
                 Element root = document.getDocumentElement();
+                String producer = root.getAttribute("producer");
                 List<FPID> dependencies = new ArrayList<>();
+                 List<FPID> transitives = new ArrayList<>();
                 NodeList lst = root.getChildNodes();
                 for (int i = 0; i < lst.getLength(); i++) {
                     Node n = lst.item(i);
@@ -60,10 +64,25 @@ public class FeaturePackLightXmlParser {
                                     }
                                 }
                             }
+                        } else {
+                            if (TRANSITIVE.equals(n.getNodeName())) {
+                                Element e = (Element) n;
+                                NodeList deps = e.getChildNodes();
+                                for (int j = 0; j < deps.getLength(); j++) {
+                                    Node dep = deps.item(j);
+                                    if (dep instanceof Element) {
+                                        if (DEPENDENCY.equals(dep.getNodeName())) {
+                                            Element depElement = (Element) dep;
+                                            String location = depElement.getAttribute("location");
+                                            dependencies.add(FeaturePackLocation.fromString(location).getFPID());
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
-                return dependencies;
+                return new FeaturePackDependencies(FeaturePackLocation.fromString(producer).getFPID(), dependencies, transitives);
             }
         } catch (Exception ex) {
             throw new ProvisioningException(ex);

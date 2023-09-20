@@ -73,4 +73,8 @@ public interface BaseErrors {
         }
         return buf.toString();
     }
+
+    static String writeFile(Path p) {
+        return "Failed to write to " + p.toAbsolutePath();
+    }
 }

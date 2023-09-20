@@ -233,7 +233,7 @@ public class ProvisioningManager implements AutoCloseable {
         try {
             ProvisioningXmlWriter.getInstance().write(config, PathsUtils.getProvisioningXml(home));
         } catch (Exception e) {
-            throw new ProvisioningException(Errors.writeFile(PathsUtils.getProvisioningXml(home)), e);
+            throw new ProvisioningException(BaseErrors.writeFile(PathsUtils.getProvisioningXml(home)), e);
         }
         this.provisioningConfig = config;
     }
@@ -252,7 +252,7 @@ public class ProvisioningManager implements AutoCloseable {
         try {
             ProvisioningXmlWriter.getInstance().write(config, PathsUtils.getProvisioningXml(home));
         } catch (Exception e) {
-            throw new ProvisioningException(Errors.writeFile(PathsUtils.getProvisioningXml(home)), e);
+            throw new ProvisioningException(BaseErrors.writeFile(PathsUtils.getProvisioningXml(home)), e);
         }
         this.provisioningConfig = config;
     }

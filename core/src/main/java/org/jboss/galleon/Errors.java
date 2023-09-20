@@ -83,10 +83,6 @@ public interface Errors {
         return "Failed to parse " + p.toAbsolutePath();
     }
 
-    static String writeFile(Path p) {
-        return "Failed to write to " + p.toAbsolutePath();
-    }
-
     static String deleteFile(Path p) {
         return "Failed to delete " + p.toAbsolutePath();
     }

@@ -16,6 +16,7 @@
  */
 package org.jboss.galleon.tooling.spi;
 
+import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.Map;
 import org.jboss.galleon.MessageWriter;
@@ -27,7 +28,7 @@ import org.jboss.galleon.tooling.api.ProvisioningDescription;
 
 public interface ProvisioningContextBuilder {
 
-    public ProvisioningContext buildProvisioningContext(Path home,
+    public ProvisioningContext buildProvisioningContext(URLClassLoader loader, Path home,
             ProvisioningDescription pConfig,
             MessageWriter msgWriter,
             boolean logTime,
@@ -35,7 +36,7 @@ public interface ProvisioningContextBuilder {
             RepositoryArtifactResolver artifactResolver,
             Map<String, ProgressTracker<?>> progressTrackers) throws ProvisioningException;
 
-    public ProvisioningContext buildProvisioningContext(Path home,
+    public ProvisioningContext buildProvisioningContext(URLClassLoader loader, Path home,
             Path provisioning,
             Map<String, String> options,
             MessageWriter msgWriter,

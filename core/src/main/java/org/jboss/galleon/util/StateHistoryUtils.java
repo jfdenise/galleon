@@ -93,7 +93,7 @@ public class StateHistoryUtils {
                 writer.write(newStateId);
             }
         } catch (IOException e) {
-            throw new ProvisioningException(Errors.writeFile(stagedHistoryDir.resolve(Constants.HISTORY_LIST)), e);
+            throw new ProvisioningException(BaseErrors.writeFile(stagedHistoryDir.resolve(Constants.HISTORY_LIST)), e);
         }
         final Path stateDir = stagedHistoryDir.resolve(newStateId);
         try {
@@ -119,7 +119,7 @@ public class StateHistoryUtils {
                     writer.newLine();
                 }
             } catch (IOException e) {
-                throw new ProvisioningException(Errors.writeFile(stateDir.resolve(Constants.UNDO_TASKS)), e);
+                throw new ProvisioningException(BaseErrors.writeFile(stateDir.resolve(Constants.UNDO_TASKS)), e);
             }
         }
     }
@@ -172,7 +172,7 @@ public class StateHistoryUtils {
                 }
             }
         } catch (IOException e) {
-            throw new ProvisioningException(Errors.writeFile(stagedHistoryDir.resolve(Constants.HISTORY_LIST)), e);
+            throw new ProvisioningException(BaseErrors.writeFile(stagedHistoryDir.resolve(Constants.HISTORY_LIST)), e);
         }
     }
 
@@ -350,7 +350,7 @@ public class StateHistoryUtils {
             writer.write(String.valueOf(limit));
             writer.newLine();
         } catch (IOException e) {
-            throw new ProvisioningException(Errors.writeFile(installedHistoryList), e);
+            throw new ProvisioningException(BaseErrors.writeFile(installedHistoryList), e);
         }
         deleteHistoryFiles(installedHistoryDir);
     }

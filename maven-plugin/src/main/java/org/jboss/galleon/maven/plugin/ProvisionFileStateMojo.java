@@ -142,9 +142,10 @@ public class ProvisionFileStateMojo extends AbstractMojo {
                 .setLogTime(logTime)
                 .setRecordState(recordState)
                 .build()) {
-            ProvisioningContext ctx = pm.buildProvisioningContext(provisioningFile.toPath(),pluginOptions);
-            System.out.println("Galleon core version " + ctx.getCoreVersion() + " API used to retrieve it " + APIVersion.getVersion());
-            ctx.provision();
+            try (ProvisioningContext ctx = pm.buildProvisioningContext(provisioningFile.toPath(), pluginOptions)) {
+                System.out.println("Galleon core version " + ctx.getCoreVersion() + " API used to retrieve it " + APIVersion.getVersion());
+                ctx.provision();
+            }
         }
     }
 }

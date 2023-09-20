@@ -231,9 +231,10 @@ public class ProvisionStateMojo extends AbstractMojo {
                     setCustomConfig(customConfig == null ? null : customConfig.toPath()).
                     setFeaturePacks(featurePacks).
                     setLocalItems(resolveLocals).setOptions(pluginOptions).build();
-            ProvisioningContext ctx = pm.buildProvisioningContext(config);
-            System.out.println("Galleon core version " + ctx.getCoreVersion() + " API used to retrieve it " + APIVersion.getVersion());
-            ctx.provision();
+            try (ProvisioningContext ctx = pm.buildProvisioningContext(config)) {
+                System.out.println("Galleon core version " + ctx.getCoreVersion() + " API used to retrieve it " + APIVersion.getVersion());
+                ctx.provision();
+            }
         }
     }
 

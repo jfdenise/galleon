@@ -18,6 +18,7 @@ package org.jboss.galleon.caller;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -45,7 +46,7 @@ import org.jboss.galleon.tooling.spi.ProvisioningContextBuilder;
 public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilder {
 
     @Override
-    public ProvisioningContext buildProvisioningContext(Path home,
+    public ProvisioningContext buildProvisioningContext(URLClassLoader loader, Path home,
             Path provisioning,
             Map<String, String> options,
             MessageWriter msgWriter,
@@ -71,12 +72,12 @@ public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilde
             pm.getLayoutFactory().setProgressTracker(entry.getKey(), entry.getValue());
         }
 
-        return new ProvisioningContextImpl(noHome, pm, ProvisioningXmlParser.parse(provisioning),
+        return new ProvisioningContextImpl(loader, noHome, pm, ProvisioningXmlParser.parse(provisioning),
                 options);
     }
 
     @Override
-    public ProvisioningContext buildProvisioningContext(Path home,
+    public ProvisioningContext buildProvisioningContext(URLClassLoader loader, Path home,
             ProvisioningDescription pConfig,
             MessageWriter msgWriter,
             boolean logTime,
@@ -108,10 +109,7 @@ public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilde
                 fpl = pm.getLayoutFactory().addLocal(fp.getNormalizedPath(), false);
             } else {
                 if (fp.getGroupId() != null && fp.getArtifactId() != null) {
-                    String coords = GalleonFeaturePack.toMavenCoords(fp.getGroupId(),
-                            fp.getArtifactId(),
-                            fp.getExtension(), fp.getClassifier(),
-                            fp.getVersion());
+                    String coords = fp.getMavenCoords();
                     fpl = FeaturePackLocation.fromString(coords);
                 } else {
                     fpl = FeaturePackLocation.fromString(fp.getLocation());
@@ -171,6 +169,9 @@ public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilde
                     configBuilder.excludeLayer(layer);
                 }
             }
+            for (Entry<String, String> entry : config.getProps().entrySet()) {
+                configBuilder.setProperty(entry.getKey(), entry.getValue());
+            }
             state.addConfig(configBuilder.build());
         }
 
@@ -188,8 +189,10 @@ public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilde
                         localResolverItem.getInstallInUniverse());
             }
         }
-
-        return new ProvisioningContextImpl(noHome, pm, state.build(), pConfig.getOptions());
+        for(String transitive : pConfig.getTransitiveLocations()) {
+            state.addTransitiveDep(FeaturePackLocation.fromString(transitive));
+        }
+        return new ProvisioningContextImpl(loader, noHome, pm, state.build(), pConfig.getOptions());
 
     }
 }
