@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ import org.aesh.command.CommandDefinition;
 import org.aesh.command.impl.internal.ParsedCommand;
 import org.aesh.command.impl.internal.ParsedOption;
 import org.aesh.command.option.Option;
+import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningManager;
 import org.jboss.galleon.cli.CommandExecutionException;
@@ -141,7 +142,7 @@ public class CheckUpdatesCommand extends AbstractInstallationCommand {
                 plan = ProvisioningPlan.builder();
             }
             if (!locs.isEmpty()) {
-                addCustomUpdates(plan, locs, mgr);
+                addCustomUpdates(plan, locs, mgr, session.getPmSession().getMessageWriter(false));
             }
         }
         Updates updates = new Updates();
@@ -202,8 +203,8 @@ public class CheckUpdatesCommand extends AbstractInstallationCommand {
         return updates;
     }
 
-    private static void addCustomUpdates(ProvisioningPlan plan, List<FeaturePackLocation> custom, ProvisioningManager mgr) throws ProvisioningException {
-        try (ProvisioningLayout<?> layout = mgr.getLayoutFactory().newConfigLayout(mgr.getProvisioningConfig())) {
+    private static void addCustomUpdates(ProvisioningPlan plan, List<FeaturePackLocation> custom, ProvisioningManager mgr, MessageWriter writer) throws ProvisioningException {
+        try (ProvisioningLayout<?> layout = mgr.getLayoutFactory().newConfigLayout(mgr.getProvisioningConfig(), writer)) {
             for (FeaturePackLocation loc : custom) {
                 FeaturePackLayout fpl = layout.getFeaturePack(loc.getProducer());
                 FeaturePackLocation current = fpl.getFPID().getLocation();

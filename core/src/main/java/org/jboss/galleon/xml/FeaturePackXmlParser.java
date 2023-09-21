@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@ package org.jboss.galleon.xml;
 import java.io.Reader;
 
 import javax.xml.stream.XMLStreamException;
+import org.jboss.galleon.MessageWriter;
 
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.spec.FeaturePackSpec;
@@ -39,14 +40,14 @@ public class FeaturePackXmlParser implements XmlParser<FeaturePackSpec>{
     private FeaturePackXmlParser() {
     }
 
-    public void parse(final Reader input, final FeaturePackSpec.Builder fpBuilder) throws XMLStreamException {
-        XmlParsers.parse(input, fpBuilder);
+    public void parse(final Reader input, final FeaturePackSpec.Builder fpBuilder, MessageWriter writer) throws XMLStreamException {
+        XmlParsers.parse(input, fpBuilder, writer);
     }
 
     @Override
-    public FeaturePackSpec parse(Reader input) throws XMLStreamException, ProvisioningDescriptionException {
+    public FeaturePackSpec parse(Reader input, MessageWriter writer) throws XMLStreamException, ProvisioningDescriptionException {
         final FeaturePackSpec.Builder fpBuilder = FeaturePackSpec.builder();
-        parse(input, fpBuilder);
+        parse(input, fpBuilder, writer);
         return fpBuilder.build();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@ package org.jboss.galleon.xml;
 import java.io.Reader;
 
 import javax.xml.stream.XMLStreamException;
+import org.jboss.galleon.MessageWriter;
 
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.config.FeatureGroup;
@@ -39,9 +40,9 @@ public class FeatureGroupXmlParser implements XmlParser<FeatureGroup> {
     }
 
     @Override
-    public FeatureGroup parse(final Reader input) throws XMLStreamException, ProvisioningDescriptionException {
+    public FeatureGroup parse(final Reader input, MessageWriter log) throws XMLStreamException, ProvisioningDescriptionException {
         final FeatureGroup.Builder configBuilder = FeatureGroup.builder();
-        XmlParsers.parse(input, configBuilder);
+        XmlParsers.parse(input, configBuilder, log);
         return configBuilder.build();
     }
 }

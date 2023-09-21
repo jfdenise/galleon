@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,6 +35,7 @@ import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.jboss.galleon.maven.plugin.util.MavenArtifactRepositoryManager;
+import org.jboss.galleon.maven.plugin.util.MvnMessageWriter;
 import org.jboss.galleon.universe.maven.MavenArtifact;
 import org.jboss.galleon.universe.maven.MavenUniverseException;
 import org.jboss.galleon.universe.maven.MavenUniverseInstaller;
@@ -140,7 +141,7 @@ public class CreateUniverseMojo extends AbstractMojo {
                 SimplisticMavenRepoManager.getInstance(
                         Paths.get(project.getBuild().getDirectory()).resolve("local-repo"),
                         new MavenArtifactRepositoryManager(repoSystem, repoSession, repositories)),
-                universeArtifact);
+                universeArtifact, new MvnMessageWriter(getLog()));
 
         final Set<String> names = new HashSet<>(producers.size());
         for(ProducerSpec producer : producers) {

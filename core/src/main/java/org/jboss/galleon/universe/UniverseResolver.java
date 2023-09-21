@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import org.jboss.galleon.MessageWriter;
 
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.repo.RepositoryArtifactResolver;
@@ -53,10 +54,12 @@ public class UniverseResolver {
     private final UniverseFactoryLoader ufl;
     private Map<UniverseSpec, Universe<?>> resolvedUniverses = Collections.emptyMap();
     private final Map<FeaturePackLocation.FPID, Path> localFeaturePacks;
+    private MessageWriter messageWriter;
 
     protected UniverseResolver(UniverseResolverBuilder<?> builder) throws ProvisioningException {
         this.ufl = builder.getUfl();
         this.localFeaturePacks = builder.getLocalFeaturePacks();
+        this.messageWriter = builder.getMessageWriter();
     }
 
     /**
@@ -84,7 +87,7 @@ public class UniverseResolver {
     public Universe<?> getUniverse(UniverseSpec universeSpec, boolean absoluteLatest) throws ProvisioningException {
         Universe<?> resolved = absoluteLatest ? null : resolvedUniverses.get(universeSpec);
         if(resolved == null) {
-            resolved = ufl.getUniverse(universeSpec, absoluteLatest);
+            resolved = ufl.getUniverse(universeSpec, absoluteLatest, messageWriter);
             resolvedUniverses = CollectionUtils.put(resolvedUniverses, universeSpec, resolved);
         }
         return resolved;

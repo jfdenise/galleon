@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -69,8 +69,8 @@ public class ProvisioningRuntimeBuilder {
 
     public static final FeaturePackLayoutFactory<FeaturePackRuntimeBuilder> FP_RT_FACTORY = new FeaturePackLayoutFactory<FeaturePackRuntimeBuilder>() {
         @Override
-        public FeaturePackRuntimeBuilder newFeaturePack(FeaturePackLocation fpl, FeaturePackSpec spec, Path fpDir, int type) {
-            return new FeaturePackRuntimeBuilder(fpl.getFPID(), spec, fpDir, type);
+        public FeaturePackRuntimeBuilder newFeaturePack(FeaturePackLocation fpl, FeaturePackSpec spec, Path fpDir, int type, MessageWriter messageWriter) {
+            return new FeaturePackRuntimeBuilder(fpl.getFPID(), spec, fpDir, type, messageWriter);
         }
     };
 
@@ -116,6 +116,10 @@ public class ProvisioningRuntimeBuilder {
         this.messageWriter = messageWriter;
     }
 
+    MessageWriter getMessageWriter() {
+        return messageWriter;
+    }
+
     public ProvisioningRuntimeBuilder setLogTime(boolean logTime) {
         this.logTime = logTime;
         return this;
@@ -127,12 +131,12 @@ public class ProvisioningRuntimeBuilder {
     }
 
     public ProvisioningRuntimeBuilder initLayout(ProvisioningLayout<?> configLayout) throws ProvisioningException {
-        layout = configLayout.transform(FP_RT_FACTORY);
+        layout = configLayout.transform(FP_RT_FACTORY, messageWriter);
         return this;
     }
 
     public ProvisioningRuntimeBuilder initLayout(ProvisioningLayoutFactory layoutFactory, ProvisioningConfig config) throws ProvisioningException {
-        layout = layoutFactory.newConfigLayout(config, FP_RT_FACTORY, false);
+        layout = layoutFactory.newConfigLayout(config, FP_RT_FACTORY, false, messageWriter);
         return this;
     }
 

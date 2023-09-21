@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import org.jboss.galleon.MessageWriter;
 
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.repo.RepositoryArtifactResolver;
@@ -52,9 +53,11 @@ public class BaseUniverseResolver {
 
     private final UniverseFactoryLoader ufl;
     private Map<UniverseSpec, Universe<?>> resolvedUniverses = Collections.emptyMap();
+    private MessageWriter messageWriter;
 
     protected BaseUniverseResolver(BaseUniverseResolverBuilder<?> builder) throws ProvisioningException {
         this.ufl = builder.getUfl();
+        this.messageWriter = builder.getMessageWriter();
     }
 
     /**
@@ -82,7 +85,7 @@ public class BaseUniverseResolver {
     public Universe<?> getUniverse(UniverseSpec universeSpec, boolean absoluteLatest) throws ProvisioningException {
         Universe<?> resolved = absoluteLatest ? null : resolvedUniverses.get(universeSpec);
         if(resolved == null) {
-            resolved = ufl.getUniverse(universeSpec, absoluteLatest);
+            resolved = ufl.getUniverse(universeSpec, absoluteLatest, messageWriter);
             resolvedUniverses = CollectionUtils.put(resolvedUniverses, universeSpec, resolved);
         }
         return resolved;

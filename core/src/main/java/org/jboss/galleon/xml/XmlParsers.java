@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import javax.xml.stream.XMLStreamException;
 
 import org.jboss.galleon.Errors;
+import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.spec.ConfigLayerSpec;
 
@@ -33,43 +34,47 @@ import org.jboss.galleon.spec.ConfigLayerSpec;
  */
 public class XmlParsers extends XmlBaseParsers {
 
-    private static final XmlParsers INSTANCE = new XmlParsers();
+    private static XmlParsers INSTANCE;
 
-    public static XmlParsers getInstance() {
+    public static XmlParsers getInstance(MessageWriter log) {
+        if (INSTANCE == null) {
+            INSTANCE = new XmlParsers(log);
+        }
         return INSTANCE;
     }
 
-    public static void parse(final Reader reader, Object builder) throws XMLStreamException {
-        INSTANCE.doParse(reader, builder);
+    public static void parse(final Reader reader, Object builder, MessageWriter log) throws XMLStreamException {
+        getInstance(log).doParse(reader, builder);
     }
 
-    public static ConfigLayerSpec parseConfigLayerSpec(Path p, String model) throws ProvisioningException {
+    public static ConfigLayerSpec parseConfigLayerSpec(Path p, String model, MessageWriter log) throws ProvisioningException {
         try(BufferedReader reader = Files.newBufferedReader(p)) {
-            return parseConfigLayerSpec(reader, model);
+            return parseConfigLayerSpec(reader, model, log);
         } catch (Exception e) {
             throw new ProvisioningException(Errors.parseXml(p), e);
         }
     }
 
-    public static ConfigLayerSpec parseConfigLayerSpec(Reader reader, String model) throws ProvisioningException {
+    public static ConfigLayerSpec parseConfigLayerSpec(Reader reader, String model, MessageWriter log) throws ProvisioningException {
         ConfigLayerSpec.Builder builder = ConfigLayerSpec.builder();
         builder.setModel(model);
         try {
-            parse(reader, builder);
+            parse(reader, builder, log);
         } catch (XMLStreamException e) {
             throw new ProvisioningException("Failed to parse config layer spec", e);
         }
         return builder.build();
     }
 
-    private XmlParsers() {
+    private XmlParsers(MessageWriter log) {
+        super(log);
         new ConfigLayerXmlParser10().plugin(this);
-        new ConfigLayerXmlParser20().plugin(this);
+        new ConfigLayerXmlParser20(log).plugin(this);
         new ConfigXmlParser10().plugin(this);
         new FeatureConfigXmlParser10().plugin(this);
         new FeatureGroupXmlParser10().plugin(this);
         new FeaturePackXmlParser20().plugin(this);
-        new FeaturePackXmlParser30().plugin(this);
+        new FeaturePackXmlParser30(log).plugin(this);
         new FeatureSpecXmlParser10().plugin(this);
         new PackageXmlParser10().plugin(this);
         new PackageXmlParser20().plugin(this);

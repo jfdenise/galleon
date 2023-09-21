@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.xml.stream.XMLStreamException;
+import org.jboss.galleon.DefaultMessageWriter;
+import org.jboss.galleon.MessageWriter;
 
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 import org.jboss.galleon.universe.maven.xml.MavenChannelSpecXmlWriter;
@@ -50,22 +52,34 @@ public class MavenProducerInstaller extends MavenProducerBase {
     private boolean installed;
 
     public MavenProducerInstaller(String name, MavenRepoManager repoManager, MavenArtifact artifact) throws MavenUniverseException {
-        this(name, repoManager, artifact, null, null);
+        this(name, repoManager, artifact, null, null, new DefaultMessageWriter());
+    }
+
+    public MavenProducerInstaller(String name, MavenRepoManager repoManager, MavenArtifact artifact, MessageWriter messageWriter) throws MavenUniverseException {
+        this(name, repoManager, artifact, null, null, messageWriter);
     }
 
     public MavenProducerInstaller(String name, MavenRepoManager repoManager, MavenArtifact artifact, String fpGroupId, String fpArtifactId) throws MavenUniverseException {
-        super(name, repoManager, artifact);
+        this(name, repoManager, artifact, fpGroupId, fpArtifactId, new DefaultMessageWriter());
+    }
+
+    public MavenProducerInstaller(String name, MavenRepoManager repoManager, MavenArtifact artifact, String fpGroupId, String fpArtifactId, MessageWriter messageWriter) throws MavenUniverseException {
+        super(name, repoManager, artifact, messageWriter);
         this.fpGroupId = fpGroupId;
         this.fpArtifactId = fpArtifactId;
     }
 
     public MavenProducerInstaller(String name, MavenRepoManager repoManager, MavenArtifact artifact, MavenArtifact extendArtifact) throws MavenUniverseException {
-        super(name, repoManager, artifact);
+        this(name, repoManager, artifact, extendArtifact, new DefaultMessageWriter());
+    }
+
+    public MavenProducerInstaller(String name, MavenRepoManager repoManager, MavenArtifact artifact, MavenArtifact extendArtifact, MessageWriter messageWriter) throws MavenUniverseException {
+        super(name, repoManager, artifact, messageWriter);
         extendProducer(name, extendArtifact);
     }
 
     public MavenProducerInstaller extendProducer(String name, MavenArtifact extendArtifact) throws MavenUniverseException {
-        final MavenProducer otherProducer = new MavenProducer(name, repo, extendArtifact);
+        final MavenProducer otherProducer = new MavenProducer(name, repo, extendArtifact, messageWriter);
         if(fpGroupId == null) {
             fpGroupId = otherProducer.getFeaturePackGroupId();
         }

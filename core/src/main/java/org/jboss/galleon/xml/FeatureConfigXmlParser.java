@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@ package org.jboss.galleon.xml;
 import java.io.Reader;
 
 import javax.xml.stream.XMLStreamException;
+import org.jboss.galleon.MessageWriter;
 
 import org.jboss.galleon.config.FeatureConfig;
 
@@ -38,9 +39,9 @@ public class FeatureConfigXmlParser implements XmlParser<FeatureConfig> {
     }
 
     @Override
-    public FeatureConfig parse(final Reader input) throws XMLStreamException {
+    public FeatureConfig parse(final Reader input, MessageWriter writer) throws XMLStreamException {
         final FeatureConfig config = new FeatureConfig();
-        XmlParsers.parse(input, config);
+        XmlParsers.parse(input, config, writer);
         return config;
     }
 }

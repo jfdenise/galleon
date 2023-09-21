@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -184,7 +184,7 @@ public class FindCommand extends PmSessionCommand {
                                         ProvisioningConfig provisioning = ProvisioningConfig.builder().addFeaturePackDep(config).build();
                                         Set<ConfigId> layers = new HashSet<>();
                                         try (ProvisioningLayout<FeaturePackLayout> layout
-                                                = invoc.getPmSession().getLayoutFactory().newConfigLayout(provisioning)) {
+                                                = invoc.getPmSession().getLayoutFactory().newConfigLayout(provisioning, invoc.getPmSession().getMessageWriter(false))) {
                                             for (FeaturePackLayout l : layout.getOrderedFeaturePacks()) {
                                                 layers.addAll(l.loadLayers());
                                             }

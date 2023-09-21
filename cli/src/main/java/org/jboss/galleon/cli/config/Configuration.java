@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Properties;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
+import org.jboss.galleon.DefaultMessageWriter;
 import org.jboss.galleon.Errors;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.cli.cmd.CliErrors;
@@ -46,7 +47,7 @@ import org.jboss.galleon.xml.util.FormattingXmlStreamWriter;
 public class Configuration implements MavenChangeListener {
 
     static {
-        new ConfigXmlParser10().plugin(XmlParsers.getInstance());
+        new ConfigXmlParser10().plugin(XmlParsers.getInstance(new DefaultMessageWriter()));
     }
 
     // Monthly cleanup, could be made configurable.
@@ -146,7 +147,7 @@ public class Configuration implements MavenChangeListener {
         Path configFile = getConfigFile();
         if (Files.exists(configFile)) {
             try (BufferedReader reader = Files.newBufferedReader(configFile)) {
-                XmlParsers.parse(reader, config);
+                XmlParsers.parse(reader, config, new DefaultMessageWriter());
             } catch (IOException | XMLStreamException e) {
                 throw new ProvisioningException(Errors.parseXml(configFile), e);
             }

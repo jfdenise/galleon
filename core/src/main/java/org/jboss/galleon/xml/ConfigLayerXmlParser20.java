@@ -24,6 +24,7 @@ import java.util.Set;
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
+import org.jboss.galleon.MessageWriter;
 
 import org.jboss.galleon.spec.ConfigLayerSpec;
 import org.jboss.galleon.util.ParsingUtils;
@@ -36,6 +37,12 @@ import org.jboss.staxmapper.XMLExtendedStreamReader;
 class ConfigLayerXmlParser20 implements PlugableXmlParser<ConfigLayerSpec.Builder> {
     public static final String NAMESPACE_2_0 = "urn:jboss:galleon:layer-spec:2.0";
     public static final QName ROOT_2_0 = new QName(NAMESPACE_2_0, ConfigLayerXml.Element.LAYER_SPEC.getLocalName());
+
+    private final MessageWriter log;
+
+    ConfigLayerXmlParser20(MessageWriter log) {
+        this.log = log;
+    }
 
     @Override
     public QName getRoot() {

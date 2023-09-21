@@ -46,6 +46,7 @@ import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningOption;
 import org.jboss.galleon.CoreVersion;
+import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.config.FeaturePackConfig;
 import org.jboss.galleon.config.FeaturePackDepsConfig;
 import org.jboss.galleon.config.ProvisioningConfig;
@@ -343,14 +344,15 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
 
     private ProgressTracker<ProducerSpec> updatesTracker;
     private ProgressTracker<FPID> buildTracker;
-
-    ProvisioningLayout(ProvisioningLayoutFactory layoutFactory, ProvisioningConfig config, FeaturePackLayoutFactory<F> fpFactory, boolean initPluginOptions)
+    private final MessageWriter writer;
+    ProvisioningLayout(ProvisioningLayoutFactory layoutFactory, ProvisioningConfig config, FeaturePackLayoutFactory<F> fpFactory, boolean initPluginOptions, MessageWriter writer)
             throws ProvisioningException {
         this.layoutFactory = layoutFactory;
         this.fpFactory = fpFactory;
         this.config = config;
         this.originalConfig = config;
         this.handle = layoutFactory.createHandle();
+        this.writer = writer;
         if(config.hasFeaturePackDeps()) {
             initBuiltInOptions(config, Collections.emptyMap());
             try {
@@ -365,13 +367,14 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
         }
     }
 
-    ProvisioningLayout(ProvisioningLayoutFactory layoutFactory, ProvisioningConfig config, FeaturePackLayoutFactory<F> fpFactory, Map<String, String> extraOptions)
+    ProvisioningLayout(ProvisioningLayoutFactory layoutFactory, ProvisioningConfig config, FeaturePackLayoutFactory<F> fpFactory, Map<String, String> extraOptions, MessageWriter writer)
             throws ProvisioningException {
         this.layoutFactory = layoutFactory;
         this.fpFactory = fpFactory;
         this.config = config;
         this.originalConfig = config;
         this.handle = layoutFactory.createHandle();
+        this.writer = writer;
         if(config.hasFeaturePackDeps()) {
             initBuiltInOptions(config, extraOptions);
             try {
@@ -384,33 +387,33 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
         }
     }
 
-    <O extends FeaturePackLayout> ProvisioningLayout(ProvisioningLayout<O> other, FeaturePackLayoutFactory<F> fpFactory) throws ProvisioningException {
+    <O extends FeaturePackLayout> ProvisioningLayout(ProvisioningLayout<O> other, FeaturePackLayoutFactory<F> fpFactory, MessageWriter writer) throws ProvisioningException {
         this(other, fpFactory, new FeaturePackLayoutTransformer<F, O>() {
             @Override
             public F transform(O other) throws ProvisioningException {
-                return fpFactory.newFeaturePack(other.getFPID().getLocation(), other.getSpec(), other.getDir(), other.getType());
+                return fpFactory.newFeaturePack(other.getFPID().getLocation(), other.getSpec(), other.getDir(), other.getType(), writer);
             }
-        });
+        }, writer);
     }
 
-    <O extends FeaturePackLayout> ProvisioningLayout(ProvisioningLayout<O> other, FeaturePackLayoutTransformer<F, O> transformer) throws ProvisioningException {
+    <O extends FeaturePackLayout> ProvisioningLayout(ProvisioningLayout<O> other, FeaturePackLayoutTransformer<F, O> transformer, MessageWriter writer) throws ProvisioningException {
         this(other, new FeaturePackLayoutFactory<F>() {
             final FeaturePackLayoutFactory<O> fpFactory = other.fpFactory;
             @Override
-            public F newFeaturePack(FeaturePackLocation fpl, FeaturePackSpec spec, Path dir, int type) throws ProvisioningException {
-                return transformer.transform(fpFactory.newFeaturePack(fpl, spec, dir, type));
+            public F newFeaturePack(FeaturePackLocation fpl, FeaturePackSpec spec, Path dir, int type, MessageWriter writer) throws ProvisioningException {
+                return transformer.transform(fpFactory.newFeaturePack(fpl, spec, dir, type, writer));
             }
-        }, transformer);
+        }, transformer, writer);
     }
 
-    private <O extends FeaturePackLayout> ProvisioningLayout(ProvisioningLayout<O> other, FeaturePackLayoutFactory<F> fpFactory, FeaturePackLayoutTransformer<F, O> transformer) throws ProvisioningException {
+    private <O extends FeaturePackLayout> ProvisioningLayout(ProvisioningLayout<O> other, FeaturePackLayoutFactory<F> fpFactory, FeaturePackLayoutTransformer<F, O> transformer, MessageWriter writer) throws ProvisioningException {
         this.layoutFactory = other.layoutFactory;
         this.fpFactory = fpFactory;
         this.config = other.config;
         this.originalConfig = other.originalConfig;
         this.options = CollectionUtils.clone(other.options);
         this.systemPaths = other.systemPaths;
-
+        this.writer = writer;
         // feature-packs are processed in the reverse order and then re-ordered again
         // this is necessary to properly analyze and include optional package and their external dependencies
         int i = other.ordered.size();
@@ -446,12 +449,12 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
         return fpFactory;
     }
 
-    public <O extends FeaturePackLayout> ProvisioningLayout<O> transform(FeaturePackLayoutFactory<O> fpFactory) throws ProvisioningException {
-        return new ProvisioningLayout<>(this, fpFactory);
+    public <O extends FeaturePackLayout> ProvisioningLayout<O> transform(FeaturePackLayoutFactory<O> fpFactory, MessageWriter writer) throws ProvisioningException {
+        return new ProvisioningLayout<>(this, fpFactory, writer);
     }
 
-    public <O extends FeaturePackLayout> ProvisioningLayout<O> transform(FeaturePackLayoutTransformer<O, F> transformer) throws ProvisioningException {
-        return new ProvisioningLayout<>(this, transformer);
+    public <O extends FeaturePackLayout> ProvisioningLayout<O> transform(FeaturePackLayoutTransformer<O, F> transformer, MessageWriter writer) throws ProvisioningException {
+        return new ProvisioningLayout<>(this, transformer, writer);
     }
 
     public void apply(ProvisioningPlan plan) throws ProvisioningException {
@@ -571,7 +574,7 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
             fpl = layoutFactory.getUniverseResolver().resolveLatestBuild(fpl);
         }
 
-        final FeaturePackSpec fpSpec = layoutFactory.resolveFeaturePack(fpl, FeaturePackLayout.DIRECT_DEP, fpFactory).getSpec();
+        final FeaturePackSpec fpSpec = layoutFactory.resolveFeaturePack(fpl, FeaturePackLayout.DIRECT_DEP, fpFactory, writer).getSpec();
         final FPID fpid = fpSpec.getFPID();
         if(fpSpec.isPatch()) {
             if(allPatches.containsKey(fpid)) {
@@ -1154,8 +1157,8 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
                 final FeaturePackSpec spec = p.getSpec();
                 if (spec.getGalleonMinVersion() != null && Boolean.getBoolean("org.jboss.galleon.version.check")) {
                     if (!CoreVersion.isSupportedVersion(spec.getGalleonMinVersion())) {
-                        throw new ProvisioningException("Feature-pack " + spec.getFPID() + " requires minimal Galleon version " + spec.getGalleonMinVersion()
-                                + " You must upgrade your provisioning tooling to a version that depends at least on Galleon " + spec.getGalleonMinVersion());
+                        writer.print("WARNING: Feature-pack " + spec.getFPID() + " depends on Galleon version " + spec.getGalleonMinVersion()
+                                + " You should upgrade your provisioning tooling to a version that depends at least on Galleon " + spec.getGalleonMinVersion());
                     }
                 }
                 layout(spec, branch, FeaturePackLayout.TRANSITIVE_DEP);
@@ -1186,7 +1189,7 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
 
     private F resolveFeaturePack(FeaturePackLocation fpl, int type, boolean translateSpecFpl) throws ProvisioningException {
         buildTracker.processing(fpl.getFPID());
-        F fp = layoutFactory.resolveFeaturePack(fpl, type, fpFactory);
+        F fp = layoutFactory.resolveFeaturePack(fpl, type, fpFactory, writer);
         buildTracker.processed(fpl.getFPID());
         if(!translateSpecFpl) {
             return fp;
@@ -1262,7 +1265,7 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
         }
         if(rebuilder != null) {
             final FeaturePackSpec spec = rebuilder.build();
-            fp = fpFactory.newFeaturePack(spec.getFPID().getLocation(), spec, fp.getDir(), fp.getType());
+            fp = fpFactory.newFeaturePack(spec.getFPID().getLocation(), spec, fp.getDir(), fp.getType(), writer);
         }
         return fp;
     }
@@ -1374,7 +1377,7 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
     }
 
     private void loadPatch(FPID patchId) throws ProvisioningException {
-        final F patchFp = layoutFactory.resolveFeaturePack(patchId.getLocation(), FeaturePackLayout.PATCH, fpFactory);
+        final F patchFp = layoutFactory.resolveFeaturePack(patchId.getLocation(), FeaturePackLayout.PATCH, fpFactory, writer);
         final FeaturePackSpec spec = patchFp.getSpec();
         if(!spec.isPatch()) {
             throw new ProvisioningDescriptionException(patchId + " is not a patch but listed as one");

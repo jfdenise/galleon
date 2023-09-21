@@ -44,7 +44,7 @@ public class FeaturePackRuntime extends FeaturePackLayout implements FeaturePack
     private final Map<String, ResolvedFeatureSpec> featureSpecs;
 
     FeaturePackRuntime(FeaturePackRuntimeBuilder builder, ProvisioningRuntimeBuilder rt) throws ProvisioningException {
-        super(builder.producer.getLocation().getFPID(), builder.getDir(), builder.getType());
+        super(builder.producer.getLocation().getFPID(), builder.getDir(), builder.getType(), rt.getMessageWriter());
         this.spec = builder.getSpec();
         this.featureSpecs = builder.featureSpecs == null ? Collections.emptyMap() : builder.featureSpecs;
 

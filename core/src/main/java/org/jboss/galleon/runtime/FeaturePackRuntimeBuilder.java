@@ -30,6 +30,7 @@ import org.jboss.galleon.BaseErrors;
 
 import org.jboss.galleon.Constants;
 import org.jboss.galleon.Errors;
+import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.UnsatisfiedPackageDependencyException;
@@ -75,9 +76,8 @@ public class FeaturePackRuntimeBuilder extends FeaturePackLayout {
     private ParameterTypeProvider featureParamTypeProvider = BuiltInParameterTypeProvider.getInstance();
 
     private int flags;
-
-    public FeaturePackRuntimeBuilder(FPID fpid, FeaturePackSpec spec, Path dir, int type) {
-        super(fpid, dir, type);
+    public FeaturePackRuntimeBuilder(FPID fpid, FeaturePackSpec spec, Path dir, int type, MessageWriter log) {
+        super(fpid, dir, type, log);
         this.producer = fpid.getProducer();
         this.dir = dir;
         this.spec = spec;
@@ -119,7 +119,7 @@ public class FeaturePackRuntimeBuilder extends FeaturePackLayout {
             }
 
             try (BufferedReader reader = Files.newBufferedReader(pkgXml)) {
-                pkgBuilder = PackageRuntime.builder(this, PackageXmlParser.getInstance().parse(reader), pkgDir, ++rt.pkgsTotal);
+                pkgBuilder = PackageRuntime.builder(this, PackageXmlParser.getInstance().parse(reader, messageWriter), pkgDir, ++rt.pkgsTotal);
             } catch (IOException | XMLStreamException e) {
                 throw new ProvisioningException(Errors.parseXml(pkgXml), e);
             }
@@ -169,7 +169,7 @@ public class FeaturePackRuntimeBuilder extends FeaturePackLayout {
             return null;
         }
         try (BufferedReader reader = Files.newBufferedReader(specXml)) {
-            final FeatureGroup fgSpec = FeatureGroupXmlParser.getInstance().parse(reader);
+            final FeatureGroup fgSpec = FeatureGroupXmlParser.getInstance().parse(reader, messageWriter);
             if(!fgSpec.getName().equals(name)) {
                 throw new ProvisioningDescriptionException("Feature-pack " + getFPID() + " feature group " + fgSpec.getName() + " does not match the requested feature group name " + name);
             }
@@ -195,7 +195,7 @@ public class FeaturePackRuntimeBuilder extends FeaturePackLayout {
             return null;
         }
         try (BufferedReader reader = Files.newBufferedReader(p)) {
-            final ConfigModel config = ConfigXmlParser.getInstance().parse(reader);
+            final ConfigModel config = ConfigXmlParser.getInstance().parse(reader, messageWriter);
             if (configs == null) {
                 configs = new HashMap<>();
             }
@@ -217,7 +217,7 @@ public class FeaturePackRuntimeBuilder extends FeaturePackLayout {
         if (!Files.exists(p)) {
             return null;
         }
-        final ConfigLayerSpec layer = XmlParsers.parseConfigLayerSpec(p, configId.getModel());
+        final ConfigLayerSpec layer = XmlParsers.parseConfigLayerSpec(p, configId.getModel(), messageWriter);
         if (layers == null) {
             layers = new HashMap<>();
         }
@@ -237,7 +237,7 @@ public class FeaturePackRuntimeBuilder extends FeaturePackLayout {
             return null;
         }
         try (BufferedReader reader = Files.newBufferedReader(specXml)) {
-            final FeatureSpec xmlSpec = FeatureSpecXmlParser.getInstance().parse(reader);
+            final FeatureSpec xmlSpec = FeatureSpecXmlParser.getInstance().parse(reader, messageWriter);
             if(!xmlSpec.getName().equals(name)) {
                 throw new ProvisioningDescriptionException("Feature-pack " + getFPID() + " feature spec " + xmlSpec.getName() + " does not match the requested feature spec name " + name);
             }

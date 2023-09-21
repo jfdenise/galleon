@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.xml.stream.XMLStreamException;
+import org.jboss.galleon.DefaultMessageWriter;
 import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningManager;
@@ -62,6 +63,7 @@ public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilde
                 throw new ProvisioningException(ex);
             }
         }
+        msgWriter = msgWriter == null ? new DefaultMessageWriter() : msgWriter;
         ProvisioningManager pm = ProvisioningManager.builder().addArtifactResolver(artifactResolver)
                 .setInstallationHome(home)
                 .setMessageWriter(msgWriter)
@@ -72,8 +74,8 @@ public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilde
             pm.getLayoutFactory().setProgressTracker(entry.getKey(), entry.getValue());
         }
 
-        return new ProvisioningContextImpl(loader, noHome, pm, ProvisioningXmlParser.parse(provisioning),
-                options);
+        return new ProvisioningContextImpl(loader, noHome, pm, ProvisioningXmlParser.parse(provisioning, msgWriter),
+                options, msgWriter);
     }
 
     @Override
@@ -92,6 +94,8 @@ public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilde
                 throw new ProvisioningException(ex);
             }
         }
+        msgWriter = msgWriter == null ? new DefaultMessageWriter() : msgWriter;
+
         final ProvisioningConfig.Builder state = ProvisioningConfig.builder();
         ProvisioningManager pm = ProvisioningManager.builder().addArtifactResolver(artifactResolver)
                 .setInstallationHome(home)
@@ -106,7 +110,7 @@ public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilde
 
             final FeaturePackLocation fpl;
             if (fp.getNormalizedPath() != null) {
-                fpl = pm.getLayoutFactory().addLocal(fp.getNormalizedPath(), false);
+                fpl = pm.getLayoutFactory().addLocal(fp.getNormalizedPath(), false, msgWriter);
             } else {
                 if (fp.getGroupId() != null && fp.getArtifactId() != null) {
                     String coords = fp.getMavenCoords();
@@ -186,14 +190,14 @@ public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilde
         for (GalleonLocalItem localResolverItem : pConfig.getLocalItems()) {
             if (localResolverItem.getNormalizedPath() != null) {
                 pm.getLayoutFactory().addLocal(localResolverItem.getNormalizedPath(),
-                        localResolverItem.getInstallInUniverse());
+                        localResolverItem.getInstallInUniverse(), msgWriter);
             }
         }
         for(String transitive : pConfig.getTransitiveLocations()) {
             state.addTransitiveDep(FeaturePackLocation.fromString(transitive));
         }
         state.addOptions(pConfig.getOptions());
-        return new ProvisioningContextImpl(loader, noHome, pm, state.build(), pConfig.getOptions());
+        return new ProvisioningContextImpl(loader, noHome, pm, state.build(), pConfig.getOptions(), msgWriter);
 
     }
 }

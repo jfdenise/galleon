@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@ package org.jboss.galleon.xml;
 import java.io.Reader;
 
 import javax.xml.stream.XMLStreamException;
+import org.jboss.galleon.MessageWriter;
 
 import org.jboss.galleon.spec.PackageSpec;
 import org.jboss.galleon.spec.PackageSpec.Builder;
@@ -40,9 +41,9 @@ public class PackageXmlParser implements XmlParser<PackageSpec> {
     }
 
     @Override
-    public PackageSpec parse(final Reader input) throws XMLStreamException {
+    public PackageSpec parse(final Reader input, MessageWriter writer) throws XMLStreamException {
         final Builder pkgBuilder = PackageSpec.builder();
-        XmlParsers.parse(input, pkgBuilder);
+        XmlParsers.parse(input, pkgBuilder, writer);
         return pkgBuilder.build();
     }
 }

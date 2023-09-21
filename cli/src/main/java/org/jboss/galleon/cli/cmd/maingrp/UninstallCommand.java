@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -115,13 +115,13 @@ public class UninstallCommand extends AbstractProvisionWithPlugins {
         String fpid = getFPID();
         Path dir = getAbsolutePath(getUninstallDir(), pmSession.getAeshContext());
         // Build layout from this directory.
-        ProvisioningConfig config = ProvisioningXmlParser.parse(PathsUtils.getProvisioningXml(dir));
+        ProvisioningConfig config = ProvisioningXmlParser.parse(PathsUtils.getProvisioningXml(dir), pmSession.getMessageWriter(false));
         if (config != null) {
             // Silent resolution.
             pmSession.unregisterTrackers();
             try {
                 try (ProvisioningLayout<FeaturePackLayout> layout = pmSession.
-                        getLayoutFactory().newConfigLayout(config)) {
+                        getLayoutFactory().newConfigLayout(config, pmSession.getMessageWriter(false))) {
                     layout.uninstall(pmSession.
                             getResolvedLocation(getInstallationDirectory(pmSession.
                                     getAeshContext()), fpid).getFPID());

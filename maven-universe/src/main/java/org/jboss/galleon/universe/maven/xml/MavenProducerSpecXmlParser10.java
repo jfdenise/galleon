@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,7 @@ import javax.xml.namespace.QName;
 import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
+import org.jboss.galleon.MessageWriter;
 
 import org.jboss.galleon.universe.maven.MavenArtifact;
 import org.jboss.galleon.universe.maven.MavenProducer;
@@ -147,6 +148,12 @@ public class MavenProducerSpecXmlParser10 implements PlugableXmlParser<ParsedCal
         }
     }
 
+    private final MessageWriter messageWriter;
+
+    MavenProducerSpecXmlParser10(MessageWriter messageWriter) {
+        this.messageWriter = messageWriter;
+    }
+
     @Override
     public QName getRoot() {
         return ROOT;
@@ -173,7 +180,7 @@ public class MavenProducerSpecXmlParser10 implements PlugableXmlParser<ParsedCal
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
                     try {
-                        builder.parsed(new MavenProducer(name, builder.getParent().getRepo(), artifact));
+                        builder.parsed(new MavenProducer(name, builder.getParent().getRepo(), artifact, messageWriter));
                     } catch (MavenUniverseException e) {
                         throw new XMLStreamException(getParserMessage("Failed to instantiate producer " + name, reader.getLocation()), e);
                     }

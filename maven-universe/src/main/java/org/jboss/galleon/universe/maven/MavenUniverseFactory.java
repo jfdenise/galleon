@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +16,7 @@
  */
 package org.jboss.galleon.universe.maven;
 
+import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.repo.RepositoryArtifactResolver;
 import org.jboss.galleon.universe.Universe;
@@ -46,7 +47,7 @@ public class MavenUniverseFactory implements UniverseFactory {
     }
 
     @Override
-    public Universe<?> getUniverse(RepositoryArtifactResolver artifactResolver, String location, boolean absoluteLatest) throws ProvisioningException {
+    public Universe<?> getUniverse(RepositoryArtifactResolver artifactResolver, String location, boolean absoluteLatest, MessageWriter writer) throws ProvisioningException {
         final MavenRepoManager repo;
         if(artifactResolver != null) {
             if(!(artifactResolver instanceof MavenRepoManager)) {
@@ -60,7 +61,7 @@ public class MavenUniverseFactory implements UniverseFactory {
             return new MvnNoLocUniverse(repo);
         }
         try {
-            return new MavenUniverse(repo, MavenArtifact.fromString(location), absoluteLatest);
+            return new MavenUniverse(repo, MavenArtifact.fromString(location), absoluteLatest, writer);
         } catch (MavenUniverseException e) {
             throw new MavenUniverseException(MavenErrors.msgUniverseNotFound(location), e);
         }

@@ -16,6 +16,7 @@
  */
 package org.jboss.galleon.universe;
 
+import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.repo.RepositoryArtifactResolver;
 
@@ -39,9 +40,9 @@ public interface UniverseFactory {
      * @return  instance of the universe
      * @throws ProvisioningException  in case of a failure
      */
-    default Universe<?> getUniverse(RepositoryArtifactResolver artifactResolver, String location) throws ProvisioningException {
-        return getUniverse(artifactResolver, location, false);
+    default Universe<?> getUniverse(RepositoryArtifactResolver artifactResolver, String location, MessageWriter writer) throws ProvisioningException {
+        return getUniverse(artifactResolver, location, false, writer);
     }
 
-    Universe<?> getUniverse(RepositoryArtifactResolver artifactResolver, String location, boolean absoluteLatest) throws ProvisioningException;
+    Universe<?> getUniverse(RepositoryArtifactResolver artifactResolver, String location, boolean absoluteLatest, MessageWriter writer) throws ProvisioningException;
 }

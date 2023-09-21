@@ -18,6 +18,8 @@ package org.jboss.galleon.universe;
 
 //import java.io.IOException;
 
+import org.jboss.galleon.DefaultMessageWriter;
+import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
 //import org.jboss.galleon.layout.FeaturePackDescription;
 //import org.jboss.galleon.layout.FeaturePackDescriber;
@@ -30,6 +32,7 @@ import org.jboss.galleon.repo.RepositoryArtifactResolver;
 public abstract class BaseUniverseResolverBuilder<T extends BaseUniverseResolverBuilder<?>> {
 
     protected UniverseFactoryLoader ufl;
+    protected MessageWriter messageWriter;
     //protected Map<FPID, Path> localFeaturePacks = new HashMap<>();
 
     @SuppressWarnings("unchecked")
@@ -38,6 +41,12 @@ public abstract class BaseUniverseResolverBuilder<T extends BaseUniverseResolver
             throw new ProvisioningException("Universe factory loader has already been initialized");
         }
         this.ufl = ufl;
+        return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public T setMessageWriter(MessageWriter messageWriter) throws ProvisioningException {
+        this.messageWriter = messageWriter;
         return (T) this;
     }
 
@@ -60,6 +69,13 @@ public abstract class BaseUniverseResolverBuilder<T extends BaseUniverseResolver
             ufl = UniverseFactoryLoader.getInstance();
         }
         return ufl;
+    }
+
+    protected MessageWriter getMessageWriter() throws ProvisioningException {
+        if(messageWriter == null) {
+            messageWriter = new DefaultMessageWriter();
+        }
+        return messageWriter;
     }
 
 //    @SuppressWarnings("unchecked")

@@ -78,7 +78,7 @@ public class ProvisioningRuntime implements FeaturePackSet<FeaturePackRuntime>, 
             public FeaturePackRuntime transform(FeaturePackRuntimeBuilder other) throws ProvisioningException {
                 return other.build(builder);
             }
-        });
+        }, messageWriter);
         this.fsDiff = builder.fsDiff;
 
         Path stagedDir = null;

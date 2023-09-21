@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,7 +44,7 @@ public class ImportCommand extends PmSessionCommand {
     @Override
     protected void runCommand(PmCommandInvocation commandInvocation) throws CommandExecutionException {
         try {
-            FeaturePackLocation fpl = commandInvocation.getPmSession().getLayoutFactory().addLocal(path.toPath(), install == null ? true : install);
+            FeaturePackLocation fpl = commandInvocation.getPmSession().getLayoutFactory().addLocal(path.toPath(), install == null ? true : install, commandInvocation.getPmSession().getMessageWriter(false));
             commandInvocation.println(fpl + " imported.");
         } catch (ProvisioningException ex) {
             throw new CommandExecutionException(commandInvocation.getPmSession(), CliErrors.importFeaturePackFailed(), ex);

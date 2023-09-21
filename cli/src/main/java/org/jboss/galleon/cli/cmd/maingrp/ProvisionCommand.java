@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -68,7 +68,7 @@ public class ProvisionCommand extends AbstractProvisionCommand {
         if (file == null) {
             return Collections.emptyList();
         }
-        ProvisioningConfig config = ProvisioningXmlParser.parse(getAbsolutePath(file, pmSession.getAeshContext()));
+        ProvisioningConfig config = ProvisioningXmlParser.parse(getAbsolutePath(file, pmSession.getAeshContext()),pmSession.getMessageWriter(false));
         opts = pmSession.getResolver().get(null, PluginResolver.newResolver(pmSession, config)).getInstall();
         for (ProvisioningOption opt : opts) {
             DynamicOption dynOption = new DynamicOption(opt.getName(), opt.isRequired());

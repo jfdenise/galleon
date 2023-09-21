@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import org.jboss.galleon.DefaultMessageWriter;
+import org.jboss.galleon.MessageWriter;
 
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.layout.FeaturePackDescription;
@@ -35,7 +37,7 @@ public abstract class UniverseResolverBuilder<T extends UniverseResolverBuilder<
 
     protected UniverseFactoryLoader ufl;
     protected Map<FPID, Path> localFeaturePacks = new HashMap<>();
-
+    protected MessageWriter messageWriter;
     @SuppressWarnings("unchecked")
     public T setUniverseFactoryLoader(UniverseFactoryLoader ufl) throws ProvisioningException {
         if(this.ufl != null) {
@@ -55,6 +57,12 @@ public abstract class UniverseResolverBuilder<T extends UniverseResolverBuilder<
         return (T) this;
     }
 
+    @SuppressWarnings("unchecked")
+    public T setMessageWriter(MessageWriter messageWriter) throws ProvisioningException {
+        this.messageWriter = messageWriter;
+        return (T) this;
+    }
+
     protected UniverseResolver buildUniverseResolver() throws ProvisioningException {
         return new UniverseResolver(this);
     }
@@ -66,13 +74,20 @@ public abstract class UniverseResolverBuilder<T extends UniverseResolverBuilder<
         return ufl;
     }
 
+    protected MessageWriter getMessageWriter() throws ProvisioningException {
+        if(messageWriter == null) {
+            messageWriter = new DefaultMessageWriter();
+        }
+        return messageWriter;
+    }
+
     @SuppressWarnings("unchecked")
     public T addLocalFeaturePack(Path path) throws ProvisioningException {
         if (path == null) {
             return (T) this;
         }
         try {
-            FeaturePackDescription featurePackLayout = FeaturePackDescriber.describeFeaturePackZip(path);
+            FeaturePackDescription featurePackLayout = FeaturePackDescriber.describeFeaturePackZip(path, getMessageWriter());
             getLocalFeaturePacks().put(featurePackLayout.getFPID(), path);
 
             return (T) this;

@@ -30,6 +30,7 @@ import org.jboss.galleon.BaseErrors;
 
 import org.jboss.galleon.Constants;
 import org.jboss.galleon.Errors;
+import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.spec.ConfigLayerSpec;
@@ -50,7 +51,7 @@ import org.jboss.galleon.xml.XmlParsers;
  */
 public class FeaturePackDescriber {
 
-    public static FeaturePackSpec readSpec(Path artifactZip) throws ProvisioningException {
+    public static FeaturePackSpec readSpec(Path artifactZip, MessageWriter writer) throws ProvisioningException {
         try (FileSystem zipfs = ZipUtils.newFileSystem(artifactZip)) {
             for(Path zipRoot : zipfs.getRootDirectories()) {
                 final Path p = zipRoot.resolve(Constants.FEATURE_PACK_XML);
@@ -58,7 +59,7 @@ public class FeaturePackDescriber {
                     throw new ProvisioningException("Feature-pack archive does not contain " + Constants.FEATURE_PACK_XML);
                 }
                 try(BufferedReader reader = Files.newBufferedReader(p)) {
-                    return FeaturePackXmlParser.getInstance().parse(reader);
+                    return FeaturePackXmlParser.getInstance().parse(reader, writer);
                 } catch (XMLStreamException e) {
                     throw new ProvisioningException(Errors.parseXml(p), e);
                 }
@@ -69,16 +70,16 @@ public class FeaturePackDescriber {
         return null;
     }
 
-    public static FeaturePackDescription describeFeaturePackZip(Path artifactZip) throws IOException, ProvisioningDescriptionException {
+    public static FeaturePackDescription describeFeaturePackZip(Path artifactZip, MessageWriter writer) throws IOException, ProvisioningDescriptionException {
         try (FileSystem zipfs = ZipUtils.newFileSystem(artifactZip)) {
             for(Path zipRoot : zipfs.getRootDirectories()) {
-                return describeFeaturePack(zipRoot, "UTF-8");
+                return describeFeaturePack(zipRoot, "UTF-8", writer);
             }
         }
         return null;
     }
 
-    public static FeaturePackDescription describeFeaturePack(Path fpDir, String encoding) throws ProvisioningDescriptionException {
+    public static FeaturePackDescription describeFeaturePack(Path fpDir, String encoding, MessageWriter writer) throws ProvisioningDescriptionException {
         assertDirectory(fpDir);
         final Path fpXml = fpDir.resolve(Constants.FEATURE_PACK_XML);
         if(!Files.exists(fpXml)) {
@@ -87,7 +88,7 @@ public class FeaturePackDescriber {
         final FeaturePackDescription.Builder layoutBuilder;
         try (Reader is = Files.newBufferedReader(fpXml, Charset.forName(encoding))) {
             final FeaturePackSpec.Builder specBuilder = FeaturePackSpec.builder();
-            XmlParsers.parse(is, specBuilder);
+            XmlParsers.parse(is, specBuilder, writer);
             layoutBuilder = FeaturePackDescription.builder(specBuilder);
         } catch (IOException e) {
             throw new ProvisioningDescriptionException(Errors.openFile(fpXml));
@@ -97,45 +98,45 @@ public class FeaturePackDescriber {
 
         final Path packagesDir = fpDir.resolve(Constants.PACKAGES);
         if(Files.exists(packagesDir)) {
-            processPackages(layoutBuilder, packagesDir, encoding);
+            processPackages(layoutBuilder, packagesDir, encoding, writer);
         }
         final Path layersDir = fpDir.resolve(Constants.LAYERS).resolve("standalone");
         if(Files.exists(layersDir)) {
-            processLayers(layoutBuilder, layersDir, encoding);
+            processLayers(layoutBuilder, layersDir, encoding, writer);
         }
 
         return layoutBuilder.build();
     }
 
-    private static void processLayers(FeaturePackDescription.Builder fpBuilder, Path layersDir, String encoding) throws ProvisioningDescriptionException {
+    private static void processLayers(FeaturePackDescription.Builder fpBuilder, Path layersDir, String encoding, MessageWriter writer) throws ProvisioningDescriptionException {
         assertDirectory(layersDir);
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(layersDir)) {
             for(Path path : stream) {
-                fpBuilder.addLayer(processLayer(path, encoding));
+                fpBuilder.addLayer(processLayer(path, encoding, writer));
             }
         } catch (IOException e) {
             failedToReadDirectory(layersDir, e);
         }
     }
-    private static void processPackages(FeaturePackDescription.Builder fpBuilder, Path packagesDir, String encoding) throws ProvisioningDescriptionException {
+    private static void processPackages(FeaturePackDescription.Builder fpBuilder, Path packagesDir, String encoding, MessageWriter writer) throws ProvisioningDescriptionException {
         assertDirectory(packagesDir);
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(packagesDir)) {
             for(Path path : stream) {
-                fpBuilder.addPackage(processPackage(path, encoding));
+                fpBuilder.addPackage(processPackage(path, encoding, writer));
             }
         } catch (IOException e) {
             failedToReadDirectory(packagesDir, e);
         }
     }
 
-    private static ConfigLayerSpec processLayer(Path layerDir, String encoding) throws ProvisioningDescriptionException {
+    private static ConfigLayerSpec processLayer(Path layerDir, String encoding, MessageWriter writer) throws ProvisioningDescriptionException {
         assertDirectory(layerDir);
         final Path layerXml = layerDir.resolve(Constants.LAYER_SPEC_XML);
         if(!Files.exists(layerXml)) {
             throw new ProvisioningDescriptionException(BaseErrors.pathDoesNotExist(layerXml));
         }
         try (Reader in = Files.newBufferedReader(layerXml, Charset.forName(encoding))) {
-            return ConfigLayerSpecXmlParser.getInstance().parse(in);
+            return ConfigLayerSpecXmlParser.getInstance().parse(in, writer);
         } catch (IOException e) {
             throw new ProvisioningDescriptionException(Errors.openFile(layerXml), e);
         } catch (XMLStreamException e) {
@@ -143,14 +144,14 @@ public class FeaturePackDescriber {
         }
     }
 
-    private static PackageSpec processPackage(Path pkgDir, String encoding) throws ProvisioningDescriptionException {
+    private static PackageSpec processPackage(Path pkgDir, String encoding, MessageWriter writer) throws ProvisioningDescriptionException {
         assertDirectory(pkgDir);
         final Path pkgXml = pkgDir.resolve(Constants.PACKAGE_XML);
         if(!Files.exists(pkgXml)) {
             throw new ProvisioningDescriptionException(BaseErrors.pathDoesNotExist(pkgXml));
         }
         try (Reader in = Files.newBufferedReader(pkgXml, Charset.forName(encoding))) {
-            return PackageXmlParser.getInstance().parse(in);
+            return PackageXmlParser.getInstance().parse(in, writer);
         } catch (IOException e) {
             throw new ProvisioningDescriptionException(Errors.openFile(pkgXml), e);
         } catch (XMLStreamException e) {

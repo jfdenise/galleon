@@ -246,7 +246,7 @@ public class StateHistoryUtils {
         if(stateDir == null) {
             throw new ProvisioningException(Errors.historyIsEmpty());
         }
-        return ProvisioningXmlParser.parse(stateDir.resolve(Constants.PROVISIONING_XML));
+        return ProvisioningXmlParser.parse(stateDir.resolve(Constants.PROVISIONING_XML), log);
     }
 
     public static Map<String, Boolean> readUndoTasks(Path installDir, MessageWriter log) throws ProvisioningException {

@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import javax.xml.stream.XMLStreamException;
 import org.jboss.galleon.CoreVersion;
+import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningManager;
 import org.jboss.galleon.config.ConfigId;
@@ -58,14 +59,16 @@ public class ProvisioningContextImpl implements ProvisioningContext {
     private final Map<String, String> options;
     private final boolean noHome;
     private final URLClassLoader loader;
+    private final MessageWriter messageWriter;
     ProvisioningContextImpl(URLClassLoader loader,
             boolean noHome,
-            ProvisioningManager manager, ProvisioningConfig config, Map<String, String> options) {
+            ProvisioningManager manager, ProvisioningConfig config, Map<String, String> options, MessageWriter messageWriter) {
         this.loader = loader;
         this.noHome = noHome;
         this.manager = manager;
         this.config = config;
         this.options = options;
+        this.messageWriter = messageWriter;
     }
 
     @Override
@@ -147,7 +150,7 @@ public class ProvisioningContextImpl implements ProvisioningContext {
     public Map<FPID, Map<String, GalleonLayer>> getAllLayers() throws ProvisioningException, IOException {
         Map<FPID, Map<String, GalleonLayer>> layersMap = new LinkedHashMap<>();
         Set<String> autoInjected = new TreeSet<>();
-        try (ProvisioningLayout<FeaturePackLayout> pmLayout = manager.getLayoutFactory().newConfigLayout(config)) {
+        try (ProvisioningLayout<FeaturePackLayout> pmLayout = manager.getLayoutFactory().newConfigLayout(config, messageWriter)) {
             for (FeaturePackLayout fp : pmLayout.getOrderedFeaturePacks()) {
                 Map<String, GalleonLayer> layers = new HashMap<>();
                 ConfigModel m = fp.loadModel("standalone");

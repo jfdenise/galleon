@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,8 @@ package org.jboss.galleon.xml;
 import java.io.Reader;
 
 import javax.xml.stream.XMLStreamException;
+import org.jboss.galleon.DefaultMessageWriter;
+import org.jboss.galleon.MessageWriter;
 
 import org.jboss.galleon.ProvisioningDescriptionException;
 
@@ -28,5 +30,9 @@ import org.jboss.galleon.ProvisioningDescriptionException;
  * @param <T> the type of the object returned by the parse method
  */
 public interface XmlParser<T> {
-    T parse(Reader input) throws XMLStreamException, ProvisioningDescriptionException;
+    T parse(Reader input, MessageWriter log) throws XMLStreamException, ProvisioningDescriptionException;
+
+    default T parse(Reader input) throws XMLStreamException, ProvisioningDescriptionException {
+        return parse(input, new DefaultMessageWriter());
+    }
 }

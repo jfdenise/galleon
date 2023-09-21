@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import org.jboss.galleon.MessageWriter;
 
 /**
  *
@@ -185,6 +186,12 @@ public class FeaturePackXmlParser30 implements PlugableXmlParser<Builder> {
         }
     }
 
+    private final MessageWriter writer;
+
+    FeaturePackXmlParser30(MessageWriter writer) {
+        this.writer = writer;
+    }
+
     @Override
     public QName getRoot() {
         return ROOT_1_0;
@@ -324,7 +331,11 @@ public class FeaturePackXmlParser30 implements PlugableXmlParser<Builder> {
                     }
                     break;
                 default:
-                    throw ParsingUtils.unexpectedContent(reader);
+                    if (Boolean.getBoolean("galleon.parsing.strict")) {
+                        throw ParsingUtils.unexpectedContent(reader);
+                    } else {
+                        ParsingUtils.printUnknownAttribute(writer, reader.getAttributeName(i).getLocalPart());
+                    }
             }
         }
         if (location == null) {

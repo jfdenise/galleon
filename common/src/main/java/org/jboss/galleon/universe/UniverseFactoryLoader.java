@@ -21,6 +21,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
+import org.jboss.galleon.DefaultMessageWriter;
+import org.jboss.galleon.MessageWriter;
 
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.repo.RepositoryArtifactResolver;
@@ -76,20 +78,32 @@ public class UniverseFactoryLoader {
     }
 
     public Universe<?> getUniverse(String factoryId, String location) throws ProvisioningException {
+        return getUniverse(factoryId, location, new DefaultMessageWriter());
+    }
+
+    public Universe<?> getUniverse(String factoryId, String location, MessageWriter messageWriter) throws ProvisioningException {
         final UniverseFactory factory = getUniverseFactory(factoryId);
-        return factory.getUniverse(getArtifactResolver(factory.getRepositoryId()), location);
+        return factory.getUniverse(getArtifactResolver(factory.getRepositoryId()), location, messageWriter);
     }
 
     public Universe<?> getUniverse(String factoryId, String location, String repoId) throws ProvisioningException {
-        return getUniverseFactory(factoryId).getUniverse(getArtifactResolver(repoId), location);
+        return getUniverse(factoryId, location, repoId, new DefaultMessageWriter());
+    }
+
+    public Universe<?> getUniverse(String factoryId, String location, String repoId, MessageWriter messageWriter) throws ProvisioningException {
+        return getUniverseFactory(factoryId).getUniverse(getArtifactResolver(repoId), location, messageWriter);
     }
 
     public Universe<?> getUniverse(String factoryId, String location, RepositoryArtifactResolver artifactResolver) throws ProvisioningException {
+        return getUniverse(factoryId, location, artifactResolver, new DefaultMessageWriter());
+    }
+
+    public Universe<?> getUniverse(String factoryId, String location, RepositoryArtifactResolver artifactResolver, MessageWriter messageWriter) throws ProvisioningException {
         final UniverseFactory factory = getUniverseFactory(factoryId);
         if(artifactResolver == null) {
             throw new ProvisioningException("artifactResolver is null");
         }
-        return factory.getUniverse(artifactResolver, location);
+        return factory.getUniverse(artifactResolver, location, messageWriter);
     }
 
     /**
@@ -101,13 +115,13 @@ public class UniverseFactoryLoader {
      * @return  resolved universe
      * @throws ProvisioningException  in case of a failure
      */
-    public Universe<?> getUniverse(UniverseSpec universeSpec) throws ProvisioningException {
-        return getUniverse(universeSpec, false);
+    public Universe<?> getUniverse(UniverseSpec universeSpec, MessageWriter messageWriter) throws ProvisioningException {
+        return getUniverse(universeSpec, false, messageWriter);
     }
 
-    public Universe<?> getUniverse(UniverseSpec universeSpec, boolean absoluteLatest) throws ProvisioningException {
+    public Universe<?> getUniverse(UniverseSpec universeSpec, boolean absoluteLatest, MessageWriter messageWriter) throws ProvisioningException {
         final UniverseFactory factory = getUniverseFactory(universeSpec.getFactory());
-        return factory.getUniverse(getArtifactResolver(factory.getRepositoryId()), universeSpec.getLocation(), absoluteLatest);
+        return factory.getUniverse(getArtifactResolver(factory.getRepositoryId()), universeSpec.getLocation(), absoluteLatest, messageWriter);
     }
 
     private UniverseFactory getUniverseFactory(String factoryId) throws ProvisioningException {

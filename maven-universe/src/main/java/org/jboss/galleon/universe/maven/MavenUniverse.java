@@ -36,6 +36,8 @@ import org.jboss.galleon.util.CollectionUtils;
 import static org.jboss.galleon.universe.maven.MavenUniverseConstants.*;
 import org.jboss.galleon.util.ZipUtils;
 import org.jboss.galleon.BaseErrors;
+import org.jboss.galleon.DefaultMessageWriter;
+import org.jboss.galleon.MessageWriter;
 
 /**
  *
@@ -90,11 +92,19 @@ public class MavenUniverse extends MavenUniverseBase {
      * @throws MavenUniverseException  in case of a failure
      */
     public MavenUniverse(MavenRepoManager repoManager, MavenArtifact artifact) throws MavenUniverseException {
-        this(repoManager, artifact, false);
+        this(repoManager, artifact, new DefaultMessageWriter());
+    }
+
+    public MavenUniverse(MavenRepoManager repoManager, MavenArtifact artifact, MessageWriter messageWriter) throws MavenUniverseException {
+        this(repoManager, artifact, false, messageWriter);
     }
 
     public MavenUniverse(MavenRepoManager repoManager, MavenArtifact artifact, boolean absoluteLatest) throws MavenUniverseException {
-        super(repoManager, artifact);
+        this(repoManager, artifact, absoluteLatest, new DefaultMessageWriter());
+    }
+
+    public MavenUniverse(MavenRepoManager repoManager, MavenArtifact artifact, boolean absoluteLatest, MessageWriter messageWriter) throws MavenUniverseException {
+        super(repoManager, artifact, messageWriter);
         if(artifact.isResolved()) {
             return;
         }
@@ -140,7 +150,7 @@ public class MavenUniverse extends MavenUniverseBase {
                 return false;
             }
             try(BufferedReader reader = Files.newBufferedReader(producerXml)) {
-                MavenProducerSpecXmlParser.getInstance().parse(reader, parsedProducerHandler);
+                MavenProducerSpecXmlParser.getInstance(messageWriter).parse(reader, parsedProducerHandler, messageWriter);
             } catch(IOException | XMLStreamException e) {
                 throw new MavenUniverseException("Failed to read " + producerXml, e);
             }
@@ -188,7 +198,7 @@ public class MavenUniverse extends MavenUniverseBase {
                         throw new MavenUniverseException(BaseErrors.pathDoesNotExist(producerXml));
                     }
                     try(BufferedReader reader = Files.newBufferedReader(producerXml)) {
-                        MavenProducerSpecXmlParser.getInstance().parse(reader, parsedProducerHandler);
+                        MavenProducerSpecXmlParser.getInstance(messageWriter).parse(reader, parsedProducerHandler, messageWriter);
                     } catch(IOException | XMLStreamException e) {
                         throw new MavenUniverseException("Failed to read " + producerXml, e);
                     }

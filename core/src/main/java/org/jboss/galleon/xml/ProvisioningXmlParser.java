@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import javax.xml.stream.XMLStreamException;
 
 import org.jboss.galleon.Errors;
+import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.config.ProvisioningConfig;
@@ -41,12 +42,12 @@ public class ProvisioningXmlParser implements XmlParser<ProvisioningConfig> {
         return INSTANCE;
     }
 
-    public static ProvisioningConfig parse(Path path) throws ProvisioningException {
+    public static ProvisioningConfig parse(Path path, MessageWriter writer) throws ProvisioningException {
         if (!Files.exists(path)) {
             return null;
         }
         try (BufferedReader reader = Files.newBufferedReader(path)) {
-            return getInstance().parse(reader);
+            return getInstance().parse(reader, writer);
         } catch (IOException | XMLStreamException e) {
             throw new ProvisioningException(Errors.parseXml(path), e);
         }
@@ -56,9 +57,9 @@ public class ProvisioningXmlParser implements XmlParser<ProvisioningConfig> {
     }
 
     @Override
-    public ProvisioningConfig parse(final Reader input) throws XMLStreamException, ProvisioningDescriptionException {
+    public ProvisioningConfig parse(final Reader input, MessageWriter writer) throws XMLStreamException, ProvisioningDescriptionException {
         final ProvisioningConfig.Builder builder = ProvisioningConfig.builder();
-        XmlParsers.parse(input, builder);
+        XmlParsers.parse(input, builder, writer);
         return builder.build();
     }
 }

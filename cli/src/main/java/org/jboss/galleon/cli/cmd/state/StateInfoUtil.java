@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -654,7 +654,7 @@ public class StateInfoUtil {
 
             if (type != null) {
                 invoc.println("");
-                try (ProvisioningLayout<FeaturePackLayout> layout = invoc.getPmSession().getLayoutFactory().newConfigLayout(config)) {
+                try (ProvisioningLayout<FeaturePackLayout> layout = invoc.getPmSession().getLayoutFactory().newConfigLayout(config, invoc.getPmSession().getMessageWriter(false))) {
                     switch (type) {
                         case ALL: {
                             FeatureContainer container = supplier.apply(layout);

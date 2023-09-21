@@ -29,6 +29,7 @@ import java.util.Set;
 
 import org.jboss.galleon.Constants;
 import org.jboss.galleon.Errors;
+import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.config.ConfigId;
@@ -57,17 +58,21 @@ public abstract class FeaturePackLayout {
     protected Path dir;
     protected FeaturePackSpec spec;
 
-    protected FeaturePackLayout(FPID fpid, Path dir, int type) {
+    protected final MessageWriter messageWriter;
+
+    protected FeaturePackLayout(FPID fpid, Path dir, int type, MessageWriter messageWriter) {
         this.fpid = fpid;
         this.dir = dir;
         this.type = type;
+        this.messageWriter = messageWriter;
     }
 
-    protected FeaturePackLayout(FeaturePackSpec spec, Path dir, int type) {
+    protected FeaturePackLayout(FeaturePackSpec spec, Path dir, int type, MessageWriter messageWriter) {
         this.fpid = spec.getFPID();
         this.dir = dir;
         this.type = type;
         this.spec = spec;
+        this.messageWriter = messageWriter;
     }
 
     public FPID getFPID() {
@@ -77,7 +82,7 @@ public abstract class FeaturePackLayout {
     public FeaturePackSpec getSpec() throws ProvisioningException {
         if(spec == null) {
             try(BufferedReader reader = Files.newBufferedReader(dir.resolve(Constants.FEATURE_PACK_XML))) {
-                spec = FeaturePackXmlParser.getInstance().parse(reader);
+                spec = FeaturePackXmlParser.getInstance().parse(reader, messageWriter);
             } catch (Exception e) {
                 throw new ProvisioningException(Errors.readFile(dir.resolve(Constants.FEATURE_PACK_XML)));
             }
@@ -136,7 +141,7 @@ public abstract class FeaturePackLayout {
             return null;
         }
         try (BufferedReader reader = Files.newBufferedReader(specXml)) {
-            return FeatureSpecXmlParser.getInstance().parse(reader);
+            return FeatureSpecXmlParser.getInstance().parse(reader, messageWriter);
         } catch (Exception e) {
             throw new ProvisioningDescriptionException(Errors.parseXml(specXml), e);
         }
@@ -153,7 +158,7 @@ public abstract class FeaturePackLayout {
             return null;
         }
         try (BufferedReader reader = Files.newBufferedReader(specXml)) {
-            return ConfigLayerSpecXmlParser.getInstance().parse(reader);
+            return ConfigLayerSpecXmlParser.getInstance().parse(reader, messageWriter);
         } catch (Exception e) {
             throw new ProvisioningDescriptionException(Errors.parseXml(specXml), e);
         }
@@ -166,7 +171,7 @@ public abstract class FeaturePackLayout {
             return null;
         }
         try (BufferedReader reader = Files.newBufferedReader(modelXml)) {
-            return ConfigXmlParser.getInstance().parse(reader);
+            return ConfigXmlParser.getInstance().parse(reader, messageWriter);
         } catch (Exception e) {
             throw new ProvisioningDescriptionException(Errors.parseXml(modelXml), e);
         }

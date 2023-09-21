@@ -19,6 +19,7 @@ package org.jboss.galleon.universe.maven.xml;
 import java.io.Reader;
 
 import javax.xml.stream.XMLStreamException;
+import org.jboss.galleon.MessageWriter;
 
 import org.jboss.galleon.xml.XmlBaseParsers;
 
@@ -28,17 +29,20 @@ import org.jboss.galleon.xml.XmlBaseParsers;
  */
 public class MavenProducerXmlParser {
 
-    private static final MavenProducerXmlParser INSTANCE = new MavenProducerXmlParser();
+    private static MavenProducerXmlParser INSTANCE;
 
-    public static MavenProducerXmlParser getInstance() {
+    public static MavenProducerXmlParser getInstance(MessageWriter writer) {
+        if (INSTANCE == null) {
+            INSTANCE = new MavenProducerXmlParser(writer);
+        }
         return INSTANCE;
     }
 
-    private MavenProducerXmlParser() {
-        XmlBaseParsers.getInstance().plugin(MavenProducerXmlParser10.ROOT, new MavenProducerXmlParser10());
+    private MavenProducerXmlParser(MessageWriter writer) {
+        XmlBaseParsers.getInstance(writer).plugin(MavenProducerXmlParser10.ROOT, new MavenProducerXmlParser10());
     }
 
-    public void parse(final Reader input, final MavenParsedProducerCallbackHandler builder) throws XMLStreamException {
-        XmlBaseParsers.parse(input, builder);
+    public void parse(final Reader input, final MavenParsedProducerCallbackHandler builder, MessageWriter writer) throws XMLStreamException {
+        XmlBaseParsers.parse(input, builder, writer);
     }
 }

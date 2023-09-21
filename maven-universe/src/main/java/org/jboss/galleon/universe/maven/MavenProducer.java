@@ -39,6 +39,8 @@ import org.jboss.galleon.universe.maven.xml.ParsedCallbackHandler;
 import org.jboss.galleon.util.CollectionUtils;
 import org.jboss.galleon.util.ZipUtils;
 import org.jboss.galleon.BaseErrors;
+import org.jboss.galleon.DefaultMessageWriter;
+import org.jboss.galleon.MessageWriter;
 
 /**
  *
@@ -66,11 +68,19 @@ public class MavenProducer extends MavenProducerBase {
     private boolean resolvedLocally;
 
     public MavenProducer(String name, MavenRepoManager repoManager, MavenArtifact artifact) throws MavenUniverseException {
-        this(name, repoManager, artifact, false);
+        this(name, repoManager, artifact, new DefaultMessageWriter());
+    }
+
+    public MavenProducer(String name, MavenRepoManager repoManager, MavenArtifact artifact, MessageWriter messageWriter) throws MavenUniverseException {
+        this(name, repoManager, artifact, false, messageWriter);
     }
 
     public MavenProducer(String name, MavenRepoManager repoManager, MavenArtifact artifact, boolean absoluteLatest) throws MavenUniverseException {
-        super(name, repoManager, artifact);
+        this(name, repoManager, artifact, absoluteLatest, new DefaultMessageWriter());
+    }
+
+    public MavenProducer(String name, MavenRepoManager repoManager, MavenArtifact artifact, boolean absoluteLatest, MessageWriter messageWriter) throws MavenUniverseException {
+        super(name, repoManager, artifact, messageWriter);
         if(!artifact.isResolved()) {
             resolvedLocally = MavenUniverse.resolveUniverseArtifact(repoManager, artifact, !absoluteLatest);
         }
@@ -84,7 +94,7 @@ public class MavenProducer extends MavenProducerBase {
                 throw new MavenUniverseException("Failed to locate " + producerXml + " in " + artifact.getCoordsAsString());
             }
             try(BufferedReader reader = Files.newBufferedReader(producerXml)) {
-                MavenProducerXmlParser.getInstance().parse(reader, new MavenParsedProducerCallbackHandler() {
+                MavenProducerXmlParser.getInstance(messageWriter).parse(reader, new MavenParsedProducerCallbackHandler() {
                     @Override
                     public void parsedName(String name) throws XMLStreamException {
                         if(!name.equals(name)) {
@@ -117,7 +127,7 @@ public class MavenProducer extends MavenProducerBase {
                     public void parsedDefaultChannel(String channelName) throws XMLStreamException {
                         defaultChannel = channelName;
                     }
-                });
+                }, messageWriter);
             } catch (XMLStreamException e) {
                 throw new MavenUniverseException("Failed to parse " + producerXml, e);
             }
@@ -193,7 +203,7 @@ public class MavenProducer extends MavenProducerBase {
                 return false;
             }
             try(BufferedReader reader = Files.newBufferedReader(channelXml)) {
-                MavenChannelSpecXmlParser.getInstance().parse(reader, parsedChannelHandler);
+                MavenChannelSpecXmlParser.getInstance(messageWriter).parse(reader, parsedChannelHandler, messageWriter);
             } catch(IOException | XMLStreamException e) {
                 throw new MavenUniverseException("Failed to read " + channelXml, e);
             }
@@ -252,7 +262,7 @@ public class MavenProducer extends MavenProducerBase {
                         throw new MavenUniverseException("Required path does not exist: " + channelXml);
                     }
                     try(BufferedReader reader = Files.newBufferedReader(channelXml)) {
-                        MavenChannelSpecXmlParser.getInstance().parse(reader, parsedChannelHandler);
+                        MavenChannelSpecXmlParser.getInstance(messageWriter).parse(reader, parsedChannelHandler, messageWriter);
                     } catch(IOException | XMLStreamException e) {
                         throw new MavenUniverseException("Failed to read " + channelXml, e);
                     }

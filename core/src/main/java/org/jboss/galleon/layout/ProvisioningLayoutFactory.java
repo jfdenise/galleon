@@ -30,7 +30,9 @@ import javax.xml.stream.XMLStreamException;
 import org.jboss.galleon.BaseErrors;
 
 import org.jboss.galleon.Constants;
+import org.jboss.galleon.DefaultMessageWriter;
 import org.jboss.galleon.Errors;
+import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.config.ProvisioningConfig;
@@ -120,7 +122,11 @@ public class ProvisioningLayoutFactory implements Closeable {
      * @throws ProvisioningException  in case of a failure
      */
     public synchronized FeaturePackLocation addLocal(Path featurePack, boolean installInUniverse) throws ProvisioningException {
-        final FPID fpid = FeaturePackDescriber.readSpec(featurePack).getFPID();
+        return addLocal(featurePack, installInUniverse, new DefaultMessageWriter());
+    }
+
+    public synchronized FeaturePackLocation addLocal(Path featurePack, boolean installInUniverse, MessageWriter writer) throws ProvisioningException {
+        final FPID fpid = FeaturePackDescriber.readSpec(featurePack, writer).getFPID();
         put(featurePack, fpid);
         if(!installInUniverse) {
             return fpid.getLocation();
@@ -147,31 +153,39 @@ public class ProvisioningLayoutFactory implements Closeable {
      * @throws ProvisioningException  in case of a failure
      */
     public ProvisioningLayout<FeaturePackLayout> newConfigLayout(Path featurePack, boolean installInUniverse) throws ProvisioningException {
-        return newConfigLayout(ProvisioningConfig.builder().addFeaturePackDep(addLocal(featurePack, installInUniverse)).build());
+        return newConfigLayout(featurePack, installInUniverse, new DefaultMessageWriter());
+    }
+
+    public ProvisioningLayout<FeaturePackLayout> newConfigLayout(Path featurePack, boolean installInUniverse, MessageWriter messageWriter) throws ProvisioningException {
+        return newConfigLayout(ProvisioningConfig.builder().addFeaturePackDep(addLocal(featurePack, installInUniverse, messageWriter)).build(), messageWriter);
     }
 
     public ProvisioningLayout<FeaturePackLayout> newConfigLayout(ProvisioningConfig config) throws ProvisioningException {
+        return newConfigLayout(config, new DefaultMessageWriter());
+    }
+
+    public ProvisioningLayout<FeaturePackLayout> newConfigLayout(ProvisioningConfig config, MessageWriter messageWriter) throws ProvisioningException {
         return newConfigLayout(config, new FeaturePackLayoutFactory<FeaturePackLayout>() {
             @Override
-            public FeaturePackLayout newFeaturePack(FeaturePackLocation fpl, FeaturePackSpec fpSpec, Path dir, int type) {
-                return new FeaturePackLayout(fpl.getFPID(), dir, type) {
+            public FeaturePackLayout newFeaturePack(FeaturePackLocation fpl, FeaturePackSpec fpSpec, Path dir, int type, MessageWriter messageWriter) {
+                return new FeaturePackLayout(fpl.getFPID(), dir, type, messageWriter) {
                     @Override
                     public FeaturePackSpec getSpec() {
                         return fpSpec;
                     }
                 };
-            }}, false);
+            }}, false, messageWriter);
     }
 
-    public <F extends FeaturePackLayout> ProvisioningLayout<F> newConfigLayout(ProvisioningConfig config, FeaturePackLayoutFactory<F> factory, boolean initOptions) throws ProvisioningException {
-        return new ProvisioningLayout<>(this, config, factory, initOptions);
+    public <F extends FeaturePackLayout> ProvisioningLayout<F> newConfigLayout(ProvisioningConfig config, FeaturePackLayoutFactory<F> factory, boolean initOptions, MessageWriter log) throws ProvisioningException {
+        return new ProvisioningLayout<>(this, config, factory, initOptions, log);
     }
 
-    public <F extends FeaturePackLayout> ProvisioningLayout<F> newConfigLayout(ProvisioningConfig config, FeaturePackLayoutFactory<F> factory, Map<String, String> pluginOptions) throws ProvisioningException {
-        return new ProvisioningLayout<>(this, config, factory, pluginOptions);
+    public <F extends FeaturePackLayout> ProvisioningLayout<F> newConfigLayout(ProvisioningConfig config, FeaturePackLayoutFactory<F> factory, Map<String, String> pluginOptions, MessageWriter log) throws ProvisioningException {
+        return new ProvisioningLayout<>(this, config, factory, pluginOptions, log);
     }
 
-    public <F extends FeaturePackLayout> F resolveFeaturePack(FeaturePackLocation location, int type, FeaturePackLayoutFactory<F> factory)
+    public <F extends FeaturePackLayout> F resolveFeaturePack(FeaturePackLocation location, int type, FeaturePackLayoutFactory<F> factory, MessageWriter log)
             throws ProvisioningException {
         final Path fpDir = resolveFeaturePackDir(location);
         final Path fpXml = fpDir.resolve(Constants.FEATURE_PACK_XML);
@@ -179,7 +193,7 @@ public class ProvisioningLayoutFactory implements Closeable {
             throw new ProvisioningDescriptionException(BaseErrors.pathDoesNotExist(fpXml));
         }
         try (BufferedReader reader = Files.newBufferedReader(fpXml)) {
-            final FeaturePackSpec fpSpec = FeaturePackXmlParser.getInstance().parse(reader);
+            final FeaturePackSpec fpSpec = FeaturePackXmlParser.getInstance().parse(reader, log);
             if(location.isMavenCoordinates()) {
                 final FPID specId = fpSpec.getFPID();
                 final FeaturePackLocation fpl = new FeaturePackLocation(specId.getUniverse(), specId.getProducer().getName(), specId.getChannel().getName(), location.getFrequency(), specId.getBuild());
@@ -188,7 +202,7 @@ public class ProvisioningLayoutFactory implements Closeable {
                 }
                 location = fpl;
             }
-            return factory.newFeaturePack(location, fpSpec, fpDir, type);
+            return factory.newFeaturePack(location, fpSpec, fpDir, type, log);
         } catch (IOException | XMLStreamException e) {
             throw new ProvisioningException(Errors.parseXml(fpXml), e);
         }

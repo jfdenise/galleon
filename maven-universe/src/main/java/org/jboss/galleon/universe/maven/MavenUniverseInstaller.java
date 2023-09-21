@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
+import org.jboss.galleon.DefaultMessageWriter;
+import org.jboss.galleon.MessageWriter;
 
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 import org.jboss.galleon.universe.maven.xml.MavenProducerSpecXmlWriter;
@@ -42,11 +44,15 @@ public class MavenUniverseInstaller extends MavenUniverseBase {
     private boolean installed;
 
     public MavenUniverseInstaller(MavenRepoManager repoManager, MavenArtifact artifact) {
-        super(repoManager, artifact);
+        super(repoManager, artifact, new DefaultMessageWriter());
+    }
+
+    public MavenUniverseInstaller(MavenRepoManager repoManager, MavenArtifact artifact, MessageWriter messageWriter) {
+        super(repoManager, artifact, messageWriter);
     }
 
     public MavenUniverseInstaller extendUniverse(MavenArtifact extendArtifact) throws MavenUniverseException {
-        final MavenUniverse otherUniverse = new MavenUniverse(repo, extendArtifact);
+        final MavenUniverse otherUniverse = new MavenUniverse(repo, extendArtifact, messageWriter);
         for(MavenProducer producer : otherUniverse.getProducers()) {
             addProducer(producer);
         }
@@ -61,7 +67,7 @@ public class MavenUniverseInstaller extends MavenUniverseBase {
         if(artifact.getVersionRange() == null) {
             MavenErrors.missingVersionRange(artifact);
         }
-        return addProducer(new MavenProducer(producer, repo, artifact));
+        return addProducer(new MavenProducer(producer, repo, artifact, messageWriter));
     }
 
     public MavenUniverseInstaller addProducer(MavenProducer producer) throws MavenUniverseException {

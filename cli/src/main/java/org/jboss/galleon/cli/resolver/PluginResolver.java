@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -93,10 +93,10 @@ public class PluginResolver implements Resolver<ResolvedPlugins> {
             try {
                 if (pLayout == null) {
                     if (config != null) {
-                        pLayout = session.getLayoutFactory().newConfigLayout(config);
+                        pLayout = session.getLayoutFactory().newConfigLayout(config, session.getMessageWriter(false));
                     } else {
                         // No registration in universe during completion
-                        pLayout = session.getLayoutFactory().newConfigLayout(file, false);
+                        pLayout = session.getLayoutFactory().newConfigLayout(file, false, session.getMessageWriter(false));
                     }
                 }
                 return resolvePlugins(pLayout);

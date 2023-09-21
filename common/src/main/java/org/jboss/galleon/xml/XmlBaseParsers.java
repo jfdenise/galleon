@@ -22,6 +22,7 @@ import javax.xml.namespace.QName;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import org.jboss.galleon.MessageWriter;
 
 import org.jboss.staxmapper.XMLElementReader;
 import org.jboss.staxmapper.XMLMapper;
@@ -32,14 +33,17 @@ import org.jboss.staxmapper.XMLMapper;
  */
 public class XmlBaseParsers {
 
-    private static final XmlBaseParsers INSTANCE = new XmlBaseParsers();
+    private static XmlBaseParsers INSTANCE;
 
-    public static XmlBaseParsers getInstance() {
+    public static XmlBaseParsers getInstance(MessageWriter log) {
+        if (INSTANCE == null) {
+            INSTANCE = new XmlBaseParsers(log);
+        }
         return INSTANCE;
     }
 
-    public static void parse(final Reader reader, Object builder) throws XMLStreamException {
-        INSTANCE.doParse(reader, builder);
+    public static void parse(final Reader reader, Object builder, MessageWriter log) throws XMLStreamException {
+        getInstance(log).doParse(reader, builder);
     }
     private static final XMLInputFactory inputFactory;
     static {
@@ -60,9 +64,11 @@ public class XmlBaseParsers {
     }
 
     private final XMLMapper mapper;
+    private final MessageWriter log;
 
-    protected XmlBaseParsers() {
+    protected XmlBaseParsers(MessageWriter log) {
         mapper = XMLMapper.Factory.create();
+        this.log = log;
     }
 
     public void plugin(QName root, XMLElementReader<?> reader) {

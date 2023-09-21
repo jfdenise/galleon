@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.option.Option;
+import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.cli.AbstractCompleter;
 import org.jboss.galleon.cli.CommandExecutionException;
@@ -94,9 +95,9 @@ public class GetInfoCommand extends AbstractFeaturePackCommand {
                     loc = session.getResolvedLocation(null, fpl);
                     FeaturePackConfig config = FeaturePackConfig.forLocation(loc);
                     provisioning = ProvisioningConfig.builder().addFeaturePackDep(config).build();
-                    layout = session.getLayoutFactory().newConfigLayout(provisioning);
+                    layout = session.getLayoutFactory().newConfigLayout(provisioning, session.getMessageWriter(false));
                 } else {
-                    layout = session.getLayoutFactory().newConfigLayout(file.toPath(), true);
+                    layout = session.getLayoutFactory().newConfigLayout(file.toPath(), true, session.getMessageWriter(false));
                 }
 
                 for (FeaturePackLayout fpLayout : layout.getOrderedFeaturePacks()) {
@@ -211,9 +212,10 @@ public class GetInfoCommand extends AbstractFeaturePackCommand {
     private boolean displayConfigs(PmCommandInvocation commandInvocation,
             ProvisioningLayout<FeaturePackLayout> pLayout) throws ProvisioningException, IOException {
         Map<String, List<ConfigInfo>> configs = new HashMap<>();
+        MessageWriter writer = commandInvocation.getPmSession().getMessageWriter(false);
         try (ProvisioningRuntime rt = ProvisioningRuntimeBuilder.
-                newInstance(commandInvocation.getPmSession().getMessageWriter(false))
-                .initRtLayout(pLayout.transform(ProvisioningRuntimeBuilder.FP_RT_FACTORY))
+                newInstance(writer)
+                .initRtLayout(pLayout.transform(ProvisioningRuntimeBuilder.FP_RT_FACTORY, writer))
                 .build()) {
             for (ProvisionedConfig m : rt.getConfigs()) {
                 String model = m.getModel();
@@ -254,9 +256,10 @@ public class GetInfoCommand extends AbstractFeaturePackCommand {
 
     private boolean displayOptionalPackages(PmCommandInvocation commandInvocation,
             ProvisioningLayout<FeaturePackLayout> pLayout) throws ProvisioningException, IOException {
+        MessageWriter writer = commandInvocation.getPmSession().getMessageWriter(false);
         try (ProvisioningRuntime rt = ProvisioningRuntimeBuilder.
-                newInstance(commandInvocation.getPmSession().getMessageWriter(false))
-                .initRtLayout(pLayout.transform(ProvisioningRuntimeBuilder.FP_RT_FACTORY))
+                newInstance(writer)
+                .initRtLayout(pLayout.transform(ProvisioningRuntimeBuilder.FP_RT_FACTORY, writer))
                 .build()) {
             FeatureContainer container = FeatureContainers.
                     fromProvisioningRuntime(commandInvocation.getPmSession(), rt);

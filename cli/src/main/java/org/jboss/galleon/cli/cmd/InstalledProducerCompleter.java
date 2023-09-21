@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -85,7 +85,7 @@ public class InstalledProducerCompleter extends AbstractCommaSeparatedCompleter 
             PathsUtils.assertInstallationDir(installation);
             ProvisioningManager mgr = session.
                     newProvisioningManager(installation, false);
-            try (ProvisioningLayout<FeaturePackLayout> layout = mgr.getLayoutFactory().newConfigLayout(mgr.getProvisioningConfig())) {
+            try (ProvisioningLayout<FeaturePackLayout> layout = mgr.getLayoutFactory().newConfigLayout(mgr.getProvisioningConfig(),session.getMessageWriter(false))) {
                 for (FeaturePackLayout fp : layout.getOrderedFeaturePacks()) {
                     if (fp.isDirectDep() || (fp.isTransitiveDep() && transitive)) {
                         items.add(fp.getFPID().getLocation());

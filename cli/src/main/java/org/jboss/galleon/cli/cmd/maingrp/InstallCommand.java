@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -168,7 +168,7 @@ public class InstallCommand extends AbstractPluginsCommand {
             String layers = (String) getValue(LAYERS_OPTION_NAME);
             if (filePath != null) {
                 Path p = Util.resolvePath(session.getConfiguration().getAeshContext(), filePath);
-                loc = session.getPmSession().getLayoutFactory().addLocal(p, true);
+                loc = session.getPmSession().getLayoutFactory().addLocal(p, true, session.getPmSession().getMessageWriter(false));
             }
             if (layers == null) {
                 String configurations = (String) getValue(DEFAULT_CONFIGS_OPTION_NAME);
@@ -212,6 +212,7 @@ public class InstallCommand extends AbstractPluginsCommand {
                         session.getPmSession().getExposedLocation(manager.getInstallationHome(), loc));
             }
         } catch (ProvisioningException | IOException ex) {
+            ex.printStackTrace();
             throw new CommandExecutionException(session.getPmSession(), CliErrors.installFailed(), ex);
         }
     }
@@ -344,7 +345,7 @@ public class InstallCommand extends AbstractPluginsCommand {
             return null;
         }
         try {
-            return FeaturePackDescriber.readSpec(path).getFPID().toString();
+            return FeaturePackDescriber.readSpec(path, session.getMessageWriter(false)).getFPID().toString();
         } catch (ProvisioningException ex) {
             throw new CommandExecutionException(session, CliErrors.retrieveFeaturePackID(), ex);
         }

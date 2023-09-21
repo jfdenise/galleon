@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@ package org.jboss.galleon.universe.maven;
 
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
+import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.universe.Universe;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 
@@ -31,10 +32,11 @@ public abstract class MavenUniverseBase implements Universe<MavenProducer> {
 
     protected final MavenRepoManager repo;
     protected final MavenArtifact artifact;
-
-    protected MavenUniverseBase(MavenRepoManager repoManager, MavenArtifact artifact) {
+    protected final MessageWriter messageWriter;
+    protected MavenUniverseBase(MavenRepoManager repoManager, MavenArtifact artifact, MessageWriter messageWriter) {
         this.repo = repoManager;
         this.artifact = artifact;
+        this.messageWriter = messageWriter;
     }
 
     @Override

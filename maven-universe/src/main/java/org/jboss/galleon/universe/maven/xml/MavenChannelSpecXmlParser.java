@@ -19,6 +19,7 @@ package org.jboss.galleon.universe.maven.xml;
 import java.io.Reader;
 
 import javax.xml.stream.XMLStreamException;
+import org.jboss.galleon.MessageWriter;
 
 import org.jboss.galleon.universe.maven.MavenChannel;
 import org.jboss.galleon.universe.maven.MavenProducerBase;
@@ -30,17 +31,20 @@ import org.jboss.galleon.xml.XmlBaseParsers;
  */
 public class MavenChannelSpecXmlParser {
 
-    private static final MavenChannelSpecXmlParser INSTANCE = new MavenChannelSpecXmlParser();
+    private static MavenChannelSpecXmlParser INSTANCE;
 
-    public static MavenChannelSpecXmlParser getInstance() {
+    public static MavenChannelSpecXmlParser getInstance(MessageWriter writer) {
+        if (INSTANCE == null) {
+            INSTANCE = new MavenChannelSpecXmlParser(writer);
+        }
         return INSTANCE;
     }
 
-    private MavenChannelSpecXmlParser() {
-        XmlBaseParsers.getInstance().plugin(MavenChannelSpecXmlParser10.ROOT_1_0, new MavenChannelSpecXmlParser10());
+    private MavenChannelSpecXmlParser(MessageWriter writer) {
+        XmlBaseParsers.getInstance(writer).plugin(MavenChannelSpecXmlParser10.ROOT_1_0, new MavenChannelSpecXmlParser10());
     }
 
-    public void parse(final Reader input, final ParsedCallbackHandler<MavenProducerBase, MavenChannel> builder) throws XMLStreamException {
-        XmlBaseParsers.parse(input, builder);
+    public void parse(final Reader input, final ParsedCallbackHandler<MavenProducerBase, MavenChannel> builder, MessageWriter writer) throws XMLStreamException {
+        XmlBaseParsers.parse(input, builder, writer);
     }
 }

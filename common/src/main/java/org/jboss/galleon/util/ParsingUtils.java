@@ -25,6 +25,7 @@ import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import org.jboss.galleon.MessageWriter;
 
 import org.jboss.galleon.xml.XmlNameProvider;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
@@ -197,5 +198,11 @@ public class ParsingUtils {
 
     public static XMLStreamException error(String string, Location location, Throwable e) {
         return new XMLStreamException(error(string, location), e);
+    }
+
+    public static void printUnknownAttribute(MessageWriter writer, String attribute) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Parsing warning: Unknown attribute " + attribute);
+        writer.print(builder.toString());
     }
 }
