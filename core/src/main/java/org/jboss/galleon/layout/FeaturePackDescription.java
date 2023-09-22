@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.jboss.galleon.BaseErrors;
 
 import org.jboss.galleon.Errors;
 import org.jboss.galleon.ProvisioningDescriptionException;
@@ -114,7 +115,7 @@ public class FeaturePackDescription {
                         try {
                             spec.getFeaturePackDep(origin);
                         } catch(ProvisioningDescriptionException e) {
-                            throw new ProvisioningDescriptionException(Errors.unknownFeaturePackDependencyName(fpid, pkg.getName(), origin), e);
+                            throw new ProvisioningDescriptionException(BaseErrors.unknownFeaturePackDependencyName(fpid, pkg.getName(), origin), e);
                         }
                     }
                     externalPkgDeps = true;
