@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.jboss.galleon.config.ConfigId;
+import org.jboss.galleon.api.config.ConfigId;
 import org.jboss.galleon.config.FeatureConfig;
 import org.jboss.galleon.runtime.ResolvedFeature;
 import org.jboss.galleon.runtime.ResolvedFeatureId;
@@ -51,24 +51,8 @@ public interface Errors {
 
     // GENERAL MESSAGES
 
-    static String pathDoesNotExist(Path p) {
-        return "Failed to locate " + p.toAbsolutePath();
-    }
-
     static String pathAlreadyExists(Path p) {
         return "Path already exists " + p.toAbsolutePath();
-    }
-
-    static String mkdirs(Path p) {
-        return "Failed to make directories " + p.toAbsolutePath();
-    }
-
-    static String readDirectory(Path p) {
-        return "Failed to read directory " + p.toAbsolutePath();
-    }
-
-    static String notADir(Path p) {
-        return p.toAbsolutePath() + " is not a directory";
     }
 
     static String copyFile(Path src, Path target) {
@@ -99,10 +83,6 @@ public interface Errors {
         return "Failed to parse " + p.toAbsolutePath();
     }
 
-    static String writeFile(Path p) {
-        return "Failed to write to " + p.toAbsolutePath();
-    }
-
     static String deleteFile(Path p) {
         return "Failed to delete " + p.toAbsolutePath();
     }
@@ -112,10 +92,6 @@ public interface Errors {
     }
 
     // FEATURE PACK INSTALL MESSAGES
-
-    static String homeDirNotUsable(Path p) {
-        return p + " has to be empty or contain a provisioned installation to be used by the tool";
-    }
 
     static String fpVersionCheckFailed(Collection<Set<FPID>> versionConflicts) throws ProvisioningException {
         final StringWriter strWriter = new StringWriter();
@@ -158,10 +134,6 @@ public interface Errors {
         return "Package " + pkgName + " is not found in " + fpid;
     }
 
-    static String unknownFeaturePack(FeaturePackLocation.FPID fpid) {
-        return "Feature-pack " + fpid + " not found in the configuration";
-    }
-
     static String unsatisfiedFeaturePackDep(ProducerSpec producer) {
         return "Feature-pack " + producer + " is a required dependency";
     }
@@ -200,26 +172,6 @@ public interface Errors {
 
     static String resolvePackage(FeaturePackLocation.FPID fpid, String packageName) {
         return "Failed to resolve feature-pack " + fpid + " package " + packageName;
-    }
-
-    static String packageExcludeInclude(String packageName) {
-        return "Attempt to explicitly include and exclude package " + packageName;
-    }
-
-    static String duplicateDependencyName(String name) {
-        return "Dependency with name " + name + " already exists";
-    }
-
-    static String unknownFeaturePackDependencyName(String depName) {
-        return depName + " was not found among the feature-pack dependencies";
-    }
-
-    static String featurePackAlreadyConfigured(ProducerSpec producer) {
-        return "Feature-pack " + producer + " already present in the configuration";
-    }
-
-    static String unknownFeaturePackDependencyName(FeaturePackLocation.FPID fpid, String pkgName, String depName) {
-        return fpid + " package " + pkgName + " references unknown feature-pack dependency " + depName;
     }
 
     static String noCapabilityProvider(String capability) {
@@ -388,20 +340,6 @@ public interface Errors {
         return buf.toString();
     }
 
-    static String frequencyNotSupported(final Collection<String> frequencies, FeaturePackLocation fpl) {
-        final StringBuilder buf = new StringBuilder();
-        buf.append("The frequency specified in ").append(fpl).append(" is not supported, the producer ");
-        if (frequencies.isEmpty()) {
-            buf.append(" does not suport frequencies");
-        } else {
-            buf.append("supported frequencies are ");
-            final String[] arr = frequencies.toArray(new String[frequencies.size()]);
-            Arrays.sort(arr);
-            StringUtils.append(buf, Arrays.asList(arr));
-        }
-        return buf.toString();
-    }
-
     static String transitiveDependencyNotFound(ProducerSpec... producer) {
         final StringBuilder buf = new StringBuilder();
         buf.append("Failed to locate ");
@@ -430,10 +368,6 @@ public interface Errors {
             StringUtils.append(buf, installers);
         }
         return buf.toString();
-    }
-
-    static String noVersionAvailable(FeaturePackLocation fpl) {
-        return "No version is available for " + fpl;
     }
 
     static String historyIsEmpty() {
@@ -523,9 +457,6 @@ public interface Errors {
         return action + " took " + timeSec + "." + ((nanos - timeSec * 1000000000) / 1000000) + " seconds";
     }
 
-    static String defaultChannelNotConfigured(String producer) {
-        return "Default channel has not been configured for feature-pack producer " + producer;
-    }
 
     static void appendConfig(final StringBuilder buf, String model, String name) {
         if (model != null) {

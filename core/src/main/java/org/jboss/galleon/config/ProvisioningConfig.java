@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +19,15 @@ package org.jboss.galleon.config;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.jboss.galleon.ProvisioningDescriptionException;
+import org.jboss.galleon.api.Configuration;
+import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
+import org.jboss.galleon.api.config.GalleonProvisioningConfig;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
+import org.jboss.galleon.universe.UniverseSpec;
 import org.jboss.galleon.util.CollectionUtils;
 import org.jboss.galleon.util.StringUtils;
 
@@ -87,6 +94,129 @@ public class ProvisioningConfig extends FeaturePackDepsConfig {
         return new Builder();
     }
 
+    public static ProvisioningConfig toConfig(GalleonProvisioningConfig gConfig) throws ProvisioningDescriptionException {
+        Builder builder = ProvisioningConfig.builder();
+        builder.addOptions(gConfig.getOptions());
+        for(ConfigId c : gConfig.getExcludedConfigs()) {
+            builder.excludeDefaultConfig(c);
+        }
+        for(GalleonFeaturePackConfig dep : gConfig.getFeaturePackDeps()) {
+            FeaturePackConfig.Builder fpBuilder = dep.isTransitive() ? FeaturePackConfig.transitiveBuilder(dep.getLocation()) : FeaturePackConfig.builder(dep.getLocation());
+            for (ConfigId c : dep.getExcludedConfigs()) {
+                fpBuilder.excludeDefaultConfig(c);
+            }
+            fpBuilder.excludeAllPackages(dep.getExcludedPackages());
+            for (Entry<String, Boolean> entry : dep.getFullModelsExcluded().entrySet()) {
+                fpBuilder.excludeConfigModel(entry.getKey(), entry.getValue());
+            }
+            for (String model : dep.getFullModelsIncluded()) {
+                fpBuilder.includeConfigModel(model);
+            }
+            for (ConfigId id : dep.getIncludedConfigs()) {
+                fpBuilder.includeDefaultConfig(id);
+            }
+            fpBuilder.includeAllPackages(dep.getIncludedPackages());
+            fpBuilder.setInheritConfigs(dep.getInheritConfigs());
+            fpBuilder.setInheritPackages(dep.getInheritPackages());
+            for(FPID patch : dep.getPatches()) {
+                fpBuilder.addPatch(patch);
+            }
+            builder.addFeaturePackDep(fpBuilder.build());
+        }
+        for(GalleonFeaturePackConfig tc : gConfig.getTransitiveDeps()) {
+            builder.addTransitiveDep(tc.getLocation());
+        }
+        for (Entry<String, UniverseSpec> entry : gConfig.getUniverseNamedSpecs().entrySet()) {
+            builder.addUniverse(entry.getKey(), entry.getValue());
+        }
+        builder.setInheritConfigs(gConfig.getInheritConfigs());
+        builder.setDefaultUniverse(gConfig.getDefaultUniverse());
+        builder.setInheritModelOnlyConfigs(gConfig.isInheritModelOnlyConfigs());
+        for (ConfigId c : gConfig.getExcludedConfigs()) {
+            builder.excludeDefaultConfig(c);
+        }
+        for (Entry<String, Boolean> entry : gConfig.getFullModelsExcluded().entrySet()) {
+            builder.excludeConfigModel(entry.getKey(), entry.getValue());
+        }
+        for (String model : gConfig.getFullModelsIncluded()) {
+            builder.includeConfigModel(model);
+        }
+        for (ConfigId id : gConfig.getIncludedConfigs()) {
+            builder.includeDefaultConfig(id);
+        }
+        for (Configuration configuration : gConfig.getDefinedConfigs()) {
+            if (configuration instanceof ParsedConfiguration) {
+                builder.addConfig(((ParsedConfiguration) configuration).getConfig());
+            } else {
+                ConfigModel.Builder cBuilder = ConfigModel.builder(configuration.getModel(), configuration.getName());
+                for (String l : configuration.getLayers()) {
+                    cBuilder.includeLayer(l);
+                }
+                for (String l : configuration.getExcludedLayers()) {
+                    cBuilder.excludeLayer(l);
+                }
+                builder.addConfig(cBuilder.build());
+            }
+        }
+        return builder.build();
+    }
+
+    public static GalleonProvisioningConfig toConfig(ProvisioningConfig gConfig) throws ProvisioningDescriptionException {
+        GalleonProvisioningConfig.Builder builder = GalleonProvisioningConfig.builder();
+        builder.addOptions(gConfig.getOptions());
+        for (ConfigId c : gConfig.getExcludedConfigs()) {
+            builder.excludeDefaultConfig(c);
+        }
+        for (FeaturePackConfig dep : gConfig.getFeaturePackDeps()) {
+            GalleonFeaturePackConfig.Builder fpBuilder = dep.isTransitive() ? GalleonFeaturePackConfig.transitiveBuilder(dep.getLocation()) : GalleonFeaturePackConfig.builder(dep.getLocation());
+            for (ConfigId c : dep.getExcludedConfigs()) {
+                fpBuilder.excludeDefaultConfig(c);
+            }
+            fpBuilder.excludeAllPackages(dep.getExcludedPackages());
+            for (Entry<String, Boolean> entry : dep.getFullModelsExcluded().entrySet()) {
+                fpBuilder.excludeConfigModel(entry.getKey(), entry.getValue());
+            }
+            for (String model : dep.getFullModelsIncluded()) {
+                fpBuilder.includeConfigModel(model);
+            }
+            for (ConfigId id : dep.getIncludedConfigs()) {
+                fpBuilder.includeDefaultConfig(id);
+            }
+            fpBuilder.includeAllPackages(dep.getIncludedPackages());
+            fpBuilder.setInheritConfigs(dep.getInheritConfigs());
+            fpBuilder.setInheritPackages(dep.getInheritPackages());
+            for (FPID patch : dep.getPatches()) {
+                fpBuilder.addPatch(patch);
+            }
+            builder.addFeaturePackDep(fpBuilder.build());
+        }
+        for (FeaturePackConfig tc : gConfig.getTransitiveDeps()) {
+            builder.addTransitiveDep(tc.getLocation());
+        }
+        for (Entry<String, UniverseSpec> entry : gConfig.getUniverseNamedSpecs().entrySet()) {
+            builder.addUniverse(entry.getKey(), entry.getValue());
+        }
+        builder.setInheritConfigs(gConfig.getInheritConfigs());
+        builder.setDefaultUniverse(gConfig.getDefaultUniverse());
+        builder.setInheritModelOnlyConfigs(gConfig.isInheritModelOnlyConfigs());
+        for (ConfigId c : gConfig.getExcludedConfigs()) {
+            builder.excludeDefaultConfig(c);
+        }
+        for (Entry<String, Boolean> entry : gConfig.getFullModelsExcluded().entrySet()) {
+            builder.excludeConfigModel(entry.getKey(), entry.getValue());
+        }
+        for (String model : gConfig.getFullModelsIncluded()) {
+            builder.includeConfigModel(model);
+        }
+        for (ConfigId id : gConfig.getIncludedConfigs()) {
+            builder.includeDefaultConfig(id);
+        }
+        for(ConfigModel m : gConfig.getDefinedConfigs()) {
+            ParsedConfiguration pConfig = new ParsedConfiguration(m);
+            builder.addConfig(pConfig);
+        }
+        return builder.build();
+    }
     /**
      * Allows to build a provisioning configuration starting from the passed in
      * initial configuration.

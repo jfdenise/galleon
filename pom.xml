@@ -42,6 +42,9 @@
   </licenses>
 
   <modules>
+    <module>common-api</module>
+    <module>api</module>
+    <module>core-caller</module>
     <module>core</module>
     <module>maven-plugin</module>
     <module>cli</module>
@@ -68,6 +71,7 @@
     <version.adoc-maven-plugin-descriptor>1.0.0.Alpha3</version.adoc-maven-plugin-descriptor>
     <version.assertj>3.23.1</version.assertj>
     <version.com.io7m.xom>1.2.10</version.com.io7m.xom>
+    <version.com.fasterxml.jackson.core>2.14.2</version.com.fasterxml.jackson.core>
     <version.com.mycila.license-maven-plugin>3.0</version.com.mycila.license-maven-plugin>
     <version.junit>4.13.1</version.junit>
     <version.maven-aether-provider>3.3.9</version.maven-aether-provider>
@@ -138,6 +142,17 @@
     <dependencies>
 
       <!-- Modules in this project -->
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>galleon-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>galleon-common-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
 
       <dependency>
         <groupId>${project.groupId}</groupId>
@@ -172,6 +187,11 @@
       <!-- External Dependencies -->
 
       <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>${version.com.fasterxml.jackson.core}</version>
+      </dependency>
+      <dependency>
         <groupId>com.io7m.xom</groupId>
         <artifactId>xom</artifactId>
         <version>${version.com.io7m.xom}</version>
@@ -192,12 +212,6 @@
         <groupId>org.apache.maven</groupId>
         <artifactId>maven-aether-provider</artifactId>
         <version>${version.maven-aether-provider}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.maven</groupId>
-        <artifactId>maven-artifact</artifactId>
-        <version>${version.org.apache.maven}</version>
       </dependency>
 
       <dependency>
@@ -455,6 +469,7 @@ limitations under the License.</inlineHeader>
             <exclude>mvnw</exclude>
             <exclude>mvnw.cmd</exclude>
             <exclude>**/help/*.txt</exclude>
+            <exclude>**/galleon.properties</exclude>
             <exclude>**/pom.xml.releaseBackup</exclude>
             <exclude>**/pom.xml.tag</exclude>
             <exclude>CODEOWNERS</exclude>

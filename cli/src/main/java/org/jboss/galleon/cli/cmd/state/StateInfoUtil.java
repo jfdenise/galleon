@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ import org.aesh.utils.Config;
 import org.jboss.galleon.Constants;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningOption;
+import org.jboss.galleon.api.config.ConfigId;
 import org.jboss.galleon.cli.CommandExecutionException;
 import org.jboss.galleon.cli.PmCommandInvocation;
 import org.jboss.galleon.cli.PmSession;
@@ -59,7 +60,6 @@ import org.jboss.galleon.cli.path.PathParser;
 import org.jboss.galleon.cli.path.PathParserException;
 import org.jboss.galleon.cli.resolver.PluginResolver;
 import org.jboss.galleon.cli.resolver.ResolvedPlugins;
-import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.config.ConfigModel;
 import org.jboss.galleon.config.FeaturePackConfig;
 import org.jboss.galleon.config.ProvisioningConfig;

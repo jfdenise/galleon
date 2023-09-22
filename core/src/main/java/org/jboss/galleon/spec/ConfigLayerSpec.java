@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import org.jboss.galleon.ProvisioningDescriptionException;
-import org.jboss.galleon.config.ConfigId;
+import org.jboss.galleon.api.config.ConfigId;
 import org.jboss.galleon.config.FeatureConfig;
 import org.jboss.galleon.config.FeatureGroupBuilderSupport;
 import org.jboss.galleon.config.FeatureGroupSupport;

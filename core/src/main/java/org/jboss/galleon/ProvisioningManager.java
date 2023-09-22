@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -233,7 +233,7 @@ public class ProvisioningManager implements AutoCloseable {
         try {
             ProvisioningXmlWriter.getInstance().write(config, PathsUtils.getProvisioningXml(home));
         } catch (Exception e) {
-            throw new ProvisioningException(Errors.writeFile(PathsUtils.getProvisioningXml(home)), e);
+            throw new ProvisioningException(BaseErrors.writeFile(PathsUtils.getProvisioningXml(home)), e);
         }
         this.provisioningConfig = config;
     }
@@ -252,7 +252,7 @@ public class ProvisioningManager implements AutoCloseable {
         try {
             ProvisioningXmlWriter.getInstance().write(config, PathsUtils.getProvisioningXml(home));
         } catch (Exception e) {
-            throw new ProvisioningException(Errors.writeFile(PathsUtils.getProvisioningXml(home)), e);
+            throw new ProvisioningException(BaseErrors.writeFile(PathsUtils.getProvisioningXml(home)), e);
         }
         this.provisioningConfig = config;
     }
@@ -375,7 +375,7 @@ public class ProvisioningManager implements AutoCloseable {
     public void uninstall(FeaturePackLocation.FPID fpid, Map<String, String> pluginOptions) throws ProvisioningException {
         ProvisioningConfig config = getProvisioningConfig();
         if(config == null || !config.hasFeaturePackDeps()) {
-            throw new ProvisioningException(Errors.unknownFeaturePack(fpid));
+            throw new ProvisioningException(BaseErrors.unknownFeaturePack(fpid));
         }
         try(ProvisioningLayout<FeaturePackRuntimeBuilder> layout = getLayoutFactory().newConfigLayout(config, ProvisioningRuntimeBuilder.FP_RT_FACTORY, false)) {
             layout.uninstall(resolveUniverseSpec(fpid.getLocation()).getFPID(), pluginOptions);
@@ -701,7 +701,7 @@ public class ProvisioningManager implements AutoCloseable {
                             IoUtils.recursiveDelete(p);
                         }
                     } catch (IOException e) {
-                        throw new ProvisioningException(Errors.readDirectory(home), e);
+                        throw new ProvisioningException(BaseErrors.readDirectory(home), e);
                     }
                 } else {
                     IoUtils.recursiveDelete(home);

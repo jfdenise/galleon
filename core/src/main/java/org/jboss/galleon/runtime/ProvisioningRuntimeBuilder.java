@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,7 @@ import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningOption;
 import org.jboss.galleon.UnsatisfiedPackageDependencyException;
-import org.jboss.galleon.config.ConfigId;
+import org.jboss.galleon.api.config.ConfigId;
 import org.jboss.galleon.config.ConfigItem;
 import org.jboss.galleon.config.ConfigItemContainer;
 import org.jboss.galleon.config.ConfigModel;

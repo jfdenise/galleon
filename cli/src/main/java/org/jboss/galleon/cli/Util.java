@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,7 +40,7 @@ import org.eclipse.aether.spi.connector.RepositoryConnectorFactory;
 import org.eclipse.aether.spi.connector.transport.TransporterFactory;
 import org.eclipse.aether.transport.file.FileTransporterFactory;
 import org.eclipse.aether.transport.http.HttpTransporterFactory;
-import org.jboss.galleon.Errors;
+import org.jboss.galleon.BaseErrors;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.util.PathsUtils;
 
@@ -100,7 +100,7 @@ public class Util {
             if (Files.exists(PathsUtils.getProvisioningXml(install))) {
                 return install;
             } else {
-                throw new ProvisioningException(Errors.homeDirNotUsable(install));
+                throw new ProvisioningException(BaseErrors.homeDirNotUsable(install));
             }
         } else {
             Path currentDir = PmSession.getWorkDir(ctx);
@@ -110,7 +110,7 @@ public class Util {
                 }
                 currentDir = currentDir.getParent();
             }
-            throw new ProvisioningException(Errors.homeDirNotUsable(PmSession.getWorkDir(ctx)));
+            throw new ProvisioningException(BaseErrors.homeDirNotUsable(PmSession.getWorkDir(ctx)));
         }
     }
 }

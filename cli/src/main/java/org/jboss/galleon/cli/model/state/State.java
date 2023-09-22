@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ import java.util.Set;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.util.PathsUtils;
 import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.api.config.ConfigId;
 import org.jboss.galleon.cli.PmSession;
 import org.jboss.galleon.cli.model.ConfigInfo;
 import org.jboss.galleon.cli.model.FeatureContainer;
@@ -38,7 +39,6 @@ import org.jboss.galleon.cli.model.FeatureInfo;
 import org.jboss.galleon.cli.model.FeatureSpecInfo;
 import org.jboss.galleon.cli.model.Identity;
 import org.jboss.galleon.cli.path.PathParser;
-import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.config.FeaturePackConfig;
 import org.jboss.galleon.config.ProvisioningConfig;
 import org.jboss.galleon.runtime.FeaturePackRuntime;

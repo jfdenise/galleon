@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@ package org.jboss.galleon.cli.cmd.state.layers;
 
 import org.aesh.command.option.Argument;
 import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.api.config.ConfigId;
 import org.jboss.galleon.cli.HelpDescriptions;
 import org.jboss.galleon.cli.cmd.CommandDomain;
 import org.jboss.galleon.cli.cmd.state.AbstractStateCommand;
@@ -28,7 +29,6 @@ import org.jboss.galleon.cli.path.FeatureContainerPathConsumer;
 import org.jboss.galleon.cli.path.PathConsumerException;
 import org.jboss.galleon.cli.path.PathParser;
 import org.jboss.galleon.cli.path.PathParserException;
-import org.jboss.galleon.config.ConfigId;
 
 /**
  *
