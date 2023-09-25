@@ -19,6 +19,7 @@ package org.jboss.galleon.api;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import javax.xml.stream.XMLStreamException;
 import org.jboss.galleon.ProvisioningDescriptionException;
@@ -26,6 +27,7 @@ import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 
 public interface ProvisioningContext extends AutoCloseable {
 
@@ -48,6 +50,8 @@ public interface ProvisioningContext extends AutoCloseable {
     public void provision(Map<String, String> options) throws ProvisioningException;
 
     public GalleonProvisioningConfig parseProvisioningFile(Path provisioning) throws ProvisioningException;
+
+    public List<FPID> getOrderedFeaturePacks() throws ProvisioningException;
 
     @Override
     public void close();

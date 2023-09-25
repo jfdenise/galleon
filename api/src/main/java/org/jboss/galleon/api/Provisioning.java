@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.jboss.galleon.BaseErrors;
 
 import org.jboss.galleon.DefaultMessageWriter;
 import org.jboss.galleon.MessageWriter;
@@ -45,6 +46,8 @@ import org.jboss.galleon.util.IoUtils;
 import org.jboss.galleon.core.builder.ProvisioningContextBuilder;
 import org.jboss.galleon.impl.ProvisioningUtil;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
+import org.jboss.galleon.universe.UniverseSpec;
+import org.jboss.galleon.util.PathsUtils;
 
 public class Provisioning implements AutoCloseable {
 
@@ -303,6 +306,59 @@ public class Provisioning implements AutoCloseable {
     @Override
     public void close() {
         IoUtils.recursiveDelete(tmp);
+    }
+
+    // Required by CLI
+    /**
+     * Add named universe spec to the provisioning configuration
+     *
+     * @param name universe name
+     * @param universeSpec universe spec
+     * @throws ProvisioningException in case of an error
+     */
+    public void addUniverse(String name, UniverseSpec universeSpec) throws ProvisioningException {
+        final GalleonProvisioningConfig config = GalleonProvisioningConfig.builder(getProvisioningConfig()).addUniverse(name, universeSpec).build();
+        try {
+            buildProvisioningContext(config).storeProvisioningConfig(PathsUtils.getProvisioningXml(home));
+        } catch (Exception e) {
+            throw new ProvisioningException(BaseErrors.writeFile(PathsUtils.getProvisioningXml(home)), e);
+        }
+    }
+
+    /**
+     * Removes universe spec associated with the name from the provisioning
+     * configuration
+     *
+     * @param name name of the universe spec or null for the default universe
+     * spec
+     * @throws ProvisioningException in case of an error
+     */
+    public void removeUniverse(String name) throws ProvisioningException {
+        GalleonProvisioningConfig config = getProvisioningConfig();
+        if (config == null || !config.hasUniverse(name)) {
+            return;
+        }
+        config = GalleonProvisioningConfig.builder(config).removeUniverse(name).build();
+        try {
+            buildProvisioningContext(config).storeProvisioningConfig(PathsUtils.getProvisioningXml(home));
+        } catch (Exception e) {
+            throw new ProvisioningException(BaseErrors.writeFile(PathsUtils.getProvisioningXml(home)), e);
+        }
+    }
+
+    /**
+     * Set the default universe spec for the installation
+     *
+     * @param universeSpec universe spec
+     * @throws ProvisioningException in case of an error
+     */
+    public void setDefaultUniverse(UniverseSpec universeSpec) throws ProvisioningException {
+        addUniverse(null, universeSpec);
+    }
+
+    public GalleonProvisioningConfig getProvisioningConfig() throws ProvisioningException {
+        Path provisioning = PathsUtils.getProvisioningXml(home);
+        return buildProvisioningContext(provisioning).getConfig();
     }
 
 }

@@ -20,8 +20,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -163,4 +165,12 @@ public class ProvisioningContextImpl implements ProvisioningContext {
         return ProvisioningConfig.toConfig(c);
     }
 
+    @Override
+    public List<FPID> getOrderedFeaturePacks() throws ProvisioningException {
+        List<FPID> lst = new ArrayList<>();
+        for (FeaturePackLayout f : manager.getLayoutFactory().newConfigLayout(config).getOrderedFeaturePacks()) {
+            lst.add(f.getFPID());
+        }
+        return lst;
+    }
 }
