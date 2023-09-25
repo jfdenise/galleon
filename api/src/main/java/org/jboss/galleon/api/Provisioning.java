@@ -178,6 +178,10 @@ public class Provisioning implements AutoCloseable {
         return ProvisioningUtil.isFeaturePack(path);
     }
 
+    public static GalleonFeaturePackDescription getFeaturePackDescription(Path path) throws ProvisioningException {
+        return ProvisioningUtil.getFeaturePackDescription(path);
+    }
+
     public ProvisioningContext buildProvisioningContext(Path provisioning) throws ProvisioningException {
         MavenRepoManager repoManager = (MavenRepoManager) universeResolver.getArtifactResolver(MavenRepoManager.REPOSITORY_ID);
         try {

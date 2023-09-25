@@ -25,6 +25,7 @@ import org.jboss.galleon.Constants;
 
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.api.APIVersion;
+import org.jboss.galleon.api.GalleonFeaturePackDescription;
 import org.jboss.galleon.api.GalleonFeaturePack;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
@@ -51,7 +52,7 @@ public class ProvisioningUtil {
         try {
             tmp = Files.createTempDirectory("galleon-tmp");
             Path spec = getFeaturePackSpec(path, tmp);
-            FeaturePackDependencies deps = FeaturePackLightXmlParser.parseDependencies(spec);
+            GalleonFeaturePackDescription deps = FeaturePackLightXmlParser.parseDescription(spec);
             return deps.getProducer();
         } finally {
             IoUtils.recursiveDelete(tmp);
@@ -67,7 +68,7 @@ public class ProvisioningUtil {
                 currentVersion = fpVersion;
             }
         }
-        FeaturePackDependencies deps = FeaturePackLightXmlParser.parseDependencies(spec);
+        GalleonFeaturePackDescription deps = FeaturePackLightXmlParser.parseDescription(spec);
         return getCoreVersion(deps.getDependencies(), currentVersion, universeResolver, tmp);
     }
 
@@ -101,7 +102,7 @@ public class ProvisioningUtil {
                         version = fpVersion;
                     }
                 }
-                FeaturePackDependencies deps = FeaturePackLightXmlParser.parseDependencies(spec);
+                GalleonFeaturePackDescription deps = FeaturePackLightXmlParser.parseDescription(spec);
                 version = getCoreVersion(deps.getDependencies(), version, universeResolver, tmp);
             }
             return version;
@@ -110,14 +111,19 @@ public class ProvisioningUtil {
         }
     }
 
-//    FeaturePackDependencies getFeaturePackDependencies(Path fp) throws ProvisioningException {
-//        try {
-//            Path spec = getFeaturePackSpec(fp, tmp);
-//            return FeaturePackLightXmlParser.parseDependencies(spec);
-//        } catch (Exception ex) {
-//            throw new ProvisioningException(ex);
-//        }
-//    }
+    public static GalleonFeaturePackDescription getFeaturePackDescription(Path fp) throws ProvisioningException {
+        Path tmp = null;
+        try {
+            tmp = Files.createTempDirectory("galleon-tmp");
+            Path spec = getFeaturePackSpec(fp, tmp);
+            return FeaturePackLightXmlParser.parseDescription(spec);
+        } catch (Exception ex) {
+            throw new ProvisioningException(ex);
+        } finally {
+            IoUtils.recursiveDelete(tmp);
+        }
+    }
+
     private static Path getFeaturePackSpec(Path resolvedFP, Path tmp) throws Exception {
         Path fpDir = tmp.resolve(resolvedFP.getFileName());
         Files.createDirectories(fpDir);

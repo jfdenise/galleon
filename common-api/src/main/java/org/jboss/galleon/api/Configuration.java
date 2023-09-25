@@ -18,6 +18,7 @@ package org.jboss.galleon.api;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import org.jboss.galleon.api.config.ConfigId;
 
 /**
@@ -30,6 +31,7 @@ public class Configuration {
     private String name;
     private List<String> layers = Collections.emptyList();
     private List<String> excludedLayers = Collections.emptyList();
+    private Map<String, String> props = Collections.emptyMap();
 
     public String getModel() {
         return model;
@@ -41,6 +43,10 @@ public class Configuration {
 
     public List<String> getLayers() {
         return layers;
+    }
+
+    public Map<String, String> getProps() {
+        return props;
     }
 
     public List<String> getExcludedLayers() {
@@ -57,6 +63,10 @@ public class Configuration {
 
     public void setLayers(List<String> layers) {
         this.layers = layers;
+    }
+
+    public void setProps(Map<String, String> props) {
+        this.props = props;
     }
 
     public void setExcludedLayers(List<String> excludedLayers) {

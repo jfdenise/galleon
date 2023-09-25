@@ -38,6 +38,7 @@ class ParsedConfiguration extends Configuration {
         List<String> excludedLayers = new ArrayList<>();
         excludedLayers.addAll(model.getExcludedLayers());
         setExcludedLayers(excludedLayers);
+        setProps(model.getProperties());
     }
 
     /**

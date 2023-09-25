@@ -23,6 +23,7 @@ import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.api.GalleonFeaturePackDescription;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.w3c.dom.Document;
@@ -36,7 +37,7 @@ class FeaturePackLightXmlParser {
     private static final String DEPENDENCY = "dependency";
     private static final String TRANSITIVE = "transitive";
 
-    public static FeaturePackDependencies parseDependencies(Path featurePack) throws ProvisioningException {
+    public static GalleonFeaturePackDescription parseDescription(Path featurePack) throws ProvisioningException {
         try {
             try (FileInputStream fileInputStream = new FileInputStream(featurePack.toFile())) {
                 DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
@@ -81,7 +82,7 @@ class FeaturePackLightXmlParser {
                         }
                     }
                 }
-                return new FeaturePackDependencies(FeaturePackLocation.fromString(producer).getFPID(), dependencies, transitives);
+                return new GalleonFeaturePackDescription(FeaturePackLocation.fromString(producer).getFPID(), dependencies, transitives);
             }
         } catch (Exception ex) {
             throw new ProvisioningException(ex);

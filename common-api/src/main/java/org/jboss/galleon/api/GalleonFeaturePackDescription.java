@@ -14,18 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.galleon.impl;
+package org.jboss.galleon.api;
 
 import java.util.List;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 
-class FeaturePackDependencies {
+public class GalleonFeaturePackDescription {
 
     private final FPID producer;
     private final List<FPID> dependencies;
     private final List<FPID> transitives;
 
-    FeaturePackDependencies(FPID producer, List<FPID> dependencies, List<FPID> transitives) {
+    public GalleonFeaturePackDescription(FPID producer, List<FPID> dependencies, List<FPID> transitives) {
         this.producer = producer;
         this.dependencies = dependencies;
         this.transitives = transitives;

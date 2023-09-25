@@ -167,6 +167,9 @@ public class ProvisioningConfig extends FeaturePackDepsConfig {
                 for (String l : configuration.getExcludedLayers()) {
                     cBuilder.excludeLayer(l);
                 }
+                for (Entry<String, String> p : configuration.getProps().entrySet()) {
+                    cBuilder.setProperty(p.getKey(), p.getValue());
+                }
                 builder.addConfig(cBuilder.build());
             }
         }
