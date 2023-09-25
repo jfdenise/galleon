@@ -239,7 +239,7 @@ public class ProvisioningLayoutFactory implements Closeable {
             try {
                 fs.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                //e.printStackTrace();
             }
         }
         checkOpenLayouts();

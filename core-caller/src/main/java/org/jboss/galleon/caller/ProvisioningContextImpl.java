@@ -168,8 +168,11 @@ public class ProvisioningContextImpl implements ProvisioningContext {
     @Override
     public List<FPID> getOrderedFeaturePacks() throws ProvisioningException {
         List<FPID> lst = new ArrayList<>();
-        for (FeaturePackLayout f : manager.getLayoutFactory().newConfigLayout(config).getOrderedFeaturePacks()) {
-            lst.add(f.getFPID());
+        try (ProvisioningLayout<FeaturePackLayout> l = manager.getLayoutFactory().newConfigLayout(config)) {
+            for (FeaturePackLayout f : l.getOrderedFeaturePacks()) {
+                lst.add(f.getFPID());
+
+            }
         }
         return lst;
     }
