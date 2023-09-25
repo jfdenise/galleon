@@ -174,6 +174,10 @@ public class Provisioning implements AutoCloseable {
         }
     }
 
+    public static boolean isFeaturePack(Path path) {
+        return ProvisioningUtil.isFeaturePack(path);
+    }
+
     public ProvisioningContext buildProvisioningContext(Path provisioning) throws ProvisioningException {
         MavenRepoManager repoManager = (MavenRepoManager) universeResolver.getArtifactResolver(MavenRepoManager.REPOSITORY_ID);
         try {
