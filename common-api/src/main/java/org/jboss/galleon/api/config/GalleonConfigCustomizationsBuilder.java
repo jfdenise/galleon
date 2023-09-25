@@ -116,7 +116,7 @@ public abstract class GalleonConfigCustomizationsBuilder<B extends GalleonConfig
 
     @SuppressWarnings("unchecked")
     public B excludeConfigModel(String model, boolean namedConfigsOnly) throws ProvisioningDescriptionException {
-        if(includedModels.contains(model)) {
+        if (includedModels.contains(model)) {
             throw new ProvisioningDescriptionException("Model " + model + " has been included");
         }
         excludedModels = CollectionUtils.put(excludedModels, model, namedConfigsOnly);
@@ -125,7 +125,7 @@ public abstract class GalleonConfigCustomizationsBuilder<B extends GalleonConfig
 
     @SuppressWarnings("unchecked")
     public B includeConfigModel(String name) throws ProvisioningDescriptionException {
-        if(excludedModels.containsKey(name)) {
+        if (excludedModels.containsKey(name)) {
             throw new ProvisioningDescriptionException("Model " + name + " has been excluded");
         }
         includedModels = CollectionUtils.add(includedModels, name);
@@ -138,7 +138,7 @@ public abstract class GalleonConfigCustomizationsBuilder<B extends GalleonConfig
 
     @SuppressWarnings("unchecked")
     public B includeDefaultConfig(ConfigId configId) throws ProvisioningDescriptionException {
-        if(includedConfigs.contains(configId)) {
+        if (includedConfigs.contains(configId)) {
             throw new ProvisioningDescriptionException("Config model with id " + configId + " has already been included into the configuration");
         }
         includedConfigs = CollectionUtils.add(includedConfigs, configId);

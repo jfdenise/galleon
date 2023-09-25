@@ -35,17 +35,17 @@ import org.jboss.galleon.xml.util.FormattingXmlStreamWriter;
  */
 public abstract class BaseXmlWriter<T> {
 
-    protected static void ensureParentDir(Path p) throws IOException {
+    public static void ensureParentDir(Path p) throws IOException {
         if(!Files.exists(p.getParent())) {
             Files.createDirectories(p.getParent());
         }
     }
 
-    protected static ElementNode addElement(ElementNode parent, XmlNameProvider e) {
+    public static ElementNode addElement(ElementNode parent, XmlNameProvider e) {
         return addElement(parent, e.getLocalName(), e.getNamespace());
     }
 
-    protected static ElementNode addElement(ElementNode parent, String localName, String ns) {
+    public static ElementNode addElement(ElementNode parent, String localName, String ns) {
         final ElementNode eNode = new ElementNode(parent, localName, ns);
         if(parent != null) {
             parent.addChild(eNode);
@@ -53,11 +53,11 @@ public abstract class BaseXmlWriter<T> {
         return eNode;
     }
 
-    protected static void addAttribute(ElementNode e, XmlNameProvider name, String value) {
+    public static void addAttribute(ElementNode e, XmlNameProvider name, String value) {
         addAttribute(e, name.getLocalName(), value);
     }
 
-    protected static void addAttribute(ElementNode e, String name, String value) {
+    public static void addAttribute(ElementNode e, String name, String value) {
         e.addAttribute(name, new AttributeValue(value));
     }
 

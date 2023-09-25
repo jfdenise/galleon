@@ -21,6 +21,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,9 @@ import java.util.Map;
 import org.jboss.galleon.DefaultMessageWriter;
 import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
+import org.jboss.galleon.api.config.GalleonProvisioningConfig;
+import org.jboss.galleon.core.builder.LocalFP;
 import org.jboss.galleon.progresstracking.DefaultProgressTracker;
 import org.jboss.galleon.progresstracking.ProgressCallback;
 import org.jboss.galleon.progresstracking.ProgressTracker;
@@ -40,6 +44,7 @@ import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 import org.jboss.galleon.util.IoUtils;
 import org.jboss.galleon.core.builder.ProvisioningContextBuilder;
 import org.jboss.galleon.impl.ProvisioningUtil;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 
 public class Provisioning implements AutoCloseable {
 
@@ -96,6 +101,7 @@ public class Provisioning implements AutoCloseable {
     private final Map<String, ProgressTracker<?>> progressTrackers = new HashMap<>();
 
     private final Path tmp;
+    private Map<FPID, LocalFP> locals = new HashMap<>();
 
     private Provisioning(Builder builder) throws ProvisioningException {
         this.home = builder.installationHome;
@@ -179,7 +185,15 @@ public class Provisioning implements AutoCloseable {
 
             try {
                 ProvisioningContextBuilder provisioner = (ProvisioningContextBuilder) callerClass.getConstructor().newInstance();
-                ProvisioningContext ctx = provisioner.buildProvisioningContext(loader, home, log, logTime, recordState, repoManager, progressTrackers);
+                ProvisioningContext ctx = provisioner.buildProvisioningContext(loader,
+                        home,
+                        provisioning,
+                        log,
+                        logTime,
+                        recordState,
+                        repoManager,
+                        progressTrackers,
+                        locals);
                 return ctx;
             } catch (Exception ex) {
                 throw new ProvisioningException(ex);
@@ -192,31 +206,34 @@ public class Provisioning implements AutoCloseable {
         }
     }
 
-    public ProvisioningContext buildProvisioningContext(List<GalleonFeaturePack> featurePacks) throws ProvisioningException {
+    public FeaturePackLocation addLocal(Path path, boolean installInUniverse) throws ProvisioningException {
+        final FeaturePackLocation.FPID fpid;
+        try {
+            fpid = ProvisioningUtil.getFeaturePackProducer(path);
+        } catch (Exception ex) {
+            throw new ProvisioningException(ex);
+        }
+        locals.put(fpid, new LocalFP(fpid, path, installInUniverse));
+        return fpid.getLocation();
+    }
+
+    public ProvisioningContext buildProvisioningContext(GalleonProvisioningConfig config) throws ProvisioningException {
+        return buildProvisioningContext(config, Collections.emptyList());
+    }
+
+    public ProvisioningContext buildProvisioningContext(GalleonProvisioningConfig config, List<Path> customConfigs) throws ProvisioningException {
         MavenRepoManager repoManager = (MavenRepoManager) universeResolver.getArtifactResolver(MavenRepoManager.REPOSITORY_ID);
         String coreVersion = APIVersion.getVersion();
         try {
-            for (GalleonFeaturePack fp : featurePacks) {
-                if (fp.getNormalizedPath() != null) {
-                    coreVersion = ProvisioningUtil.getCoreVersion(fp.getNormalizedPath(), coreVersion, tmp, universeResolver);
-                } else if (fp.getGroupId() != null && fp.getArtifactId() != null) {
-                    String coords = ProvisioningUtil.getMavenCoords(fp);
-                    FeaturePackLocation fpl = FeaturePackLocation.fromString(coords);
-                    Path resolvedFP = universeResolver.resolve(fpl);
-                    coreVersion = ProvisioningUtil.getCoreVersion(resolvedFP, coreVersion, tmp, universeResolver);
+            for (GalleonFeaturePackConfig fp : config.getFeaturePackDeps()) {
+                LocalFP local = locals.get(fp.getLocation().getFPID());
+                Path resolvedFP = null;
+                if (local == null) {
+                    resolvedFP = universeResolver.resolve(fp.getLocation());
                 } else {
-                    // Special case for G:A that conflicts with producer:channel that we can't have in the plugin.
-                    String location = fp.getLocation();
-                    if (!FeaturePackLocation.fromString(location).hasUniverse()) {
-                        long numSeparators = location.chars().filter(ch -> ch == ':').count();
-                        if (numSeparators <= 1) {
-                            location += ":";
-                        }
-                    }
-                    FeaturePackLocation fpl = FeaturePackLocation.fromString(location);
-                    Path resolvedFP = universeResolver.resolve(fpl);
-                    coreVersion = ProvisioningUtil.getCoreVersion(resolvedFP, coreVersion, tmp, universeResolver);
+                    resolvedFP = local.getPath();
                 }
+                coreVersion = ProvisioningUtil.getCoreVersion(resolvedFP, coreVersion, tmp, universeResolver);
             }
             //System.out.println("REQUIRED CORE VERSION is " + coreVersion);
             URLClassLoader loader = getCallerClassLoader(coreVersion, repoManager);
@@ -224,7 +241,16 @@ public class Provisioning implements AutoCloseable {
 
             try {
                 ProvisioningContextBuilder provisioner = (ProvisioningContextBuilder) callerClass.getConstructor().newInstance();
-                ProvisioningContext ctx = provisioner.buildProvisioningContext(loader, home, log, logTime, recordState, repoManager, progressTrackers);
+                ProvisioningContext ctx = provisioner.buildProvisioningContext(loader,
+                        home,
+                        config,
+                        customConfigs,
+                        log,
+                        logTime,
+                        recordState,
+                        repoManager,
+                        progressTrackers,
+                        locals);
                 return ctx;
             } catch (Exception ex) {
                 throw new ProvisioningException(ex);

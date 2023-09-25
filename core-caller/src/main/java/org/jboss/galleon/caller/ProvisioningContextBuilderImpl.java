@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.jboss.galleon.MessageWriter;
@@ -28,17 +29,24 @@ import org.jboss.galleon.ProvisioningManager;
 import org.jboss.galleon.progresstracking.ProgressTracker;
 import org.jboss.galleon.repo.RepositoryArtifactResolver;
 import org.jboss.galleon.api.ProvisioningContext;
+import org.jboss.galleon.api.config.GalleonProvisioningConfig;
+import org.jboss.galleon.config.ProvisioningConfig;
+import org.jboss.galleon.core.builder.LocalFP;
 import org.jboss.galleon.core.builder.ProvisioningContextBuilder;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
+import org.jboss.galleon.xml.ProvisioningXmlParser;
 
 public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilder {
 
     @Override
     public ProvisioningContext buildProvisioningContext(URLClassLoader loader, Path home,
+            Path provisioning,
             MessageWriter msgWriter,
             boolean logTime,
             boolean recordState,
             RepositoryArtifactResolver artifactResolver,
-            Map<String, ProgressTracker<?>> progressTrackers) throws ProvisioningException {
+            Map<String, ProgressTracker<?>> progressTrackers,
+            Map<FPID, LocalFP> locals) throws ProvisioningException {
         boolean noHome = home == null;
         if (home == null) {
             try {
@@ -56,6 +64,44 @@ public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilde
         for (Entry<String, ProgressTracker<?>> entry : progressTrackers.entrySet()) {
             pm.getLayoutFactory().setProgressTracker(entry.getKey(), entry.getValue());
         }
-        return new ProvisioningContextImpl(loader, noHome, pm);
+        for (LocalFP fp : locals.values()) {
+            pm.getLayoutFactory().addLocal(fp.getPath(), fp.isInstallInUniverse());
+        }
+        ProvisioningConfig c = ProvisioningXmlParser.parse(provisioning);
+        return new ProvisioningContextImpl(loader, noHome, pm, c);
+    }
+
+    @Override
+    public ProvisioningContext buildProvisioningContext(URLClassLoader loader, Path home,
+            GalleonProvisioningConfig config,
+            List<Path> customConfigs,
+            MessageWriter msgWriter,
+            boolean logTime,
+            boolean recordState,
+            RepositoryArtifactResolver artifactResolver,
+            Map<String, ProgressTracker<?>> progressTrackers,
+            Map<FPID, LocalFP> locals) throws ProvisioningException {
+        boolean noHome = home == null;
+        if (home == null) {
+            try {
+                home = Files.createTempDirectory("gallon-no-installation");
+            } catch (IOException ex) {
+                throw new ProvisioningException(ex);
+            }
+        }
+        ProvisioningManager pm = ProvisioningManager.builder().addArtifactResolver(artifactResolver)
+                .setInstallationHome(home)
+                .setMessageWriter(msgWriter)
+                .setLogTime(logTime)
+                .setRecordState(recordState)
+                .build();
+        for (Entry<String, ProgressTracker<?>> entry : progressTrackers.entrySet()) {
+            pm.getLayoutFactory().setProgressTracker(entry.getKey(), entry.getValue());
+        }
+        for (LocalFP fp : locals.values()) {
+            pm.getLayoutFactory().addLocal(fp.getPath(), fp.isInstallInUniverse());
+        }
+        ProvisioningConfig c = ProvisioningConfig.toConfig(config, customConfigs);
+        return new ProvisioningContextImpl(loader, noHome, pm, c);
     }
 }

@@ -16,23 +16,34 @@
  */
 package org.jboss.galleon.config;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.jboss.galleon.api.Configuration;
 
 /**
  *
- * @author jdenise@redhat.com
+ * @author jdenise
  */
-public class ParsedConfiguration extends Configuration {
+class ParsedConfiguration extends Configuration {
 
-    private final ConfigModel config;
+    private final ConfigModel model;
 
-    public ParsedConfiguration(ConfigModel config) {
-        this.config = config;
-        setModel(config.getModel());
-        setName(config.getName());
+    ParsedConfiguration(ConfigModel model) {
+        this.model = model;
+        setModel(model.getModel());
+        setName(model.getName());
+        List<String> layers = new ArrayList<>();
+        layers.addAll(model.getIncludedLayers());
+        setLayers(layers);
+        List<String> excludedLayers = new ArrayList<>();
+        excludedLayers.addAll(model.getExcludedLayers());
+        setExcludedLayers(excludedLayers);
     }
 
-    ConfigModel getConfig() {
-        return config;
+    /**
+     * @return the model
+     */
+    public ConfigModel getConfigModel() {
+        return model;
     }
 }

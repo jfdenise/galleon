@@ -18,19 +18,32 @@ package org.jboss.galleon.core.builder;
 
 import java.net.URLClassLoader;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.progresstracking.ProgressTracker;
 import org.jboss.galleon.repo.RepositoryArtifactResolver;
 import org.jboss.galleon.api.ProvisioningContext;
+import org.jboss.galleon.api.config.GalleonProvisioningConfig;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 
 public interface ProvisioningContextBuilder {
 
     public ProvisioningContext buildProvisioningContext(URLClassLoader loader, Path home,
+            Path provisioningFile,
             MessageWriter msgWriter,
             boolean logTime,
             boolean recordState,
             RepositoryArtifactResolver artifactResolver,
-            Map<String, ProgressTracker<?>> progressTrackers) throws ProvisioningException;
+            Map<String, ProgressTracker<?>> progressTrackers, Map<FPID, LocalFP> locals) throws ProvisioningException;
+
+    public ProvisioningContext buildProvisioningContext(URLClassLoader loader, Path home,
+            GalleonProvisioningConfig config,
+            List<Path> customConfigs,
+            MessageWriter msgWriter,
+            boolean logTime,
+            boolean recordState,
+            RepositoryArtifactResolver artifactResolver,
+            Map<String, ProgressTracker<?>> progressTrackers, Map<FPID, LocalFP> locals) throws ProvisioningException;
 }

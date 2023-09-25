@@ -31,33 +31,23 @@ public interface ProvisioningContext extends AutoCloseable {
 
     public String getCoreVersion();
 
-    public void storeProvisioningConfig(GalleonProvisioningConfig config, Path target) throws XMLStreamException, IOException, ProvisioningDescriptionException;
+    public GalleonProvisioningConfig getConfig() throws ProvisioningDescriptionException;
 
-    public Map<FeaturePackLocation.FPID, Map<String, GalleonLayer>> getAllLayers(GalleonProvisioningConfig config) throws ProvisioningException, IOException;
+    public void storeProvisioningConfig(Path target) throws XMLStreamException, IOException, ProvisioningDescriptionException;
 
-    public GalleonProvisioningRuntime getProvisioningRuntime(GalleonProvisioningConfig config) throws ProvisioningException;
+    public Map<FeaturePackLocation.FPID, Map<String, GalleonLayer>> getAllLayers() throws ProvisioningException, IOException;
+
+    public GalleonProvisioningRuntime getProvisioningRuntime() throws ProvisioningException;
 
     UniverseResolver getUniverseResolver();
 
-    public default void provision(GalleonProvisioningConfig config) throws ProvisioningException {
-        provision(config, Collections.emptyMap());
+    public default void provision() throws ProvisioningException {
+        provision(Collections.emptyMap());
     }
 
-    public default void provision(Path provisioning) throws ProvisioningException {
-        provision(parseProvisioningFile(provisioning), Collections.emptyMap());
-    }
-
-    public default void provision(Path provisioning, Map<String, String> options) throws ProvisioningException {
-        provision(parseProvisioningFile(provisioning), options);
-    }
-
-    public void provision(GalleonProvisioningConfig config, Map<String, String> options) throws ProvisioningException;
+    public void provision(Map<String, String> options) throws ProvisioningException;
 
     public GalleonProvisioningConfig parseProvisioningFile(Path provisioning) throws ProvisioningException;
-
-    public Configuration parseConfigurationFile(Path configuration) throws ProvisioningException;
-
-    public FeaturePackLocation addLocal(Path path, boolean installInUniverse) throws ProvisioningException;
 
     @Override
     public void close();

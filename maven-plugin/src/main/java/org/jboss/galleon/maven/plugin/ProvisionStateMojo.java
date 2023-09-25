@@ -18,6 +18,7 @@ package org.jboss.galleon.maven.plugin;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +51,6 @@ import org.jboss.galleon.maven.plugin.util.MavenArtifactRepositoryManager;
 import org.jboss.galleon.maven.plugin.util.MvnMessageWriter;
 import org.jboss.galleon.repo.RepositoryArtifactResolver;
 import org.jboss.galleon.api.ProvisioningContext;
-import org.jboss.galleon.api.config.ConfigId;
 import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.maven.plugin.util.ResolveLocalItem;
@@ -199,116 +199,103 @@ public class ProvisionStateMojo extends AbstractMojo {
                 .setLogTime(logTime)
                 .setRecordState(recordState)
                 .build()) {
-
+            GalleonProvisioningConfig.Builder state = GalleonProvisioningConfig.builder();
             for (GalleonFeaturePack fp : featurePacks) {
+
                 if (fp.getLocation() == null && (fp.getGroupId() == null || fp.getArtifactId() == null)
                         && fp.getNormalizedPath() == null) {
                     throw new MojoExecutionException("Feature-pack location, Maven GAV or feature pack path is missing");
                 }
 
-                if (fp.getGroupId() != null && fp.getArtifactId() != null) {
+                final FeaturePackLocation fpl;
+                if (fp.getNormalizedPath() != null) {
+                    fpl = pm.addLocal(fp.getNormalizedPath(), false);
+                } else if (fp.getGroupId() != null && fp.getArtifactId() != null) {
                     Path path = resolveMaven(fp, (MavenRepoManager) artifactResolver);
-                    fp.setGroupId(null);
-                    fp.setArtifactId(null);
-                    fp.setVersion(null);
-                    fp.setPath(path.toFile());
+                    fpl = pm.addLocal(path, false);
+                } else {
+                    fpl = FeaturePackLocation.fromString(fp.getLocation());
+                }
+
+                final GalleonFeaturePackConfig.Builder fpConfig = fp.isTransitive() ? GalleonFeaturePackConfig.transitiveBuilder(fpl)
+                        : GalleonFeaturePackConfig.builder(fpl);
+                if (fp.isInheritConfigs() != null) {
+                    fpConfig.setInheritConfigs(fp.isInheritConfigs());
+                }
+                if (fp.isInheritPackages() != null) {
+                    fpConfig.setInheritPackages(fp.isInheritPackages());
+                }
+
+                if (!fp.getExcludedConfigs().isEmpty()) {
+                    for (ConfigurationId configId : fp.getExcludedConfigs()) {
+                        if (configId.isModelOnly()) {
+                            fpConfig.excludeConfigModel(configId.getId().getModel());
+                        } else {
+                            fpConfig.excludeDefaultConfig(configId.getId());
+                        }
+                    }
+                }
+                if (!fp.getIncludedConfigs().isEmpty()) {
+                    for (ConfigurationId configId : fp.getIncludedConfigs()) {
+                        if (configId.isModelOnly()) {
+                            fpConfig.includeConfigModel(configId.getId().getModel());
+                        } else {
+                            fpConfig.includeDefaultConfig(configId.getId());
+                        }
+                    }
+                }
+
+                if (!fp.getIncludedPackages().isEmpty()) {
+                    for (String includedPackage : fp.getIncludedPackages()) {
+                        fpConfig.includePackage(includedPackage);
+                    }
+                }
+                if (!fp.getExcludedPackages().isEmpty()) {
+                    for (String excludedPackage : fp.getExcludedPackages()) {
+                        fpConfig.excludePackage(excludedPackage);
+                    }
+                }
+
+                state.addFeaturePackDep(fpConfig.build());
+            }
+            for (ResolveLocalItem localResolverItem : resolveLocals) {
+                if (localResolverItem.getError() != null) {
+                    throw new MojoExecutionException(localResolverItem.getError());
                 }
             }
 
-            try (ProvisioningContext ctx = pm.buildProvisioningContext(featurePacks)) {
-                GalleonProvisioningConfig.Builder builder = GalleonProvisioningConfig.builder();
-                for (GalleonFeaturePack fp : featurePacks) {
-
-                    if (fp.getLocation() == null && (fp.getGroupId() == null || fp.getArtifactId() == null)
-                            && fp.getNormalizedPath() == null) {
-                        throw new MojoExecutionException("Feature-pack location, Maven GAV or feature pack path is missing");
-                    }
-
-                    final FeaturePackLocation fpl;
-                    if (fp.getNormalizedPath() != null) {
-                        fpl = ctx.addLocal(fp.getNormalizedPath(), false);
-                    } else {
-                        fpl = FeaturePackLocation.fromString(fp.getLocation());
-                    }
-                    GalleonFeaturePackConfig.Builder fpConfig = fp.isTransitive() ? GalleonFeaturePackConfig.transitiveBuilder(fpl) : GalleonFeaturePackConfig.builder(fpl);
-                    if (fp.isInheritConfigs() != null) {
-                        fpConfig.setInheritConfigs(fp.isInheritConfigs());
-                    }
-                    if (fp.isInheritPackages() != null) {
-                        fpConfig.setInheritPackages(fp.isInheritPackages());
-                    }
-
-                    if (!fp.getExcludedConfigs().isEmpty()) {
-                        for (ConfigurationId configId : fp.getExcludedConfigs()) {
-                            if (configId.isModelOnly()) {
-                                fpConfig.excludeConfigModel(configId.getId().getModel());
-                            } else {
-                                fpConfig.excludeDefaultConfig(configId.getId());
-                            }
-                        }
-                    }
-                    if (!fp.getIncludedConfigs().isEmpty()) {
-                        for (ConfigurationId configId : fp.getIncludedConfigs()) {
-                            if (configId.isModelOnly()) {
-                                fpConfig.includeConfigModel(configId.getId().getModel());
-                            } else {
-                                fpConfig.includeDefaultConfig(configId.getId());
-                            }
-                        }
-                    }
-
-                    if (!fp.getIncludedPackages().isEmpty()) {
-                        for (String includedPackage : fp.getIncludedPackages()) {
-                            fpConfig.includePackage(includedPackage);
-                        }
-                    }
-                    if (!fp.getExcludedPackages().isEmpty()) {
-                        for (String excludedPackage : fp.getExcludedPackages()) {
-                            fpConfig.excludePackage(excludedPackage);
-                        }
-                    }
-
-                    builder.addFeaturePackDep(fpConfig.build());
+            for (ResolveLocalItem localResolverItem : resolveLocals) {
+                if (localResolverItem.getNormalizedPath() != null) {
+                    pm.addLocal(localResolverItem.getNormalizedPath(),
+                            localResolverItem.getInstallInUniverse());
+                } else if (localResolverItem.hasArtifactCoords()) {
+                    Path path = resolveMaven(localResolverItem, (MavenRepoManager) artifactResolver);
+                    pm.addLocal(path, false);
+                } else {
+                    throw new MojoExecutionException("resolve-local element appears to be neither path not maven artifact");
                 }
-                for (ResolveLocalItem localResolverItem : resolveLocals) {
-                    if (localResolverItem.getError() != null) {
-                        throw new MojoExecutionException(localResolverItem.getError());
-                    }
-                }
+            }
+            boolean hasLayers = false;
+            for (Configuration config : configs) {
+                hasLayers = !config.getLayers().isEmpty();
+                state.addConfig(config);
+            }
 
-                for (ResolveLocalItem localResolverItem : resolveLocals) {
-                    if (localResolverItem.getNormalizedPath() != null) {
-                        ctx.addLocal(localResolverItem.getNormalizedPath(),
-                                localResolverItem.getInstallInUniverse());
-                    } else if (localResolverItem.hasArtifactCoords()) {
-                        Path path = resolveMaven(localResolverItem, (MavenRepoManager) artifactResolver);
-                        ctx.addLocal(path, false);
-                    } else {
-                        throw new MojoExecutionException("resolve-local element appears to be neither path not maven artifact");
-                    }
+            if (hasLayers) {
+                if (pluginOptions.isEmpty()) {
+                    pluginOptions = Collections.
+                            singletonMap(Constants.OPTIONAL_PACKAGES, Constants.PASSIVE_PLUS);
+                } else if (!pluginOptions.containsKey(Constants.OPTIONAL_PACKAGES)) {
+                    pluginOptions.put(Constants.OPTIONAL_PACKAGES, Constants.PASSIVE_PLUS);
                 }
-                boolean hasLayers = false;
-                for (Configuration config : configs) {
-                    ConfigId id = new ConfigId(config.getModel(), config.getName());
-                    hasLayers = !config.getLayers().isEmpty();
-                    builder.addConfig(config);
-                }
-
-                if (hasLayers) {
-                    if (pluginOptions.isEmpty()) {
-                        pluginOptions = Collections.
-                                singletonMap(Constants.OPTIONAL_PACKAGES, Constants.PASSIVE_PLUS);
-                    } else if (!pluginOptions.containsKey(Constants.OPTIONAL_PACKAGES)) {
-                        pluginOptions.put(Constants.OPTIONAL_PACKAGES, Constants.PASSIVE_PLUS);
-                    }
-                }
-                builder.addOptions(pluginOptions);
-                if (customConfig != null && customConfig.exists()) {
-                    builder.addConfig(ctx.parseConfigurationFile(customConfig.toPath()));
-                }
-
-                System.out.println("Galleon core version " + ctx.getCoreVersion() + " API used to retrieve it " + APIVersion.getVersion());
-                ctx.provision(builder.build(), pluginOptions);
+            }
+            state.addOptions(pluginOptions);
+            List<Path> customConfigs = new ArrayList<>();
+            if (customConfig != null && customConfig.exists()) {
+                customConfigs.add(customConfig.toPath());
+            }
+            try (ProvisioningContext ctx = pm.buildProvisioningContext(state.build(), customConfigs)) {
+                ctx.provision(pluginOptions);
             }
         }
     }

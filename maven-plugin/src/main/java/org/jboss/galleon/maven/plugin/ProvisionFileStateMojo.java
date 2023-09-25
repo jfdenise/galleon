@@ -144,7 +144,7 @@ public class ProvisionFileStateMojo extends AbstractMojo {
                 .build()) {
             try (ProvisioningContext ctx = pm.buildProvisioningContext(provisioningFile.toPath())) {
                 System.out.println("Galleon core version " + ctx.getCoreVersion() + " API used to retrieve it " + APIVersion.getVersion());
-                ctx.provision(provisioningFile.toPath(), pluginOptions);
+                ctx.provision(pluginOptions);
             }
         }
     }

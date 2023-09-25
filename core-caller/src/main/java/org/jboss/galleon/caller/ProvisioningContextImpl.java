@@ -16,11 +16,9 @@
  */
 package org.jboss.galleon.caller;
 
-import java.io.BufferedReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URLClassLoader;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -32,12 +30,10 @@ import org.jboss.galleon.CoreVersion;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningManager;
-import org.jboss.galleon.api.Configuration;
 import org.jboss.galleon.api.GalleonLayer;
 import org.jboss.galleon.api.GalleonProvisioningRuntime;
 import org.jboss.galleon.config.ConfigModel;
 import org.jboss.galleon.config.ProvisioningConfig;
-import org.jboss.galleon.config.ParsedConfiguration;
 import org.jboss.galleon.api.ProvisioningContext;
 import org.jboss.galleon.api.config.ConfigId;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
@@ -45,10 +41,8 @@ import org.jboss.galleon.layout.FeaturePackLayout;
 import org.jboss.galleon.layout.ProvisioningLayout;
 import org.jboss.galleon.spec.ConfigLayerDependency;
 import org.jboss.galleon.spec.ConfigLayerSpec;
-import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.UniverseResolver;
-import org.jboss.galleon.xml.ConfigXmlParser;
 import org.jboss.galleon.xml.ProvisioningXmlParser;
 import org.jboss.galleon.xml.ProvisioningXmlWriter;
 
@@ -57,34 +51,34 @@ public class ProvisioningContextImpl implements ProvisioningContext {
     private final ProvisioningManager manager;
     private final boolean noHome;
     private final URLClassLoader loader;
+    private final ProvisioningConfig config;
 
     ProvisioningContextImpl(URLClassLoader loader,
             boolean noHome,
-            ProvisioningManager manager) {
+            ProvisioningManager manager, ProvisioningConfig config) {
         this.loader = loader;
         this.noHome = noHome;
         this.manager = manager;
+        this.config = config;
     }
 
     @Override
-    public FeaturePackLocation addLocal(Path path, boolean installInUniverse) throws ProvisioningException {
-        return manager.getLayoutFactory().addLocal(path, installInUniverse);
+    public GalleonProvisioningConfig getConfig() throws ProvisioningDescriptionException {
+        return ProvisioningConfig.toConfig(config);
     }
 
     @Override
-    public void provision(GalleonProvisioningConfig config, Map<String, String> options) throws ProvisioningException {
+    public void provision(Map<String, String> options) throws ProvisioningException {
         if (noHome) {
             throw new ProvisioningException("No installation set, can't provision.");
         }
-        ProvisioningConfig c = ProvisioningConfig.toConfig(config);
         ClassLoader originalLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(loader);
         try {
-            manager.provision(c, options);
+            manager.provision(config, options);
         } finally {
             Thread.currentThread().setContextClassLoader(originalLoader);
         }
-        manager.provision(c);
     }
 
     @Override
@@ -93,19 +87,17 @@ public class ProvisioningContextImpl implements ProvisioningContext {
     }
 
     @Override
-    public void storeProvisioningConfig(GalleonProvisioningConfig config, Path file) throws XMLStreamException, IOException, ProvisioningDescriptionException {
-        ProvisioningConfig c = ProvisioningConfig.toConfig(config);
+    public void storeProvisioningConfig(Path file) throws XMLStreamException, IOException, ProvisioningDescriptionException {
         try (FileWriter writer = new FileWriter(file.toFile())) {
-            ProvisioningXmlWriter.getInstance().write(c, writer);
+            ProvisioningXmlWriter.getInstance().write(config, writer);
         }
     }
 
     @Override
-    public Map<FPID, Map<String, GalleonLayer>> getAllLayers(GalleonProvisioningConfig config) throws ProvisioningException, IOException {
-        ProvisioningConfig c = ProvisioningConfig.toConfig(config);
+    public Map<FPID, Map<String, GalleonLayer>> getAllLayers() throws ProvisioningException, IOException {
         Map<FPID, Map<String, GalleonLayer>> layersMap = new LinkedHashMap<>();
         Set<String> autoInjected = new TreeSet<>();
-        try (ProvisioningLayout<FeaturePackLayout> pmLayout = manager.getLayoutFactory().newConfigLayout(c)) {
+        try (ProvisioningLayout<FeaturePackLayout> pmLayout = manager.getLayoutFactory().newConfigLayout(config)) {
             for (FeaturePackLayout fp : pmLayout.getOrderedFeaturePacks()) {
                 Map<String, GalleonLayer> layers = new HashMap<>();
                 ConfigModel m = fp.loadModel("standalone");
@@ -140,12 +132,11 @@ public class ProvisioningContextImpl implements ProvisioningContext {
     }
 
     @Override
-    public GalleonProvisioningRuntime getProvisioningRuntime(GalleonProvisioningConfig config) throws ProvisioningException {
-        ProvisioningConfig c = ProvisioningConfig.toConfig(config);
+    public GalleonProvisioningRuntime getProvisioningRuntime() throws ProvisioningException {
         ClassLoader originalLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(loader);
         try {
-            return manager.getRuntime(c);
+            return manager.getRuntime(config);
         } finally {
             Thread.currentThread().setContextClassLoader(originalLoader);
         }
@@ -170,17 +161,6 @@ public class ProvisioningContextImpl implements ProvisioningContext {
     public GalleonProvisioningConfig parseProvisioningFile(Path provisioning) throws ProvisioningException {
         ProvisioningConfig c = ProvisioningXmlParser.parse(provisioning);
         return ProvisioningConfig.toConfig(c);
-    }
-
-    @Override
-    public Configuration parseConfigurationFile(Path configuration) throws ProvisioningException {
-        try (BufferedReader reader = Files.newBufferedReader(configuration)) {
-            ConfigModel c = ConfigXmlParser.getInstance().parse(reader);
-            ParsedConfiguration config = new ParsedConfiguration(c);
-            return config;
-        } catch (XMLStreamException | IOException ex) {
-            throw new ProvisioningException("Couldn't load the customization configuration " + configuration, ex);
-        }
     }
 
 }
