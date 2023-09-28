@@ -374,10 +374,6 @@ public interface Errors {
         return "Provisioning history is empty";
     }
 
-    static String configLayerCanEitherBeIncludedOrExcluded(String configModel, String configName, String layerName) {
-        return "Configuration layer " + layerName + " appears to be included and excluded in the same configuration " + (configModel == null ? configName : configModel + ':' + configName);
-    }
-
     static String unsatisfiedLayerDependency(String srcLayer, String targetLayer) {
         return "Required dependency of configuration layer " + srcLayer + " on layer " + targetLayer + " was excluded";
     }

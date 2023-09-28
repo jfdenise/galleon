@@ -33,6 +33,7 @@ import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.config.ProvisioningConfig;
 import org.jboss.galleon.core.builder.LocalFP;
 import org.jboss.galleon.core.builder.ProvisioningContextBuilder;
+import org.jboss.galleon.impl.GalleonClassLoaderHandler;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.xml.ProvisioningXmlParser;
 
@@ -46,7 +47,7 @@ public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilde
             boolean recordState,
             RepositoryArtifactResolver artifactResolver,
             Map<String, ProgressTracker<?>> progressTrackers,
-            Map<FPID, LocalFP> locals) throws ProvisioningException {
+            Map<FPID, LocalFP> locals, GalleonClassLoaderHandler handler) throws ProvisioningException {
         boolean noHome = home == null;
         if (home == null) {
             try {
@@ -68,7 +69,7 @@ public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilde
             pm.getLayoutFactory().addLocal(fp.getPath(), fp.isInstallInUniverse());
         }
         ProvisioningConfig c = ProvisioningXmlParser.parse(provisioning);
-        return new ProvisioningContextImpl(loader, noHome, pm, c);
+        return new ProvisioningContextImpl(loader, noHome, pm, c, handler);
     }
 
     @Override
@@ -80,7 +81,7 @@ public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilde
             boolean recordState,
             RepositoryArtifactResolver artifactResolver,
             Map<String, ProgressTracker<?>> progressTrackers,
-            Map<FPID, LocalFP> locals) throws ProvisioningException {
+            Map<FPID, LocalFP> locals, GalleonClassLoaderHandler handler) throws ProvisioningException {
         boolean noHome = home == null;
         if (home == null) {
             try {
@@ -102,6 +103,6 @@ public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilde
             pm.getLayoutFactory().addLocal(fp.getPath(), fp.isInstallInUniverse());
         }
         ProvisioningConfig c = ProvisioningConfig.toConfig(config, customConfigs);
-        return new ProvisioningContextImpl(loader, noHome, pm, c);
+        return new ProvisioningContextImpl(loader, noHome, pm, c, handler);
     }
 }

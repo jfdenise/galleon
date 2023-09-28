@@ -28,8 +28,8 @@ import javax.xml.stream.XMLStreamException;
 
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.api.Configuration;
 import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.api.config.GalleonConfigurationWithLayers;
 import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
@@ -156,18 +156,18 @@ public class ProvisioningConfig extends FeaturePackDepsConfig {
         for (ConfigId id : gConfig.getIncludedConfigs()) {
             builder.includeDefaultConfig(id);
         }
-        for (Configuration configuration : gConfig.getDefinedConfigs()) {
-            if (configuration instanceof ParsedConfiguration) {
-                builder.addConfig(((ParsedConfiguration) configuration).getConfigModel());
+        for (GalleonConfigurationWithLayers configuration : gConfig.getDefinedConfigs()) {
+            if (configuration instanceof ConfigModel) {
+                builder.addConfig((ConfigModel) configuration);
             } else {
                 ConfigModel.Builder cBuilder = ConfigModel.builder(configuration.getModel(), configuration.getName());
-                for (String l : configuration.getLayers()) {
+                for (String l : configuration.getIncludedLayers()) {
                     cBuilder.includeLayer(l);
                 }
                 for (String l : configuration.getExcludedLayers()) {
                     cBuilder.excludeLayer(l);
                 }
-                for (Entry<String, String> p : configuration.getProps().entrySet()) {
+                for (Entry<String, String> p : configuration.getProperties().entrySet()) {
                     cBuilder.setProperty(p.getKey(), p.getValue());
                 }
                 builder.addConfig(cBuilder.build());
@@ -244,8 +244,7 @@ public class ProvisioningConfig extends FeaturePackDepsConfig {
             builder.includeDefaultConfig(id);
         }
         for(ConfigModel m : gConfig.getDefinedConfigs()) {
-            ParsedConfiguration pConfig = new ParsedConfiguration(m);
-            builder.addConfig(pConfig);
+            builder.addConfig(m);
         }
         return builder.build();
     }

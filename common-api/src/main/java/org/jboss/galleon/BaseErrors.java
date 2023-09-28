@@ -100,4 +100,8 @@ public interface BaseErrors {
     static String duplicateDependencyName(String name) {
         return "Dependency with name " + name + " already exists";
     }
+
+    static String configLayerCanEitherBeIncludedOrExcluded(String configModel, String configName, String layerName) {
+        return "Configuration layer " + layerName + " appears to be included and excluded in the same configuration " + (configModel == null ? configName : configModel + ':' + configName);
+    }
 }

@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.jboss.galleon.ProvisioningDescriptionException;
-import org.jboss.galleon.api.Configuration;
 import org.jboss.galleon.util.CollectionUtils;
 
 /**
@@ -37,7 +36,7 @@ public abstract class GalleonConfigCustomizationsBuilder<B extends GalleonConfig
     protected Set<ConfigId> includedConfigs = Collections.emptySet();
     protected Map<String, Boolean> excludedModels = Collections.emptyMap();
     protected Set<ConfigId> excludedConfigs = Collections.emptySet();
-    protected Map<ConfigId, Configuration> definedConfigs = Collections.emptyMap();
+    protected Map<ConfigId, GalleonConfigurationWithLayers> definedConfigs = Collections.emptyMap();
     protected boolean hasModelOnlyConfigs;
 
     @SuppressWarnings("unchecked")
@@ -77,7 +76,7 @@ public abstract class GalleonConfigCustomizationsBuilder<B extends GalleonConfig
     }
 
     @SuppressWarnings("unchecked")
-    public B addConfig(Configuration config) throws ProvisioningDescriptionException {
+    public B addConfig(GalleonConfigurationWithLayers config) throws ProvisioningDescriptionException {
         final ConfigId id = new ConfigId(config.getModel(), config.getName());
         definedConfigs = CollectionUtils.putLinked(definedConfigs, id, config);
         this.hasModelOnlyConfigs |= id.isModelOnly();
@@ -88,7 +87,7 @@ public abstract class GalleonConfigCustomizationsBuilder<B extends GalleonConfig
         return !definedConfigs.isEmpty();
     }
 
-    public Collection<Configuration> getDefinedConfigs() {
+    public Collection<GalleonConfigurationWithLayers> getDefinedConfigs() {
         return definedConfigs.values();
     }
 
@@ -97,8 +96,8 @@ public abstract class GalleonConfigCustomizationsBuilder<B extends GalleonConfig
         definedConfigs = CollectionUtils.remove(definedConfigs, id);
         // reset flag
         hasModelOnlyConfigs = false;
-        for (Configuration cm : definedConfigs.values()) {
-            hasModelOnlyConfigs |= Configuration.toId(cm).isModelOnly();
+        for (GalleonConfigurationWithLayers cm : definedConfigs.values()) {
+            hasModelOnlyConfigs |= GalleonConfigurationWithLayers.toId(cm).isModelOnly();
         }
         return (B) this;
     }

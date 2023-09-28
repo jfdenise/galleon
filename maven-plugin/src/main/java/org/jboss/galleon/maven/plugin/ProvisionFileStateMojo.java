@@ -36,6 +36,7 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.api.APIVersion;
 import org.jboss.galleon.api.Provisioning;
+import org.jboss.galleon.api.ProvisioningBuilder;
 import org.jboss.galleon.maven.plugin.util.MavenArtifactRepositoryManager;
 import org.jboss.galleon.maven.plugin.util.MvnMessageWriter;
 import org.jboss.galleon.api.ProvisioningContext;
@@ -136,7 +137,7 @@ public class ProvisionFileStateMojo extends AbstractMojo {
         if (!recordState) {
             IoUtils.recursiveDelete(home);
         }
-        try (Provisioning pm = Provisioning.builder().addArtifactResolver(artifactResolver)
+        try (Provisioning pm = ProvisioningBuilder.builder().addArtifactResolver(artifactResolver)
                 .setInstallationHome(home)
                 .setMessageWriter(new MvnMessageWriter(getLog()))
                 .setLogTime(logTime)

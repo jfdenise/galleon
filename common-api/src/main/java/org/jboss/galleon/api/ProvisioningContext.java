@@ -24,6 +24,8 @@ import java.util.Map;
 import javax.xml.stream.XMLStreamException;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.api.config.GalleonConfigurationWithLayers;
+import org.jboss.galleon.api.config.GalleonConfigurationWithLayersBuilderItf;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.FeaturePackLocation;
@@ -52,6 +54,11 @@ public interface ProvisioningContext extends AutoCloseable {
     public GalleonProvisioningConfig parseProvisioningFile(Path provisioning) throws ProvisioningException;
 
     public List<FPID> getOrderedFeaturePacks() throws ProvisioningException;
+
+    /**
+     * When dealing with parsed configuration that we want to update.
+     */
+    public GalleonConfigurationWithLayersBuilderItf buildConfigurationBuilder(GalleonConfigurationWithLayers config);
 
     @Override
     public void close();

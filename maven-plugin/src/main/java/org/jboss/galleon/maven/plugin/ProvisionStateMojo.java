@@ -47,10 +47,12 @@ import org.jboss.galleon.api.ConfigurationId;
 import org.jboss.galleon.api.GalleonArtifactCoordinate;
 import org.jboss.galleon.api.GalleonFeaturePack;
 import org.jboss.galleon.api.Provisioning;
+import org.jboss.galleon.api.ProvisioningBuilder;
 import org.jboss.galleon.maven.plugin.util.MavenArtifactRepositoryManager;
 import org.jboss.galleon.maven.plugin.util.MvnMessageWriter;
 import org.jboss.galleon.repo.RepositoryArtifactResolver;
 import org.jboss.galleon.api.ProvisioningContext;
+import org.jboss.galleon.api.config.GalleonConfigurationWithLayersBuilder;
 import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.maven.plugin.util.ResolveLocalItem;
@@ -193,7 +195,7 @@ public class ProvisionStateMojo extends AbstractMojo {
         if (!recordState) {
             IoUtils.recursiveDelete(home);
         }
-        try (Provisioning pm = Provisioning.builder().addArtifactResolver(artifactResolver)
+        try (Provisioning pm = ProvisioningBuilder.builder().addArtifactResolver(artifactResolver)
                 .setInstallationHome(home)
                 .setMessageWriter(new MvnMessageWriter(getLog()))
                 .setLogTime(logTime)
@@ -278,7 +280,18 @@ public class ProvisionStateMojo extends AbstractMojo {
             boolean hasLayers = false;
             for (Configuration config : configs) {
                 hasLayers = !config.getLayers().isEmpty();
-                state.addConfig(config);
+                GalleonConfigurationWithLayersBuilder configBuilder =
+                        GalleonConfigurationWithLayersBuilder.builder(config.getModel(), config.getName());
+                for (String layer : config.getLayers()) {
+                    hasLayers = true;
+                    configBuilder.includeLayer(layer);
+                }
+                if (config.getExcludedLayers() != null) {
+                    for (String layer : config.getExcludedLayers()) {
+                        configBuilder.excludeLayer(layer);
+                    }
+                }
+                state.addConfig(configBuilder.build());
             }
 
             if (hasLayers) {

@@ -26,6 +26,7 @@ import org.jboss.galleon.progresstracking.ProgressTracker;
 import org.jboss.galleon.repo.RepositoryArtifactResolver;
 import org.jboss.galleon.api.ProvisioningContext;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
+import org.jboss.galleon.impl.GalleonClassLoaderHandler;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 
 public interface ProvisioningContextBuilder {
@@ -36,7 +37,7 @@ public interface ProvisioningContextBuilder {
             boolean logTime,
             boolean recordState,
             RepositoryArtifactResolver artifactResolver,
-            Map<String, ProgressTracker<?>> progressTrackers, Map<FPID, LocalFP> locals) throws ProvisioningException;
+            Map<String, ProgressTracker<?>> progressTrackers, Map<FPID, LocalFP> locals, GalleonClassLoaderHandler handler) throws ProvisioningException;
 
     public ProvisioningContext buildProvisioningContext(URLClassLoader loader, Path home,
             GalleonProvisioningConfig config,
@@ -45,5 +46,5 @@ public interface ProvisioningContextBuilder {
             boolean logTime,
             boolean recordState,
             RepositoryArtifactResolver artifactResolver,
-            Map<String, ProgressTracker<?>> progressTrackers, Map<FPID, LocalFP> locals) throws ProvisioningException;
+            Map<String, ProgressTracker<?>> progressTrackers, Map<FPID, LocalFP> locals, GalleonClassLoaderHandler handler) throws ProvisioningException;
 }

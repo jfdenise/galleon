@@ -19,7 +19,6 @@ package org.jboss.galleon.api.config;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import org.jboss.galleon.api.Configuration;
 
 import org.jboss.galleon.util.CollectionUtils;
 import org.jboss.galleon.util.StringUtils;
@@ -36,7 +35,7 @@ public class GalleonConfigCustomizations {
     protected final Map<String, Boolean> excludedModels;
     protected final Set<ConfigId> includedConfigs;
     protected final Set<ConfigId> excludedConfigs;
-    protected final Map<ConfigId, Configuration> definedConfigs;
+    protected final Map<ConfigId, GalleonConfigurationWithLayers> definedConfigs;
     protected final boolean hasModelOnlyConfigs;
 
     protected GalleonConfigCustomizations(GalleonConfigCustomizationsBuilder<?> builder) {
@@ -84,7 +83,7 @@ public class GalleonConfigCustomizations {
 
     public boolean isConfigModelExcluded(ConfigId configId) {
         final Boolean namedOnly = excludedModels.get(configId.getModel());
-        if(namedOnly == null) {
+        if (namedOnly == null) {
             return false;
         }
         return namedOnly ? configId.getName() != null : true;
@@ -118,7 +117,7 @@ public class GalleonConfigCustomizations {
         return !definedConfigs.isEmpty();
     }
 
-    public Collection<Configuration> getDefinedConfigs() {
+    public Collection<GalleonConfigurationWithLayers> getDefinedConfigs() {
         return definedConfigs.values();
     }
 
@@ -126,7 +125,7 @@ public class GalleonConfigCustomizations {
         return definedConfigs.containsKey(configId);
     }
 
-    public Configuration getDefinedConfig(ConfigId configId) {
+    public GalleonConfigurationWithLayers getDefinedConfig(ConfigId configId) {
         return definedConfigs.get(configId);
     }
 
@@ -150,72 +149,88 @@ public class GalleonConfigCustomizations {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         GalleonConfigCustomizations other = (GalleonConfigCustomizations) obj;
         if (definedConfigs == null) {
-            if (other.definedConfigs != null)
+            if (other.definedConfigs != null) {
                 return false;
-        } else if (!definedConfigs.equals(other.definedConfigs))
+            }
+        } else if (!definedConfigs.equals(other.definedConfigs)) {
             return false;
+        }
         if (excludedConfigs == null) {
-            if (other.excludedConfigs != null)
+            if (other.excludedConfigs != null) {
                 return false;
-        } else if (!excludedConfigs.equals(other.excludedConfigs))
+            }
+        } else if (!excludedConfigs.equals(other.excludedConfigs)) {
             return false;
+        }
         if (excludedModels == null) {
-            if (other.excludedModels != null)
+            if (other.excludedModels != null) {
                 return false;
-        } else if (!excludedModels.equals(other.excludedModels))
+            }
+        } else if (!excludedModels.equals(other.excludedModels)) {
             return false;
+        }
         if (includedConfigs == null) {
-            if (other.includedConfigs != null)
+            if (other.includedConfigs != null) {
                 return false;
-        } else if (!includedConfigs.equals(other.includedConfigs))
+            }
+        } else if (!includedConfigs.equals(other.includedConfigs)) {
             return false;
+        }
         if (includedModels == null) {
-            if (other.includedModels != null)
+            if (other.includedModels != null) {
                 return false;
-        } else if (!includedModels.equals(other.includedModels))
+            }
+        } else if (!includedModels.equals(other.includedModels)) {
             return false;
+        }
         if (inheritConfigs == null) {
-            if (other.inheritConfigs != null)
+            if (other.inheritConfigs != null) {
                 return false;
-        } else if (!inheritConfigs.equals(other.inheritConfigs))
+            }
+        } else if (!inheritConfigs.equals(other.inheritConfigs)) {
             return false;
-        if (inheritModelOnlyConfigs != other.inheritModelOnlyConfigs)
+        }
+        if (inheritModelOnlyConfigs != other.inheritModelOnlyConfigs) {
             return false;
+        }
         return true;
     }
 
     protected void append(StringBuilder builder) {
-        if(inheritConfigs != null) {
+        if (inheritConfigs != null) {
             builder.append(" inheritConfigs=").append(inheritConfigs);
         }
-        if(!inheritModelOnlyConfigs) {
+        if (!inheritModelOnlyConfigs) {
             builder.append(" inheritModelOnlyConfigs=false");
         }
-        if(!this.excludedModels.isEmpty()) {
+        if (!this.excludedModels.isEmpty()) {
             builder.append(" excludedModels ");
             StringUtils.append(builder, excludedModels.entrySet());
         }
-        if(!this.includedModels.isEmpty()) {
+        if (!this.includedModels.isEmpty()) {
             builder.append(" includedModels ");
             StringUtils.append(builder, includedModels);
         }
-        if(!excludedConfigs.isEmpty()) {
+        if (!excludedConfigs.isEmpty()) {
             builder.append(" excludedConfigs ");
             StringUtils.append(builder, excludedConfigs);
         }
-        if(!includedConfigs.isEmpty()) {
+        if (!includedConfigs.isEmpty()) {
             builder.append(" includedConfigs ");
             StringUtils.append(builder, includedConfigs);
         }
-        if(!definedConfigs.isEmpty()) {
+        if (!definedConfigs.isEmpty()) {
             builder.append(" definedConfigs ");
             StringUtils.append(builder, definedConfigs.values());
         }

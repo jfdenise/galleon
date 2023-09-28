@@ -47,6 +47,10 @@ import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.xml.ProvisioningXmlParser;
 import org.jboss.galleon.xml.ProvisioningXmlWriter;
+import org.jboss.galleon.api.config.GalleonConfigurationWithLayers;
+import org.jboss.galleon.api.config.GalleonConfigurationWithLayersBuilder;
+import org.jboss.galleon.api.config.GalleonConfigurationWithLayersBuilderItf;
+import org.jboss.galleon.impl.GalleonClassLoaderHandler;
 
 public class ProvisioningContextImpl implements ProvisioningContext {
 
@@ -54,14 +58,15 @@ public class ProvisioningContextImpl implements ProvisioningContext {
     private final boolean noHome;
     private final URLClassLoader loader;
     private final ProvisioningConfig config;
-
+    private final GalleonClassLoaderHandler handler;
     ProvisioningContextImpl(URLClassLoader loader,
             boolean noHome,
-            ProvisioningManager manager, ProvisioningConfig config) {
+            ProvisioningManager manager, ProvisioningConfig config, GalleonClassLoaderHandler handler) {
         this.loader = loader;
         this.noHome = noHome;
         this.manager = manager;
         this.config = config;
+        this.handler = handler;
     }
 
     @Override
@@ -152,9 +157,9 @@ public class ProvisioningContextImpl implements ProvisioningContext {
     @Override
     public void close() {
         try {
-            loader.close();
-        } catch (IOException ex) {
-            System.err.println("Error closing core classloader");
+            handler.release(CoreVersion.getVersion());
+        } catch (ProvisioningException ex) {
+            System.err.println("Error releasing core classloader" + ex);
         }
         manager.close();
     }
@@ -175,5 +180,14 @@ public class ProvisioningContextImpl implements ProvisioningContext {
             }
         }
         return lst;
+    }
+
+    public GalleonConfigurationWithLayersBuilderItf buildConfigurationBuilder(GalleonConfigurationWithLayers config) {
+        if (config instanceof ConfigModel) {
+            ConfigModel pconfig = (ConfigModel) config;
+            return ConfigModel.builder(pconfig);
+        } else {
+            return GalleonConfigurationWithLayersBuilder.builder(config);
+        }
     }
 }
