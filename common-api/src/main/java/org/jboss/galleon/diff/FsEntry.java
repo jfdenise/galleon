@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.jboss.galleon.Errors;
+import org.jboss.galleon.BaseErrors;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.util.CollectionUtils;
 import org.jboss.galleon.util.HashUtils;
@@ -169,7 +169,7 @@ public class FsEntry {
             try {
                 hash = HashUtils.hashPath(p);
             } catch (IOException e) {
-                throw new ProvisioningException(Errors.hashCalculation(p));
+                throw new ProvisioningException(BaseErrors.hashCalculation(p));
             }
         }
         return hash;

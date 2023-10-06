@@ -104,7 +104,7 @@ public class StateHistoryUtils {
         try {
             IoUtils.copy(installedConfig, stateDir.resolve(Constants.PROVISIONING_XML));
         } catch (IOException e) {
-            throw new ProvisioningException(Errors.copyFile(installedConfig, stateDir.resolve(Constants.PROVISIONING_XML)), e);
+            throw new ProvisioningException(BaseErrors.copyFile(installedConfig, stateDir.resolve(Constants.PROVISIONING_XML)), e);
         }
 
         if(!undoTasks.isEmpty()) {

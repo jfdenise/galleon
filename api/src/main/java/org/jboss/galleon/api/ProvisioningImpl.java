@@ -16,7 +16,11 @@
  */
 package org.jboss.galleon.api;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -68,7 +72,7 @@ class ProvisioningImpl implements Provisioning, GalleonClassLoaderHandler {
     private final Path tmp;
     private Map<FPID, LocalFP> locals = new HashMap<>();
 
-    private static Map<String, ClassLoaderUsage> classLoaders = new HashMap<>();
+    private static final Map<String, ClassLoaderUsage> classLoaders = new HashMap<>();
 
     ProvisioningImpl(ProvisioningBuilder builder) throws ProvisioningException {
         this.home = builder.getInstallationHome();
@@ -133,14 +137,32 @@ class ProvisioningImpl implements Provisioning, GalleonClassLoaderHandler {
         }
     }
 
+    private boolean hasArtifactResolver() {
+        try {
+            universeResolver.getArtifactResolver(MavenRepoManager.REPOSITORY_ID);
+        } catch (ProvisioningException ex) {
+            return false;
+        }
+        return true;
+    }
+
     @Override
     public ProvisioningContext buildProvisioningContext(Path provisioning) throws ProvisioningException {
-        MavenRepoManager repoManager = (MavenRepoManager) universeResolver.getArtifactResolver(MavenRepoManager.REPOSITORY_ID);
-        try {
-            String coreVersion = ProvisioningUtil.getCoreVersion(provisioning, universeResolver, tmp);
-            //System.out.println("REQUIRED CORE VERSION is " + coreVersion);
+        String coreVersion = APIVersion.getVersion();
+        URLClassLoader loader;
+        MavenRepoManager repoManager = null;
+        if (hasArtifactResolver() && provisioning != null && Files.exists(provisioning)) {
+            repoManager = (MavenRepoManager) universeResolver.getArtifactResolver(MavenRepoManager.REPOSITORY_ID);
+            try {
+                coreVersion = ProvisioningUtil.getCoreVersion(provisioning, universeResolver, tmp);
+            } catch(Exception ex) {
+                System.err.println("Error resolving coreVersion " + ex + " fallback on current core ");
+            }
+        }
+        loader = getCallerClassLoader(coreVersion, repoManager);
 
-            URLClassLoader loader = getCallerClassLoader(coreVersion, repoManager);
+        try {
+            //System.out.println("REQUIRED CORE VERSION is " + coreVersion);
             Class<?> callerClass = ProvisioningUtil.getCallerClass(loader);
 
             try {
@@ -161,8 +183,6 @@ class ProvisioningImpl implements Provisioning, GalleonClassLoaderHandler {
 
         } catch (Exception ex) {
             throw new ProvisioningException(ex);
-        } finally {
-            IoUtils.recursiveDelete(tmp);
         }
     }
 
@@ -184,21 +204,35 @@ class ProvisioningImpl implements Provisioning, GalleonClassLoaderHandler {
     }
 
     @Override
+    public ProvisioningContext buildProvisioningContext() throws ProvisioningException {
+        if (home == null) {
+            throw new ProvisioningException("No installation dir specified.");
+        }
+        return buildProvisioningContext(PathsUtils.getProvisioningXml(home));
+    }
+
+    @Override
     public ProvisioningContext buildProvisioningContext(GalleonProvisioningConfig config, List<Path> customConfigs) throws ProvisioningException {
-        MavenRepoManager repoManager = (MavenRepoManager) universeResolver.getArtifactResolver(MavenRepoManager.REPOSITORY_ID);
-        String coreVersion = APIVersion.getVersion();
         try {
-            for (GalleonFeaturePackConfig fp : config.getFeaturePackDeps()) {
-                LocalFP local = locals.get(fp.getLocation().getFPID());
-                Path resolvedFP = null;
-                if (local == null) {
-                    resolvedFP = universeResolver.resolve(fp.getLocation());
-                } else {
-                    resolvedFP = local.getPath();
+            String coreVersion = APIVersion.getVersion();
+            MavenRepoManager repoManager = null;
+            if (hasArtifactResolver()) {
+                repoManager = (MavenRepoManager) universeResolver.getArtifactResolver(MavenRepoManager.REPOSITORY_ID);
+                for (GalleonFeaturePackConfig fp : config.getFeaturePackDeps()) {
+                    LocalFP local = locals.get(fp.getLocation().getFPID());
+                    Path resolvedFP = null;
+                    if (local == null) {
+                        resolvedFP = universeResolver.resolve(fp.getLocation());
+                    } else {
+                        resolvedFP = local.getPath();
+                    }
+                    try {
+                        coreVersion = ProvisioningUtil.getCoreVersion(resolvedFP, coreVersion, tmp, universeResolver);
+                    } catch(Exception ex) {
+                        System.err.println("Error resolving coreVersion " + ex + " fallback on current core ");
+                    }
                 }
-                coreVersion = ProvisioningUtil.getCoreVersion(resolvedFP, coreVersion, tmp, universeResolver);
             }
-            //System.out.println("REQUIRED CORE VERSION is " + coreVersion);
             URLClassLoader loader = getCallerClassLoader(coreVersion, repoManager);
             Class<?> callerClass = ProvisioningUtil.getCallerClass(loader);
 
@@ -221,8 +255,6 @@ class ProvisioningImpl implements Provisioning, GalleonClassLoaderHandler {
 
         } catch (Exception ex) {
             throw new ProvisioningException(ex);
-        } finally {
-            IoUtils.recursiveDelete(tmp);
         }
     }
 
@@ -233,13 +265,13 @@ class ProvisioningImpl implements Provisioning, GalleonClassLoaderHandler {
 
     private static synchronized void releaseUsage(String version) throws ProvisioningException {
         ClassLoaderUsage usage = classLoaders.get(version);
-        if(usage == null) {
+        if (usage == null) {
             throw new ProvisioningException("Releasing usage of core " + version + " although no usage");
         }
         if (usage.num <= 0) {
-             throw new ProvisioningException("Releasing usage of core " + version + " although all usages released");
+            throw new ProvisioningException("Releasing usage of core " + version + " although all usages released");
         }
-        usage.num-=1;
+        usage.num -= 1;
         if (usage.num == 0) {
             try {
                 //System.out.println("CLEANUP " + version);
@@ -251,37 +283,77 @@ class ProvisioningImpl implements Provisioning, GalleonClassLoaderHandler {
         }
     }
 
+    private static synchronized ClassLoaderUsage addDefaultCoreClassLoader() throws ProvisioningException {
+        String apiVersion = APIVersion.getVersion();
+        try {
+            Path corePath = Files.createTempDirectory("galleon-core-default-base-dir");
+            corePath.toFile().deleteOnExit();
+            // Handle local core
+            File defaultCore = corePath.resolve("galleon-core.jar").toFile();
+            try (InputStream input = ProvisioningImpl.class.getClassLoader().getResourceAsStream("galleon-core-" + apiVersion + ".jar")) {
+                try (OutputStream output = new FileOutputStream(defaultCore, false)) {
+                    input.transferTo(output);
+                }
+            }
+            defaultCore.deleteOnExit();
+            File defaultCoreCaller = corePath.resolve("galleon-core-caller.jar").toFile();
+            try (InputStream input = ProvisioningImpl.class.getClassLoader().getResourceAsStream("galleon-core-caller-" + apiVersion + ".jar")) {
+                try (OutputStream output = new FileOutputStream(defaultCoreCaller, false)) {
+                    input.transferTo(output);
+                }
+            }
+            defaultCoreCaller.deleteOnExit();
+            URL[] cp = new URL[2];
+            ClassLoaderUsage usage = new ClassLoaderUsage();
+            try {
+                cp[0] = defaultCore.toURI().toURL();
+                cp[1] = defaultCoreCaller.toURI().toURL();
+                usage.loader = new URLClassLoader(cp, Thread.currentThread().getContextClassLoader());
+            } catch (Exception ex) {
+                throw new ProvisioningException(ex);
+            }
+            classLoaders.put(apiVersion, usage);
+            return usage;
+        } catch (IOException ex) {
+            throw new ProvisioningException(ex);
+        }
+    }
+
     private static synchronized URLClassLoader getCallerClassLoader(String version, MavenRepoManager repoManager) throws ProvisioningException {
         ClassLoaderUsage usage = classLoaders.get(version);
         if (usage == null) {
             //System.out.println("NEW USAGE OF " + version);
-            usage = new ClassLoaderUsage();
-            classLoaders.put(version, usage);
-            MavenArtifact coreArtifact = new MavenArtifact();
-            coreArtifact.setGroupId("org.jboss.galleon");
-            coreArtifact.setArtifactId("galleon-core");
-            coreArtifact.setVersion(version);
-            coreArtifact.setExtension("jar");
-            try {
-                repoManager.resolve(coreArtifact);
-            } catch (MavenUniverseException ex) {
-                throw new ProvisioningException(ex);
-            }
-            MavenArtifact callerArtifact = new MavenArtifact();
-            callerArtifact.setGroupId("org.jboss.galleon");
-            callerArtifact.setArtifactId("galleon-core-caller");
-            // This one is always the one from the tooling.
-            callerArtifact.setVersion(APIVersion.getVersion());
-            callerArtifact.setExtension("jar");
-            repoManager.resolve(callerArtifact);
+            if (APIVersion.getVersion().equals(version)) {
+                usage = addDefaultCoreClassLoader();
+            } else {
+                usage = new ClassLoaderUsage();
+                classLoaders.put(version, usage);
+                MavenArtifact coreArtifact = new MavenArtifact();
+                coreArtifact.setGroupId("org.jboss.galleon");
+                coreArtifact.setArtifactId("galleon-core");
+                coreArtifact.setVersion(version);
+                coreArtifact.setExtension("jar");
+                try {
+                    repoManager.resolve(coreArtifact);
+                } catch (MavenUniverseException ex) {
+                    throw new ProvisioningException(ex);
+                }
+                MavenArtifact callerArtifact = new MavenArtifact();
+                callerArtifact.setGroupId("org.jboss.galleon");
+                callerArtifact.setArtifactId("galleon-core-caller");
+                // This one is always the one from the tooling.
+                callerArtifact.setVersion(APIVersion.getVersion());
+                callerArtifact.setExtension("jar");
+                repoManager.resolve(callerArtifact);
 
-            URL[] cp = new URL[2];
-            try {
-                cp[0] = coreArtifact.getPath().toFile().toURI().toURL();
-                cp[1] = callerArtifact.getPath().toFile().toURI().toURL();
-                usage.loader = new URLClassLoader(cp, Thread.currentThread().getContextClassLoader());
-            } catch (Exception ex) {
-                throw new ProvisioningException(ex);
+                URL[] cp = new URL[2];
+                try {
+                    cp[0] = coreArtifact.getPath().toFile().toURI().toURL();
+                    cp[1] = callerArtifact.getPath().toFile().toURI().toURL();
+                    usage.loader = new URLClassLoader(cp, Thread.currentThread().getContextClassLoader());
+                } catch (Exception ex) {
+                    throw new ProvisioningException(ex);
+                }
             }
         } else {
             //System.out.println("REUSE OF " + version);
@@ -352,4 +424,38 @@ class ProvisioningImpl implements Provisioning, GalleonClassLoaderHandler {
         return buildProvisioningContext(provisioning).getConfig();
     }
 
+    @Override
+    public List<String> getInstalledPacks(Path dir) throws ProvisioningException {
+        Path provisioning = PathsUtils.getProvisioningXml(home);
+        try (ProvisioningContext ctx = buildProvisioningContext(provisioning)) {
+            return ctx.getInstalledPacks(dir);
+        }
+    }
+
+    @Override
+    public GalleonProvisioningConfig loadProvisioningConfig(InputStream is) throws ProvisioningException {
+        try (ProvisioningContext ctx = buildProvisioningContext((Path) null)) {
+            return ctx.loadProvisioningConfig(is);
+        } catch (Exception ex) {
+            throw new ProvisioningException(ex);
+        }
+    }
+
+    @Override
+    public void storeProvisioningConfig(GalleonProvisioningConfig config, Path target) throws ProvisioningException {
+        try (ProvisioningContext ctx = buildProvisioningContext(config)) {
+            ctx.storeProvisioningConfig(target);
+        } catch (Exception ex) {
+            throw new ProvisioningException(ex);
+        }
+    }
+
+    @Override
+    public void provision(GalleonProvisioningConfig config, Map<String, String> options) throws ProvisioningException {
+        try (ProvisioningContext ctx = buildProvisioningContext(config)) {
+            ctx.provision(options);
+        } catch (Exception ex) {
+            throw new ProvisioningException(ex);
+        }
+    }
 }

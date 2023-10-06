@@ -14,18 +14,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.galleon.state;
+package org.jboss.galleon.api.config;
 
+import java.util.Collection;
+import java.util.Map;
 
-import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.api.config.GalleonProvisionedConfig;
-import org.jboss.galleon.plugin.ProvisionedConfigHandler;
 
 /**
  *
  * @author Alexey Loubyansky
  */
-public interface ProvisionedConfig extends GalleonProvisionedConfig {
+public interface GalleonProvisionedConfig {
 
-    void handle(ProvisionedConfigHandler handler) throws ProvisioningException;
+    String getName();
+
+    String getModel();
+
+    boolean hasProperties();
+
+    String getProperty(String name);
+
+    Map<String, String> getProperties();
+
+    boolean hasLayers();
+
+    Collection<ConfigId> getLayers();
+
+    boolean hasFeatures();
+
+    int size();
+
 }

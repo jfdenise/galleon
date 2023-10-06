@@ -55,10 +55,6 @@ public interface Errors {
         return "Path already exists " + p.toAbsolutePath();
     }
 
-    static String copyFile(Path src, Path target) {
-        return "Failed to copy " + src + " to " + target;
-    }
-
     static String deletePath(Path src) {
         return "Failed to delete " + src;
     }
@@ -85,10 +81,6 @@ public interface Errors {
 
     static String deleteFile(Path p) {
         return "Failed to delete " + p.toAbsolutePath();
-    }
-
-    static String hashCalculation(Path path) {
-        return "Hash calculation failed for " + path;
     }
 
     // FEATURE PACK INSTALL MESSAGES
@@ -376,10 +368,6 @@ public interface Errors {
 
     static String unsatisfiedLayerDependency(String srcLayer, String targetLayer) {
         return "Required dependency of configuration layer " + srcLayer + " on layer " + targetLayer + " was excluded";
-    }
-
-    static String fsEntryInit(Path p) {
-        return "Failed to process child entries for " + p;
     }
 
     static String pluginOptionRequired(String name) {

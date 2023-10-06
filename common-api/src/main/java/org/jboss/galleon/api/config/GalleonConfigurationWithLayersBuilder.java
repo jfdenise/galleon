@@ -108,7 +108,7 @@ public class GalleonConfigurationWithLayersBuilder implements GalleonConfigurati
         @Override
         public int hashCode() {
             final int prime = 31;
-            int result = super.hashCode();
+            int result = 1;
             result = prime * result + ((configDeps == null) ? 0 : configDeps.hashCode());
             result = prime * result + ((excludedLayers == null) ? 0 : excludedLayers.hashCode());
             result = prime * result + ((id == null) ? 0 : id.hashCode());
@@ -122,9 +122,6 @@ public class GalleonConfigurationWithLayersBuilder implements GalleonConfigurati
         public boolean equals(Object obj) {
             if (this == obj) {
                 return true;
-            }
-            if (!super.equals(obj)) {
-                return false;
             }
             if (getClass() != obj.getClass()) {
                 return false;

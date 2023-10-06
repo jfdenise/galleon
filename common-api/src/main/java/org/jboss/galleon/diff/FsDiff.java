@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +30,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import org.jboss.galleon.Constants;
-import org.jboss.galleon.Errors;
+import org.jboss.galleon.BaseErrors;
 import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.util.CollectionUtils;
@@ -133,7 +133,7 @@ public class FsDiff {
                     try {
                         targetHash = HashUtils.hashPath(target);
                     } catch (IOException e) {
-                        throw new ProvisioningException(Errors.hashCalculation(target), e);
+                        throw new ProvisioningException(BaseErrors.hashCalculation(target), e);
                     }
                     if(Arrays.equals(update.getHash(), targetHash)) {
                         if(!modifiedPathMatchesExisting(update)) {
@@ -173,7 +173,7 @@ public class FsDiff {
                             IoUtils.copy(update.getPath(), target);
                         }
                     } catch (IOException e) {
-                        throw new ProvisioningException(Errors.copyFile(update.getPath(), target), e);
+                        throw new ProvisioningException(BaseErrors.copyFile(update.getPath(), target), e);
                     }
                 }
             }
@@ -201,7 +201,7 @@ public class FsDiff {
             try {
                 targetHash = HashUtils.hashPath(target);
             } catch (IOException e) {
-                throw new ProvisioningException(Errors.hashCalculation(target), e);
+                throw new ProvisioningException(BaseErrors.hashCalculation(target), e);
             }
             if(Arrays.equals(added.getHash(), targetHash)) {
                 if(!addedPathMatchesExisting(added)) {
@@ -231,7 +231,7 @@ public class FsDiff {
                     IoUtils.copy(added.getPath(), target);
                 }
             } catch (IOException e) {
-                throw new ProvisioningException(Errors.copyFile(added.getPath(), target), e);
+                throw new ProvisioningException(BaseErrors.copyFile(added.getPath(), target), e);
             }
         }
         return undoTasks;

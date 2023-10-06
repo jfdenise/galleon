@@ -41,6 +41,50 @@
       <groupId>org.jboss.galleon</groupId>
       <artifactId>galleon-maven-universe</artifactId>
     </dependency>
+    <!-- to be able to copy the jar as a resource -->
+    <dependency>
+      <groupId>org.jboss.galleon</groupId>
+      <artifactId>galleon-core</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.galleon</groupId>
+      <artifactId>galleon-core-caller</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
-
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-core</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${basedir}/target/classes</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${basedir}/../core/target/</directory>
+                  <includes>
+                    <include>galleon-core-${project.version}.jar</include>
+                  </includes>
+                </resource>
+                <resource>
+                  <directory>${basedir}/../core-caller/target/</directory>
+                  <includes>
+                    <include>galleon-core-caller-${project.version}.jar</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>

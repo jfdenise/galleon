@@ -104,4 +104,27 @@ public interface BaseErrors {
     static String configLayerCanEitherBeIncludedOrExcluded(String configModel, String configName, String layerName) {
         return "Configuration layer " + layerName + " appears to be included and excluded in the same configuration " + (configModel == null ? configName : configModel + ':' + configName);
     }
+
+    static String copyFile(Path src, Path target) {
+        return "Failed to copy " + src + " to " + target;
+    }
+
+    static String hashCalculation(Path path) {
+        return "Hash calculation failed for " + path;
+    }
+
+    static String fsEntryInit(Path p) {
+        return "Failed to process child entries for " + p;
+    }
+
+    static String unexpectedPackageDependencyType(String name, int type) {
+        return "Unexpected dependency type " + type + " on package " + name;
+    }
+    static String parseXml(Path p) {
+        return "Failed to parse " + p.toAbsolutePath();
+    }
+
+    static String requiredPassiveDependency(String name) {
+        return "Required dependency on " + name + " cannot be passive";
+    }
 }

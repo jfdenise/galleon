@@ -18,21 +18,23 @@ package org.jboss.galleon.caller;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
+import java.util.stream.Collectors;
 import javax.xml.stream.XMLStreamException;
 import org.jboss.galleon.CoreVersion;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningManager;
-import org.jboss.galleon.api.GalleonLayer;
+import org.jboss.galleon.api.GalleonFeaturePackLayout;
 import org.jboss.galleon.api.GalleonProvisioningRuntime;
 import org.jboss.galleon.config.ConfigModel;
 import org.jboss.galleon.config.ProvisioningConfig;
@@ -41,16 +43,22 @@ import org.jboss.galleon.api.config.ConfigId;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.layout.FeaturePackLayout;
 import org.jboss.galleon.layout.ProvisioningLayout;
-import org.jboss.galleon.spec.ConfigLayerDependency;
-import org.jboss.galleon.spec.ConfigLayerSpec;
-import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.xml.ProvisioningXmlParser;
 import org.jboss.galleon.xml.ProvisioningXmlWriter;
 import org.jboss.galleon.api.config.GalleonConfigurationWithLayers;
 import org.jboss.galleon.api.config.GalleonConfigurationWithLayersBuilder;
 import org.jboss.galleon.api.config.GalleonConfigurationWithLayersBuilderItf;
+import org.jboss.galleon.diff.FsDiff;
 import org.jboss.galleon.impl.GalleonClassLoaderHandler;
+import org.jboss.galleon.spec.FeaturePackPlugin;
+import org.jboss.galleon.state.ProvisionedFeaturePack;
+import org.jboss.galleon.universe.FeaturePackLocation;
+import org.jboss.galleon.util.IoUtils;
+import org.jboss.galleon.util.LayoutUtils;
+import org.jboss.galleon.util.PathsUtils;
+import org.jboss.galleon.xml.ProvisionedStateXmlParser;
+import org.jboss.galleon.xml.XmlParsers;
 
 public class ProvisioningContextImpl implements ProvisioningContext {
 
@@ -59,9 +67,10 @@ public class ProvisioningContextImpl implements ProvisioningContext {
     private final URLClassLoader loader;
     private final ProvisioningConfig config;
     private final GalleonClassLoaderHandler handler;
+
     ProvisioningContextImpl(URLClassLoader loader,
             boolean noHome,
-            ProvisioningManager manager, ProvisioningConfig config, GalleonClassLoaderHandler handler) {
+            ProvisioningManager manager, ProvisioningConfig config, GalleonClassLoaderHandler handler) throws ProvisioningException {
         this.loader = loader;
         this.noHome = noHome;
         this.manager = manager;
@@ -101,44 +110,6 @@ public class ProvisioningContextImpl implements ProvisioningContext {
     }
 
     @Override
-    public Map<FPID, Map<String, GalleonLayer>> getAllLayers() throws ProvisioningException, IOException {
-        Map<FPID, Map<String, GalleonLayer>> layersMap = new LinkedHashMap<>();
-        Set<String> autoInjected = new TreeSet<>();
-        try (ProvisioningLayout<FeaturePackLayout> pmLayout = manager.getLayoutFactory().newConfigLayout(config)) {
-            for (FeaturePackLayout fp : pmLayout.getOrderedFeaturePacks()) {
-                Map<String, GalleonLayer> layers = new HashMap<>();
-                ConfigModel m = fp.loadModel("standalone");
-                if (m != null) {
-                    autoInjected.addAll(m.getIncludedLayers());
-                }
-                for (ConfigId layer : fp.loadLayers()) {
-                    ConfigLayerSpec spec = fp.loadConfigLayerSpec(layer.getModel(), layer.getName());
-                    Set<String> dependencies = new TreeSet<>();
-                    for (ConfigLayerDependency dep : spec.getLayerDeps()) {
-                        dependencies.add(dep.getName());
-                    }
-                    // Case where a layer is redefined in multiple FP. Add all deps.
-
-                    GalleonLayer l = new GalleonLayer(layer.getName());
-                    l.getDependencies().addAll(dependencies);
-                    l.getProperties().putAll(spec.getProperties());
-                    layers.put(layer.getName(), l);
-                }
-
-                for (GalleonLayer l : layers.values()) {
-                    if (autoInjected.contains(l.getName())) {
-                        l.setIsAutomaticInjection(true);
-                    }
-                }
-
-                layersMap.put(fp.getFPID(), layers);
-            }
-        }
-
-        return layersMap;
-    }
-
-    @Override
     public GalleonProvisioningRuntime getProvisioningRuntime() throws ProvisioningException {
         ClassLoader originalLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(loader);
@@ -161,6 +132,9 @@ public class ProvisioningContextImpl implements ProvisioningContext {
         } catch (ProvisioningException ex) {
             System.err.println("Error releasing core classloader" + ex);
         }
+        if(noHome) {
+            IoUtils.recursiveDelete(manager.getInstallationHome());
+        }
         manager.close();
     }
 
@@ -171,17 +145,28 @@ public class ProvisioningContextImpl implements ProvisioningContext {
     }
 
     @Override
-    public List<FPID> getOrderedFeaturePacks() throws ProvisioningException {
-        List<FPID> lst = new ArrayList<>();
-        try (ProvisioningLayout<FeaturePackLayout> l = manager.getLayoutFactory().newConfigLayout(config)) {
-            for (FeaturePackLayout f : l.getOrderedFeaturePacks()) {
-                lst.add(f.getFPID());
+    public List<GalleonFeaturePackLayout> getOrderedFeaturePackLayouts() throws ProvisioningException {
+        List<GalleonFeaturePackLayout> lst = new ArrayList<>();
+        try (ProvisioningLayout<FeaturePackLayout> layout = manager.getLayoutFactory().newConfigLayout(config)) {
+            lst.addAll(layout.getOrderedFeaturePacks());
+            return lst;
+        }
+    }
 
+    @Override
+    public Set<String> getOrderedFeaturePackPluginLocations() throws ProvisioningException {
+        Set<String> lst = new HashSet<>();
+        try (ProvisioningLayout<FeaturePackLayout> layout = manager.getLayoutFactory().newConfigLayout(config)) {
+            for (FeaturePackLayout fp : layout.getOrderedFeaturePacks()) {
+                for (FeaturePackPlugin plugin : fp.getSpec().getPlugins().values()) {
+                    lst.add(plugin.getLocation());
+                }
             }
         }
         return lst;
     }
 
+    @Override
     public GalleonConfigurationWithLayersBuilderItf buildConfigurationBuilder(GalleonConfigurationWithLayers config) {
         if (config instanceof ConfigModel) {
             ConfigModel pconfig = (ConfigModel) config;
@@ -190,4 +175,45 @@ public class ProvisioningContextImpl implements ProvisioningContext {
             return GalleonConfigurationWithLayersBuilder.builder(config);
         }
     }
+
+    @Override
+    public List<String> getInstalledPacks(Path dir) throws ProvisioningException {
+        final Collection<ProvisionedFeaturePack> featurePacks = ProvisionedStateXmlParser.parse(
+                PathsUtils.getProvisionedStateXml(dir)).getFeaturePacks();
+
+        return featurePacks.stream().map(fp -> fp.getFPID().getProducer().getName()).collect(Collectors.toList());
+    }
+
+    @Override
+    public GalleonProvisioningConfig loadProvisioningConfig(InputStream is) throws ProvisioningException, XMLStreamException {
+        InputStreamReader reader = new InputStreamReader(is);
+        final ProvisioningConfig.Builder builder = ProvisioningConfig.builder();
+        XmlParsers.parse(reader, builder);
+        return ProvisioningConfig.toConfig(builder.build());
+    }
+
+    @Override
+    public FsDiff getFsDiff() throws ProvisioningException {
+        return manager.getFsDiff();
+    }
+
+    @Override
+    public void install(FeaturePackLocation loc) throws ProvisioningException {
+        manager.install(loc);
+    }
+
+    @Override
+    public boolean hasOrderedFeaturePacksConfig(ConfigId cfg) throws ProvisioningException {
+        try (ProvisioningLayout<FeaturePackLayout> layout = manager.getLayoutFactory().newConfigLayout(config)) {
+            for (FeaturePackLayout fp : layout.getOrderedFeaturePacks()) {
+                try {
+                    LayoutUtils.getConfigXml(fp.getDir(), cfg, true);
+                    return true;
+                } catch (ProvisioningDescriptionException e) {
+                }
+            }
+        }
+        return false;
+    }
+
 }

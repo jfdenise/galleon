@@ -38,6 +38,11 @@ public class ProvisioningBuilder extends UniverseResolverBuilder<ProvisioningBui
         return this;
     }
 
+    public ProvisioningBuilder setUniverseResolver(UniverseResolver resolver) throws ProvisioningException {
+        this.resolver = resolver;
+        return this;
+    }
+
     public ProvisioningBuilder setMessageWriter(MessageWriter messageWriter) {
         this.messageWriter = messageWriter;
         return this;

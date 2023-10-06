@@ -17,19 +17,22 @@
 package org.jboss.galleon.api;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.xml.stream.XMLStreamException;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.api.config.ConfigId;
 import org.jboss.galleon.api.config.GalleonConfigurationWithLayers;
 import org.jboss.galleon.api.config.GalleonConfigurationWithLayersBuilderItf;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
+import org.jboss.galleon.diff.FsDiff;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.FeaturePackLocation;
-import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 
 public interface ProvisioningContext extends AutoCloseable {
 
@@ -38,8 +41,6 @@ public interface ProvisioningContext extends AutoCloseable {
     public GalleonProvisioningConfig getConfig() throws ProvisioningDescriptionException;
 
     public void storeProvisioningConfig(Path target) throws XMLStreamException, IOException, ProvisioningDescriptionException;
-
-    public Map<FeaturePackLocation.FPID, Map<String, GalleonLayer>> getAllLayers() throws ProvisioningException, IOException;
 
     public GalleonProvisioningRuntime getProvisioningRuntime() throws ProvisioningException;
 
@@ -53,12 +54,24 @@ public interface ProvisioningContext extends AutoCloseable {
 
     public GalleonProvisioningConfig parseProvisioningFile(Path provisioning) throws ProvisioningException;
 
-    public List<FPID> getOrderedFeaturePacks() throws ProvisioningException;
+    public List<GalleonFeaturePackLayout> getOrderedFeaturePackLayouts() throws ProvisioningException;
+
+    public Set<String> getOrderedFeaturePackPluginLocations() throws ProvisioningException;
 
     /**
      * When dealing with parsed configuration that we want to update.
      */
     public GalleonConfigurationWithLayersBuilderItf buildConfigurationBuilder(GalleonConfigurationWithLayers config);
+
+    public List<String> getInstalledPacks(Path dir) throws ProvisioningException;
+
+    public GalleonProvisioningConfig loadProvisioningConfig(InputStream is) throws ProvisioningException, XMLStreamException;
+
+    public FsDiff getFsDiff() throws ProvisioningException;
+
+    public void install(FeaturePackLocation loc) throws ProvisioningException;
+
+    public boolean hasOrderedFeaturePacksConfig(ConfigId cfg) throws ProvisioningException;
 
     @Override
     public void close();

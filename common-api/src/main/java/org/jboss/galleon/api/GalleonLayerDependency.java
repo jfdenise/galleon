@@ -14,18 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.galleon.state;
-
-
-import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.api.config.GalleonProvisionedConfig;
-import org.jboss.galleon.plugin.ProvisionedConfigHandler;
+package org.jboss.galleon.api;
 
 /**
  *
- * @author Alexey Loubyansky
+ * @author jdenise
  */
-public interface ProvisionedConfig extends GalleonProvisionedConfig {
+public interface GalleonLayerDependency {
 
-    void handle(ProvisionedConfigHandler handler) throws ProvisioningException;
+    public String getName();
+    public boolean isOptional();
+
 }

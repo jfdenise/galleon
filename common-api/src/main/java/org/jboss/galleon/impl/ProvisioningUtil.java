@@ -16,6 +16,7 @@
  */
 package org.jboss.galleon.impl;
 
+import java.io.InputStream;
 import java.net.URLClassLoader;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -86,6 +87,11 @@ public class ProvisioningUtil {
 
     public static String getCoreVersion(Path provisioning, UniverseResolver universeResolver, Path tmp) throws ProvisioningException {
         List<FPID> featurePacks = ProvisioningLightXmlParser.parse(provisioning);
+        return getCoreVersion(featurePacks, APIVersion.getVersion(), universeResolver, tmp);
+    }
+
+    public static String getCoreVersion(InputStream stream, UniverseResolver universeResolver, Path tmp) throws ProvisioningException {
+        List<FPID> featurePacks = ProvisioningLightXmlParser.parse(stream);
         return getCoreVersion(featurePacks, APIVersion.getVersion(), universeResolver, tmp);
     }
 

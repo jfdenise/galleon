@@ -23,16 +23,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.jboss.galleon.Constants;
 import org.jboss.galleon.Errors;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.api.GalleonFeaturePackLayout;
+import org.jboss.galleon.api.GalleonLayer;
 import org.jboss.galleon.api.config.ConfigId;
 import org.jboss.galleon.config.ConfigModel;
+import org.jboss.galleon.config.FeaturePackConfig;
 import org.jboss.galleon.spec.ConfigLayerSpec;
 import org.jboss.galleon.spec.FeaturePackSpec;
 import org.jboss.galleon.spec.FeatureSpec;
@@ -46,7 +51,7 @@ import org.jboss.galleon.xml.FeatureSpecXmlParser;
  *
  * @author Alexey Loubyansky
  */
-public abstract class FeaturePackLayout {
+public abstract class FeaturePackLayout implements GalleonFeaturePackLayout {
 
     public static final int DIRECT_DEP = 0;
     public static final int TRANSITIVE_DEP = 1;
@@ -70,6 +75,7 @@ public abstract class FeaturePackLayout {
         this.spec = spec;
     }
 
+    @Override
     public FPID getFPID() {
         return fpid;
     }
@@ -112,6 +118,7 @@ public abstract class FeaturePackLayout {
      * @return  file-system path for the resource
      * @throws ProvisioningDescriptionException  in case the feature-pack was not found in the layout
      */
+    @Override
     public Path getResource(String... path) throws ProvisioningDescriptionException {
         if(path.length == 0) {
             throw new IllegalArgumentException("Resource path is null");
@@ -142,6 +149,19 @@ public abstract class FeaturePackLayout {
         }
     }
 
+    @Override
+    public GalleonLayer loadLayer(String model, String name)  throws ProvisioningException {
+        return loadConfigLayerSpec(model, name);
+    }
+    @Override
+    public List<FPID> getFeaturePackDeps() throws ProvisioningException {
+        List<FPID> lst = new ArrayList<>();
+        for(FeaturePackConfig c : getSpec().getFeaturePackDeps()) {
+            lst.add(c.getLocation().getFPID());
+        }
+        return lst;
+    }
+
     public ConfigLayerSpec loadConfigLayerSpec(String model, String name) throws ProvisioningException {
         final Path specXml;
         if (model == null) {
@@ -159,6 +179,7 @@ public abstract class FeaturePackLayout {
         }
     }
 
+    @Override
     public ConfigModel loadModel(String model) throws ProvisioningException {
         final Path modelXml;
             modelXml = getDir().resolve(Constants.CONFIGS).resolve(model).resolve(Constants.MODEL_XML);
@@ -172,6 +193,7 @@ public abstract class FeaturePackLayout {
         }
     }
 
+    @Override
     public Set<ConfigId> loadLayers() throws ProvisioningException, IOException {
         Path layersDir = getDir().resolve(Constants.LAYERS);
         if (!Files.exists(layersDir)) {

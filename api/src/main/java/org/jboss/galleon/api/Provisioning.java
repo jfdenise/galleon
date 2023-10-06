@@ -16,8 +16,13 @@
  */
 package org.jboss.galleon.api;
 
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.universe.FeaturePackLocation;
@@ -61,6 +66,8 @@ public interface Provisioning extends AutoCloseable {
         return ProvisioningUtil.getFeaturePackDescription(path);
     }
 
+    public ProvisioningContext buildProvisioningContext() throws ProvisioningException;
+
     public ProvisioningContext buildProvisioningContext(Path provisioning) throws ProvisioningException;
 
     public FeaturePackLocation addLocal(Path path, boolean installInUniverse) throws ProvisioningException;
@@ -102,4 +109,29 @@ public interface Provisioning extends AutoCloseable {
     public void setProgressCallback(String id, ProgressCallback<?> callback);
 
     public void setProgressTracker(String id, ProgressTracker<?> tracker);
+
+    public List<String> getInstalledPacks(Path dir) throws ProvisioningException;
+
+    public default GalleonProvisioningConfig loadProvisioningConfig(Path file) throws ProvisioningException {
+        if (!Files.exists(file)) {
+            return null;
+        }
+        try {
+            try (FileInputStream fileInputStream = new FileInputStream(file.toFile())) {
+                return loadProvisioningConfig(fileInputStream);
+            }
+        } catch (Exception ex) {
+            throw new ProvisioningException(ex);
+        }
+    }
+
+    public GalleonProvisioningConfig loadProvisioningConfig(InputStream is) throws ProvisioningException;
+
+    public void storeProvisioningConfig(GalleonProvisioningConfig config, Path target) throws ProvisioningException;
+
+    public default void provision(GalleonProvisioningConfig config) throws ProvisioningException {
+        provision(config, Collections.emptyMap());
+    }
+
+    public void provision(GalleonProvisioningConfig config, Map<String, String> options) throws ProvisioningException;
 }

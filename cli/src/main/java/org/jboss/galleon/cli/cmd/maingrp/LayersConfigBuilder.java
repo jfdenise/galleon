@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningManager;
+import org.jboss.galleon.api.GalleonLayerDependency;
 import org.jboss.galleon.api.config.ConfigId;
 import org.jboss.galleon.cli.PmSession;
 import org.jboss.galleon.cli.cmd.CliErrors;
@@ -34,7 +35,6 @@ import org.jboss.galleon.config.FeaturePackConfig;
 import org.jboss.galleon.config.ProvisioningConfig;
 import org.jboss.galleon.layout.FeaturePackLayout;
 import org.jboss.galleon.layout.ProvisioningLayout;
-import org.jboss.galleon.spec.ConfigLayerDependency;
 import org.jboss.galleon.spec.ConfigLayerSpec;
 import org.jboss.galleon.universe.FeaturePackLocation;
 
@@ -186,7 +186,7 @@ public class LayersConfigBuilder {
                 Set<String> dependencies = new TreeSet<>();
                 if (includeDependencies) {
                     ConfigLayerSpec spec = fp.loadConfigLayerSpec(model, layer.getName());
-                    for (ConfigLayerDependency dep : spec.getLayerDeps()) {
+                    for (GalleonLayerDependency dep : spec.getLayerDeps()) {
                         dependencies.add(dep.getName());
                     }
                 }

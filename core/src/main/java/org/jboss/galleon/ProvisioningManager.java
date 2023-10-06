@@ -660,7 +660,7 @@ public class ProvisioningManager implements AutoCloseable {
                                     try {
                                         IoUtils.copy(homePath, stagedPath);
                                     } catch (IOException e) {
-                                        throw new ProvisioningException(Errors.copyFile(homePath, stagedPath), e);
+                                        throw new ProvisioningException(BaseErrors.copyFile(homePath, stagedPath), e);
                                     }
                                 }
                             } else {
@@ -710,7 +710,7 @@ public class ProvisioningManager implements AutoCloseable {
             try {
                 IoUtils.copy(stagedDir, home, true);
             } catch (IOException e) {
-                throw new ProvisioningException(Errors.copyFile(stagedDir, home));
+                throw new ProvisioningException(BaseErrors.copyFile(stagedDir, home));
             }
         } finally {
             this.provisioningConfig = null;

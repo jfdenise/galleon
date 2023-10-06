@@ -16,89 +16,27 @@
  */
 package org.jboss.galleon.api;
 
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.TreeSet;
 
 /**
  *
  * @author jdenise
  */
-public class GalleonLayer implements Comparable<GalleonLayer> {
+public interface GalleonLayer {
 
-    private final String name;
-    private final Set<String> dependencies = new TreeSet<>();
-    private final Map<String, String> properties = new HashMap<>();
-    private boolean isAutomaticInjection;
+    public String getName();
 
-    public GalleonLayer(String name) {
-        this.name = name;
-    }
-
-    @Override
-    public String toString() {
-        return name;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 3;
-        hash = 53 * hash + Objects.hashCode(this.name);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final GalleonLayer other = (GalleonLayer) obj;
-        return Objects.equals(this.name, other.name);
-    }
-
-    @Override
-    public int compareTo(GalleonLayer t) {
-        return name.compareTo(t.name);
-    }
+    public String getModel();
 
     /**
      * @return the dependencies
      */
-    public Set<String> getDependencies() {
-        return dependencies;
-    }
+    public Collection<GalleonLayerDependency> getLayerDeps();
 
     /**
      * @return the properties
      */
-    public Map<String, String> getProperties() {
-        return properties;
-    }
-
-    /**
-     * @return the isAutomaticInjection
-     */
-    public boolean isIsAutomaticInjection() {
-        return isAutomaticInjection;
-    }
-
-    /**
-     * @param isAutomaticInjection the isAutomaticInjection to set
-     */
-    public void setIsAutomaticInjection(boolean isAutomaticInjection) {
-        this.isAutomaticInjection = isAutomaticInjection;
-    }
+    public Map<String, String> getProperties();
 
 }

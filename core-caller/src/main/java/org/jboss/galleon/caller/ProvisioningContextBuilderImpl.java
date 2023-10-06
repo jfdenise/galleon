@@ -48,28 +48,8 @@ public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilde
             RepositoryArtifactResolver artifactResolver,
             Map<String, ProgressTracker<?>> progressTrackers,
             Map<FPID, LocalFP> locals, GalleonClassLoaderHandler handler) throws ProvisioningException {
-        boolean noHome = home == null;
-        if (home == null) {
-            try {
-                home = Files.createTempDirectory("gallon-no-installation");
-            } catch (IOException ex) {
-                throw new ProvisioningException(ex);
-            }
-        }
-        ProvisioningManager pm = ProvisioningManager.builder().addArtifactResolver(artifactResolver)
-                .setInstallationHome(home)
-                .setMessageWriter(msgWriter)
-                .setLogTime(logTime)
-                .setRecordState(recordState)
-                .build();
-        for (Entry<String, ProgressTracker<?>> entry : progressTrackers.entrySet()) {
-            pm.getLayoutFactory().setProgressTracker(entry.getKey(), entry.getValue());
-        }
-        for (LocalFP fp : locals.values()) {
-            pm.getLayoutFactory().addLocal(fp.getPath(), fp.isInstallInUniverse());
-        }
-        ProvisioningConfig c = ProvisioningXmlParser.parse(provisioning);
-        return new ProvisioningContextImpl(loader, noHome, pm, c, handler);
+        ProvisioningConfig c = provisioning == null ? null : ProvisioningXmlParser.parse(provisioning);
+        return buildContext(loader, home, c, msgWriter, logTime, recordState, artifactResolver, progressTrackers, locals, handler);
     }
 
     @Override
@@ -82,27 +62,40 @@ public class ProvisioningContextBuilderImpl implements ProvisioningContextBuilde
             RepositoryArtifactResolver artifactResolver,
             Map<String, ProgressTracker<?>> progressTrackers,
             Map<FPID, LocalFP> locals, GalleonClassLoaderHandler handler) throws ProvisioningException {
+        ProvisioningConfig c = config == null ? null : ProvisioningConfig.toConfig(config, customConfigs);
+        return buildContext(loader, home, c, msgWriter, logTime, recordState, artifactResolver, progressTrackers, locals, handler);
+    }
+    private static ProvisioningContext buildContext(URLClassLoader loader, Path home,
+            ProvisioningConfig c,
+            MessageWriter msgWriter,
+            boolean logTime,
+            boolean recordState,
+            RepositoryArtifactResolver artifactResolver,
+            Map<String, ProgressTracker<?>> progressTrackers,
+            Map<FPID, LocalFP> locals, GalleonClassLoaderHandler handler) throws ProvisioningException  {
         boolean noHome = home == null;
         if (home == null) {
             try {
-                home = Files.createTempDirectory("gallon-no-installation");
+                home = Files.createTempDirectory("galleon-no-installation");
             } catch (IOException ex) {
                 throw new ProvisioningException(ex);
             }
         }
-        ProvisioningManager pm = ProvisioningManager.builder().addArtifactResolver(artifactResolver)
+        ProvisioningManager.Builder builder = ProvisioningManager.builder()
                 .setInstallationHome(home)
                 .setMessageWriter(msgWriter)
                 .setLogTime(logTime)
-                .setRecordState(recordState)
-                .build();
+                .setRecordState(recordState);
+        if (artifactResolver != null) {
+            builder.addArtifactResolver(artifactResolver);
+        }
+        ProvisioningManager pm = builder.build();
         for (Entry<String, ProgressTracker<?>> entry : progressTrackers.entrySet()) {
             pm.getLayoutFactory().setProgressTracker(entry.getKey(), entry.getValue());
         }
         for (LocalFP fp : locals.values()) {
             pm.getLayoutFactory().addLocal(fp.getPath(), fp.isInstallInUniverse());
         }
-        ProvisioningConfig c = ProvisioningConfig.toConfig(config, customConfigs);
         return new ProvisioningContextImpl(loader, noHome, pm, c, handler);
     }
 }

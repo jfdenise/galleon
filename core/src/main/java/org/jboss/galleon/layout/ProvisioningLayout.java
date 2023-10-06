@@ -132,7 +132,7 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
                 try {
                     IoUtils.copy(fpResources, resourcesDir);
                 } catch (IOException e) {
-                    throw new ProvisioningException(Errors.copyFile(fpResources, resourcesDir), e);
+                    throw new ProvisioningException(BaseErrors.copyFile(fpResources, resourcesDir), e);
                 }
             }
 
@@ -144,7 +144,7 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
                 try {
                     IoUtils.copy(fpPlugins, pluginsDir);
                 } catch (IOException e) {
-                    throw new ProvisioningException(Errors.copyFile(fpPlugins, pluginsDir), e);
+                    throw new ProvisioningException(BaseErrors.copyFile(fpPlugins, pluginsDir), e);
                 }
             }
         }
@@ -1060,7 +1060,7 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
         try {
             IoUtils.copy(patchDir, fpDir);
         } catch (IOException e) {
-            throw new ProvisioningException(Errors.copyFile(patchDir, fpDir), e);
+            throw new ProvisioningException(BaseErrors.copyFile(patchDir, fpDir), e);
         }
     }
 

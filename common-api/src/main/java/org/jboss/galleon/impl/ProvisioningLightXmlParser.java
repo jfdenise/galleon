@@ -17,6 +17,7 @@
 package org.jboss.galleon.impl;
 
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,25 +36,32 @@ class ProvisioningLightXmlParser {
     private static final String FEATURE_PACK = "feature-pack";
 
     public static List<FPID> parse(Path configFile) throws ProvisioningException {
-
-        List<FPID> featurePacks = new ArrayList<>();
         try {
             try (FileInputStream fileInputStream = new FileInputStream(configFile.toFile())) {
-                DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-                DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-                Document document = documentBuilder.parse(fileInputStream);
-                Element root = document.getDocumentElement();
+                return parse(fileInputStream);
+            }
+        } catch (Exception ex) {
+            throw new ProvisioningException(ex);
+        }
+    }
 
-                NodeList lst = root.getChildNodes();
-                for (int i = 0; i < lst.getLength(); i++) {
-                    Node n = lst.item(i);
-                    if (n instanceof Element) {
-                        if (FEATURE_PACK.equals(n.getNodeName())) {
-                            Element e = (Element) n;
-                            String loc = e.getAttribute("location");
-                            FeaturePackLocation location = FeaturePackLocation.fromString(loc);
-                            featurePacks.add(location.getFPID());
-                        }
+    public static List<FPID> parse(InputStream fileInputStream) throws ProvisioningException {
+        List<FPID> featurePacks = new ArrayList<>();
+        try {
+            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+            Document document = documentBuilder.parse(fileInputStream);
+            Element root = document.getDocumentElement();
+
+            NodeList lst = root.getChildNodes();
+            for (int i = 0; i < lst.getLength(); i++) {
+                Node n = lst.item(i);
+                if (n instanceof Element) {
+                    if (FEATURE_PACK.equals(n.getNodeName())) {
+                        Element e = (Element) n;
+                        String loc = e.getAttribute("location");
+                        FeaturePackLocation location = FeaturePackLocation.fromString(loc);
+                        featurePacks.add(location.getFPID());
                     }
                 }
             }
