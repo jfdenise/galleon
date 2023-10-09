@@ -23,11 +23,17 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.api.config.GalleonConfigurationWithLayers;
+import org.jboss.galleon.api.config.GalleonConfigurationWithLayersBuilderItf;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
+import org.jboss.galleon.diff.FsDiff;
 import org.jboss.galleon.impl.ProvisioningUtil;
 import org.jboss.galleon.progresstracking.ProgressCallback;
 import org.jboss.galleon.progresstracking.ProgressTracker;
+import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.UniverseSpec;
 
@@ -147,4 +153,13 @@ public interface Provisioning extends AutoCloseable {
     public List<GalleonFeaturePackLayout> getOrderedFeaturePackLayouts(GalleonProvisioningConfig config) throws ProvisioningException;
     public GalleonProvisioningRuntime getProvisioningRuntime(GalleonProvisioningConfig config) throws ProvisioningException;
     public UniverseResolver getUniverseResolver();
+
+    /**
+     * When dealing with parsed configuration that we want to update.
+     */
+    public GalleonConfigurationWithLayersBuilderItf buildConfigurationBuilder(GalleonConfigurationWithLayers config) throws ProvisioningException;
+    public boolean hasOrderedFeaturePacksConfig(GalleonProvisioningConfig config, ConfigId cfg) throws ProvisioningException;
+    public Set<String> getOrderedFeaturePackPluginLocations(GalleonProvisioningConfig config) throws ProvisioningException;
+    public FsDiff getFsDiff() throws ProvisioningException;
+    public void install(FeaturePackLocation loc) throws ProvisioningException;
 }

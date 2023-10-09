@@ -25,11 +25,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.jboss.galleon.BaseErrors;
 
 import org.jboss.galleon.DefaultMessageWriter;
 import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.api.config.GalleonConfigurationWithLayers;
+import org.jboss.galleon.api.config.GalleonConfigurationWithLayersBuilderItf;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.core.builder.LocalFP;
 import org.jboss.galleon.core.builder.ProvisioningContext;
@@ -39,7 +43,9 @@ import org.jboss.galleon.progresstracking.ProgressTracker;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.util.IoUtils;
 import org.jboss.galleon.core.builder.ProvisioningContextBuilder;
+import org.jboss.galleon.diff.FsDiff;
 import org.jboss.galleon.impl.ProvisioningUtil;
+import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.UniverseSpec;
 import org.jboss.galleon.util.PathsUtils;
@@ -295,6 +301,36 @@ class ProvisioningImpl implements Provisioning {
         } catch (Exception ex) {
             throw new ProvisioningException(ex);
         }
+    }
+
+    @Override
+    public GalleonConfigurationWithLayersBuilderItf buildConfigurationBuilder(GalleonConfigurationWithLayers config) throws ProvisioningException {
+        ProvisioningContext ctx = buildProvisioningContext();
+        return ctx.buildConfigurationBuilder(config);
+    }
+
+    @Override
+    public boolean hasOrderedFeaturePacksConfig(GalleonProvisioningConfig config, ConfigId cfg) throws ProvisioningException {
+        ProvisioningContext ctx = buildProvisioningContext();
+        return ctx.hasOrderedFeaturePacksConfig(config, cfg);
+    }
+
+    @Override
+    public Set<String> getOrderedFeaturePackPluginLocations(GalleonProvisioningConfig config) throws ProvisioningException {
+        ProvisioningContext ctx = buildProvisioningContext();
+        return ctx.getOrderedFeaturePackPluginLocations(config);
+    }
+
+    @Override
+    public FsDiff getFsDiff() throws ProvisioningException {
+        ProvisioningContext ctx = buildProvisioningContext();
+        return ctx.getFsDiff();
+    }
+
+    @Override
+    public void install(FeaturePackLocation loc) throws ProvisioningException {
+        ProvisioningContext ctx = buildProvisioningContext();
+        ctx.install(loc);
     }
 
     @Override

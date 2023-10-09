@@ -66,6 +66,10 @@ public class GalleonCoreProvider extends UniverseResolverBuilder<GalleonCoreProv
         return fpid.getLocation();
     }
 
+    public void setUniverseResolver(UniverseResolver resolver) {
+        this.resolver = resolver;
+    }
+
     private UniverseResolver getUniverseResolver() throws ProvisioningException {
         if (resolver == null) {
             resolver = buildUniverseResolver();
