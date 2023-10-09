@@ -107,34 +107,10 @@ public class ProvisioningConfig extends FeaturePackDepsConfig {
             builder.excludeDefaultConfig(c);
         }
         for (GalleonFeaturePackConfig dep : gConfig.getFeaturePackDeps()) {
-            FeaturePackConfig.Builder fpBuilder = dep.isTransitive() ? FeaturePackConfig.transitiveBuilder(dep.getLocation()) : FeaturePackConfig.builder(dep.getLocation());
-            for (ConfigId c : dep.getExcludedConfigs()) {
-                fpBuilder.excludeDefaultConfig(c);
-            }
-            fpBuilder.excludeAllPackages(dep.getExcludedPackages());
-            for (Entry<String, Boolean> entry : dep.getFullModelsExcluded().entrySet()) {
-                fpBuilder.excludeConfigModel(entry.getKey(), entry.getValue());
-            }
-            for (String model : dep.getFullModelsIncluded()) {
-                fpBuilder.includeConfigModel(model);
-            }
-            for (ConfigId id : dep.getIncludedConfigs()) {
-                fpBuilder.includeDefaultConfig(id);
-            }
-            fpBuilder.includeAllPackages(dep.getIncludedPackages());
-            if (dep.getInheritConfigs() != null) {
-                fpBuilder.setInheritConfigs(dep.getInheritConfigs());
-            }
-            if (dep.getInheritPackages() != null) {
-                fpBuilder.setInheritPackages(dep.getInheritPackages());
-            }
-            for (FPID patch : dep.getPatches()) {
-                fpBuilder.addPatch(patch);
-            }
-            builder.addFeaturePackDep(fpBuilder.build());
+            builder.addFeaturePackDep(toFeaturePackConfig(dep));
         }
         for (GalleonFeaturePackConfig tc : gConfig.getTransitiveDeps()) {
-            builder.addTransitiveDep(tc.getLocation());
+            builder.addFeaturePackDep(toFeaturePackConfig(tc));
         }
         for (Entry<String, UniverseSpec> entry : gConfig.getUniverseNamedSpecs().entrySet()) {
             builder.addUniverse(entry.getKey(), entry.getValue());
@@ -179,6 +155,62 @@ public class ProvisioningConfig extends FeaturePackDepsConfig {
         return builder.build();
     }
 
+    private static FeaturePackConfig toFeaturePackConfig(GalleonFeaturePackConfig dep) throws ProvisioningDescriptionException {
+        FeaturePackConfig.Builder fpBuilder = dep.isTransitive() ? FeaturePackConfig.transitiveBuilder(dep.getLocation()) : FeaturePackConfig.builder(dep.getLocation());
+        for (ConfigId c : dep.getExcludedConfigs()) {
+            fpBuilder.excludeDefaultConfig(c);
+        }
+        fpBuilder.excludeAllPackages(dep.getExcludedPackages());
+        for (Entry<String, Boolean> entry : dep.getFullModelsExcluded().entrySet()) {
+            fpBuilder.excludeConfigModel(entry.getKey(), entry.getValue());
+        }
+        for (String model : dep.getFullModelsIncluded()) {
+            fpBuilder.includeConfigModel(model);
+        }
+        for (ConfigId id : dep.getIncludedConfigs()) {
+            fpBuilder.includeDefaultConfig(id);
+        }
+        fpBuilder.includeAllPackages(dep.getIncludedPackages());
+        if (dep.getInheritConfigs() != null) {
+            fpBuilder.setInheritConfigs(dep.getInheritConfigs());
+        }
+        if (dep.getInheritPackages() != null) {
+            fpBuilder.setInheritPackages(dep.getInheritPackages());
+        }
+        for (FPID patch : dep.getPatches()) {
+            fpBuilder.addPatch(patch);
+        }
+        return fpBuilder.build();
+    }
+
+    private static GalleonFeaturePackConfig toFeaturePackConfig(FeaturePackConfig dep) throws ProvisioningDescriptionException {
+        GalleonFeaturePackConfig.Builder fpBuilder = dep.isTransitive() ? GalleonFeaturePackConfig.transitiveBuilder(dep.getLocation()) : GalleonFeaturePackConfig.builder(dep.getLocation());
+        for (ConfigId c : dep.getExcludedConfigs()) {
+            fpBuilder.excludeDefaultConfig(c);
+        }
+        fpBuilder.excludeAllPackages(dep.getExcludedPackages());
+        for (Entry<String, Boolean> entry : dep.getFullModelsExcluded().entrySet()) {
+            fpBuilder.excludeConfigModel(entry.getKey(), entry.getValue());
+        }
+        for (String model : dep.getFullModelsIncluded()) {
+            fpBuilder.includeConfigModel(model);
+        }
+        for (ConfigId id : dep.getIncludedConfigs()) {
+            fpBuilder.includeDefaultConfig(id);
+        }
+        fpBuilder.includeAllPackages(dep.getIncludedPackages());
+        if (dep.getInheritConfigs() != null) {
+            fpBuilder.setInheritConfigs(dep.getInheritConfigs());
+        }
+        if (dep.getInheritPackages() != null) {
+            fpBuilder.setInheritPackages(dep.getInheritPackages());
+        }
+        for (FPID patch : dep.getPatches()) {
+            fpBuilder.addPatch(patch);
+        }
+        return fpBuilder.build();
+    }
+
     private static ConfigModel parseConfigurationFile(Path configuration) throws ProvisioningException {
         try (BufferedReader reader = Files.newBufferedReader(configuration)) {
             return ConfigXmlParser.getInstance().parse(reader);
@@ -194,34 +226,10 @@ public class ProvisioningConfig extends FeaturePackDepsConfig {
             builder.excludeDefaultConfig(c);
         }
         for (FeaturePackConfig dep : gConfig.getFeaturePackDeps()) {
-            GalleonFeaturePackConfig.Builder fpBuilder = dep.isTransitive() ? GalleonFeaturePackConfig.transitiveBuilder(dep.getLocation()) : GalleonFeaturePackConfig.builder(dep.getLocation());
-            for (ConfigId c : dep.getExcludedConfigs()) {
-                fpBuilder.excludeDefaultConfig(c);
-            }
-            fpBuilder.excludeAllPackages(dep.getExcludedPackages());
-            for (Entry<String, Boolean> entry : dep.getFullModelsExcluded().entrySet()) {
-                fpBuilder.excludeConfigModel(entry.getKey(), entry.getValue());
-            }
-            for (String model : dep.getFullModelsIncluded()) {
-                fpBuilder.includeConfigModel(model);
-            }
-            for (ConfigId id : dep.getIncludedConfigs()) {
-                fpBuilder.includeDefaultConfig(id);
-            }
-            fpBuilder.includeAllPackages(dep.getIncludedPackages());
-            if (dep.getInheritConfigs() != null) {
-                fpBuilder.setInheritConfigs(dep.getInheritConfigs());
-            }
-            if (dep.getInheritPackages() != null) {
-                fpBuilder.setInheritPackages(dep.getInheritPackages());
-            }
-            for (FPID patch : dep.getPatches()) {
-                fpBuilder.addPatch(patch);
-            }
-            builder.addFeaturePackDep(fpBuilder.build());
+            builder.addFeaturePackDep(toFeaturePackConfig(dep));
         }
         for (FeaturePackConfig tc : gConfig.getTransitiveDeps()) {
-            builder.addTransitiveDep(tc.getLocation());
+            builder.addFeaturePackDep(toFeaturePackConfig(tc));
         }
         for (Entry<String, UniverseSpec> entry : gConfig.getUniverseNamedSpecs().entrySet()) {
             builder.addUniverse(entry.getKey(), entry.getValue());
