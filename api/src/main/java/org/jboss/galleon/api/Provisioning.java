@@ -28,6 +28,7 @@ import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.impl.ProvisioningUtil;
 import org.jboss.galleon.progresstracking.ProgressCallback;
 import org.jboss.galleon.progresstracking.ProgressTracker;
+import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.UniverseSpec;
 
 public interface Provisioning extends AutoCloseable {
@@ -144,4 +145,6 @@ public interface Provisioning extends AutoCloseable {
     public void provision(Path config, Map<String, String> options) throws ProvisioningException;
 
     public List<GalleonFeaturePackLayout> getOrderedFeaturePackLayouts(GalleonProvisioningConfig config) throws ProvisioningException;
+    public GalleonProvisioningRuntime getProvisioningRuntime(GalleonProvisioningConfig config) throws ProvisioningException;
+    public UniverseResolver getUniverseResolver();
 }

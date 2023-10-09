@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +59,8 @@ class ProvisioningImpl implements Provisioning {
 
     private final String coreVersion;
     private final URLClassLoader loader;
+
+    private final List<ProvisioningContext> contexts = new ArrayList<>();
 
     ProvisioningImpl(ProvisioningBuilder builder) throws ProvisioningException {
         this.home = builder.getInstallationHome();
@@ -140,6 +143,7 @@ class ProvisioningImpl implements Provisioning {
                         universeResolver,
                         progressTrackers,
                         locals);
+                contexts.add(ctx);
                 return ctx;
             } catch (Exception ex) {
                 throw new ProvisioningException(ex);
@@ -154,9 +158,18 @@ class ProvisioningImpl implements Provisioning {
     public void close() {
         IoUtils.recursiveDelete(tmp);
         try {
-            GalleonCoreProvider.releaseUsage(coreVersion);
-        } catch (ProvisioningException ex) {
-            System.err.println("Error releasing classloader " + ex.getLocalizedMessage());
+            for (ProvisioningContext ctx : contexts) {
+                try {
+                    ctx.close();
+                } finally {
+                }
+            }
+        } finally {
+            try {
+                GalleonCoreProvider.releaseUsage(coreVersion);
+            } catch (ProvisioningException ex) {
+                System.err.println("Error releasing classloader " + ex.getLocalizedMessage());
+            }
         }
     }
 
@@ -172,7 +185,7 @@ class ProvisioningImpl implements Provisioning {
     public void addUniverse(String name, UniverseSpec universeSpec) throws ProvisioningException {
         final GalleonProvisioningConfig config = GalleonProvisioningConfig.builder(getProvisioningConfig()).addUniverse(name, universeSpec).build();
         try {
-            buildProvisioningContext().storeProvisioningConfig(config, PathsUtils.getProvisioningXml(home));
+            storeProvisioningConfig(config, PathsUtils.getProvisioningXml(home));
         } catch (Exception e) {
             throw new ProvisioningException(BaseErrors.writeFile(PathsUtils.getProvisioningXml(home)), e);
         }
@@ -194,7 +207,7 @@ class ProvisioningImpl implements Provisioning {
         }
         config = GalleonProvisioningConfig.builder(config).removeUniverse(name).build();
         try {
-            buildProvisioningContext().storeProvisioningConfig(config, PathsUtils.getProvisioningXml(home));
+            storeProvisioningConfig(config, PathsUtils.getProvisioningXml(home));
         } catch (Exception e) {
             throw new ProvisioningException(BaseErrors.writeFile(PathsUtils.getProvisioningXml(home)), e);
         }
@@ -214,19 +227,20 @@ class ProvisioningImpl implements Provisioning {
     @Override
     public GalleonProvisioningConfig getProvisioningConfig() throws ProvisioningException {
         Path provisioning = PathsUtils.getProvisioningXml(home);
-        return buildProvisioningContext().parseProvisioningFile(provisioning);
+        ProvisioningContext ctx = buildProvisioningContext();
+        return ctx.parseProvisioningFile(provisioning);
     }
 
     @Override
     public List<String> getInstalledPacks(Path dir) throws ProvisioningException {
-        try (ProvisioningContext ctx = buildProvisioningContext()) {
-            return ctx.getInstalledPacks(dir);
-        }
+        ProvisioningContext ctx = buildProvisioningContext();
+        return ctx.getInstalledPacks(dir);
     }
 
     @Override
     public GalleonProvisioningConfig loadProvisioningConfig(InputStream is) throws ProvisioningException {
-        try (ProvisioningContext ctx = buildProvisioningContext()) {
+        try {
+            ProvisioningContext ctx = buildProvisioningContext();
             return ctx.loadProvisioningConfig(is);
         } catch (Exception ex) {
             throw new ProvisioningException(ex);
@@ -235,7 +249,8 @@ class ProvisioningImpl implements Provisioning {
 
     @Override
     public void storeProvisioningConfig(GalleonProvisioningConfig config, Path target) throws ProvisioningException {
-        try (ProvisioningContext ctx = buildProvisioningContext()) {
+        try {
+            ProvisioningContext ctx = buildProvisioningContext();
             ctx.storeProvisioningConfig(config, target);
         } catch (Exception ex) {
             throw new ProvisioningException(ex);
@@ -244,7 +259,8 @@ class ProvisioningImpl implements Provisioning {
 
     @Override
     public void provision(GalleonProvisioningConfig config, List<Path> customConfigs, Map<String, String> options) throws ProvisioningException {
-        try (ProvisioningContext ctx = buildProvisioningContext()) {
+        try {
+            ProvisioningContext ctx = buildProvisioningContext();
             ctx.provision(config, customConfigs, options);
         } catch (Exception ex) {
             throw new ProvisioningException(ex);
@@ -253,7 +269,8 @@ class ProvisioningImpl implements Provisioning {
 
     @Override
     public void provision(Path config, Map<String, String> options) throws ProvisioningException {
-        try (ProvisioningContext ctx = buildProvisioningContext()) {
+        try {
+            ProvisioningContext ctx = buildProvisioningContext();
             ctx.provision(config, options);
         } catch (Exception ex) {
             throw new ProvisioningException(ex);
@@ -262,10 +279,26 @@ class ProvisioningImpl implements Provisioning {
 
     @Override
     public List<GalleonFeaturePackLayout> getOrderedFeaturePackLayouts(GalleonProvisioningConfig config) throws ProvisioningException {
-        try (ProvisioningContext ctx = buildProvisioningContext()) {
+        try {
+            ProvisioningContext ctx = buildProvisioningContext();
             return ctx.getOrderedFeaturePackLayouts(config);
         } catch (Exception ex) {
             throw new ProvisioningException(ex);
         }
+    }
+
+    @Override
+    public GalleonProvisioningRuntime getProvisioningRuntime(GalleonProvisioningConfig config) throws ProvisioningException {
+        try {
+            ProvisioningContext ctx = buildProvisioningContext();
+            return ctx.getProvisioningRuntime(config);
+        } catch (Exception ex) {
+            throw new ProvisioningException(ex);
+        }
+    }
+
+    @Override
+    public UniverseResolver getUniverseResolver() {
+        return universeResolver;
     }
 }

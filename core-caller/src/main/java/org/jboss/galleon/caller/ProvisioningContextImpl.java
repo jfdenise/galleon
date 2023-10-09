@@ -158,6 +158,9 @@ public class ProvisioningContextImpl implements ProvisioningContext {
         if (provisionManager != null) {
             provisionManager.close();
         }
+        if (factory != null) {
+            factory.close();
+        }
     }
 
     @Override
