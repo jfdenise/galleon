@@ -71,13 +71,13 @@ class ProvisioningImpl implements Provisioning, GalleonClassLoaderHandler {
 
     private final Path tmp;
     private Map<FPID, LocalFP> locals = new HashMap<>();
-
+    private final boolean useDefaultCore;
     private static final Map<String, ClassLoaderUsage> classLoaders = new HashMap<>();
 
     ProvisioningImpl(ProvisioningBuilder builder) throws ProvisioningException {
         this.home = builder.getInstallationHome();
         this.log = builder.getMessageWriter() == null ? DefaultMessageWriter.getDefaultInstance() : builder.getMessageWriter();
-
+        this.useDefaultCore = builder.isUseDefaultCore();
         universeResolver = builder.getUniverseResolver();
         this.logTime = builder.isLogTime();
         this.recordState = builder.isRecordState();
@@ -151,13 +151,9 @@ class ProvisioningImpl implements Provisioning, GalleonClassLoaderHandler {
         String coreVersion = APIVersion.getVersion();
         URLClassLoader loader;
         MavenRepoManager repoManager = null;
-        if (hasArtifactResolver() && provisioning != null && Files.exists(provisioning)) {
+        if (!useDefaultCore && hasArtifactResolver() && provisioning != null && Files.exists(provisioning)) {
             repoManager = (MavenRepoManager) universeResolver.getArtifactResolver(MavenRepoManager.REPOSITORY_ID);
-            try {
-                coreVersion = ProvisioningUtil.getCoreVersion(provisioning, universeResolver, tmp);
-            } catch(Exception ex) {
-                System.err.println("Error resolving coreVersion " + ex + " fallback on current core ");
-            }
+            coreVersion = ProvisioningUtil.getCoreVersion(provisioning, universeResolver, tmp);
         }
         loader = getCallerClassLoader(coreVersion, repoManager);
 
@@ -216,7 +212,7 @@ class ProvisioningImpl implements Provisioning, GalleonClassLoaderHandler {
         try {
             String coreVersion = APIVersion.getVersion();
             MavenRepoManager repoManager = null;
-            if (hasArtifactResolver()) {
+            if (!useDefaultCore && hasArtifactResolver()) {
                 repoManager = (MavenRepoManager) universeResolver.getArtifactResolver(MavenRepoManager.REPOSITORY_ID);
                 for (GalleonFeaturePackConfig fp : config.getFeaturePackDeps()) {
                     LocalFP local = locals.get(fp.getLocation().getFPID());
@@ -226,11 +222,7 @@ class ProvisioningImpl implements Provisioning, GalleonClassLoaderHandler {
                     } else {
                         resolvedFP = local.getPath();
                     }
-                    try {
-                        coreVersion = ProvisioningUtil.getCoreVersion(resolvedFP, coreVersion, tmp, universeResolver);
-                    } catch(Exception ex) {
-                        System.err.println("Error resolving coreVersion " + ex + " fallback on current core ");
-                    }
+                    coreVersion = ProvisioningUtil.getCoreVersion(resolvedFP, coreVersion, tmp, universeResolver);
                 }
             }
             URLClassLoader loader = getCallerClassLoader(coreVersion, repoManager);
@@ -426,7 +418,10 @@ class ProvisioningImpl implements Provisioning, GalleonClassLoaderHandler {
 
     @Override
     public List<String> getInstalledPacks(Path dir) throws ProvisioningException {
-        Path provisioning = PathsUtils.getProvisioningXml(home);
+        Path provisioning = null;
+        if(home != null) {
+            provisioning = PathsUtils.getProvisioningXml(home);
+        }
         try (ProvisioningContext ctx = buildProvisioningContext(provisioning)) {
             return ctx.getInstalledPacks(dir);
         }

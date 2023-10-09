@@ -29,12 +29,18 @@ public class ProvisioningBuilder extends UniverseResolverBuilder<ProvisioningBui
     private UniverseResolver resolver;
     private boolean logTime;
     private boolean recordState = true;
+    private boolean useDefaultCore;
 
     private ProvisioningBuilder() {
     }
 
     public ProvisioningBuilder setInstallationHome(Path installationHome) {
         this.installationHome = installationHome;
+        return this;
+    }
+
+    public ProvisioningBuilder setUseDefaultCore(boolean useDefaultCore) {
+        this.useDefaultCore = useDefaultCore;
         return this;
     }
 
@@ -90,6 +96,10 @@ public class ProvisioningBuilder extends UniverseResolverBuilder<ProvisioningBui
 
     protected UniverseResolver getUniverseResolver() throws ProvisioningException {
         return resolver == null ? buildUniverseResolver() : resolver;
+    }
+
+    public boolean isUseDefaultCore() {
+        return useDefaultCore;
     }
 
     public static ProvisioningBuilder builder() {
