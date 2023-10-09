@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.galleon.api;
+package org.jboss.galleon.core.builder;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,8 +24,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.xml.stream.XMLStreamException;
-import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.api.GalleonFeaturePackLayout;
+import org.jboss.galleon.api.GalleonProvisioningRuntime;
 import org.jboss.galleon.api.config.ConfigId;
 import org.jboss.galleon.api.config.GalleonConfigurationWithLayers;
 import org.jboss.galleon.api.config.GalleonConfigurationWithLayersBuilderItf;
@@ -38,25 +39,27 @@ public interface ProvisioningContext extends AutoCloseable {
 
     public String getCoreVersion();
 
-    public GalleonProvisioningConfig getConfig() throws ProvisioningDescriptionException;
+    public GalleonProvisioningConfig getConfig(GalleonProvisioningConfig config) throws ProvisioningException;
 
-    public void storeProvisioningConfig(Path target) throws XMLStreamException, IOException, ProvisioningDescriptionException;
+    public void storeProvisioningConfig(GalleonProvisioningConfig config, Path target) throws XMLStreamException, IOException, ProvisioningException;
 
-    public GalleonProvisioningRuntime getProvisioningRuntime() throws ProvisioningException;
+    public GalleonProvisioningRuntime getProvisioningRuntime(GalleonProvisioningConfig config) throws ProvisioningException;
 
     UniverseResolver getUniverseResolver();
 
-    public default void provision() throws ProvisioningException {
-        provision(Collections.emptyMap());
+    public default void provision(GalleonProvisioningConfig config) throws ProvisioningException {
+        provision(config, Collections.emptyList(), Collections.emptyMap());
     }
 
-    public void provision(Map<String, String> options) throws ProvisioningException;
+    public void provision(GalleonProvisioningConfig config, List<Path> customConfigs, Map<String, String> options) throws ProvisioningException;
+
+    public void provision(Path config, Map<String, String> options) throws ProvisioningException;
 
     public GalleonProvisioningConfig parseProvisioningFile(Path provisioning) throws ProvisioningException;
 
-    public List<GalleonFeaturePackLayout> getOrderedFeaturePackLayouts() throws ProvisioningException;
+    public List<GalleonFeaturePackLayout> getOrderedFeaturePackLayouts(GalleonProvisioningConfig config) throws ProvisioningException;
 
-    public Set<String> getOrderedFeaturePackPluginLocations() throws ProvisioningException;
+    public Set<String> getOrderedFeaturePackPluginLocations(GalleonProvisioningConfig config) throws ProvisioningException;
 
     /**
      * When dealing with parsed configuration that we want to update.
@@ -71,7 +74,7 @@ public interface ProvisioningContext extends AutoCloseable {
 
     public void install(FeaturePackLocation loc) throws ProvisioningException;
 
-    public boolean hasOrderedFeaturePacksConfig(ConfigId cfg) throws ProvisioningException;
+    public boolean hasOrderedFeaturePacksConfig(GalleonProvisioningConfig config, ConfigId cfg) throws ProvisioningException;
 
     @Override
     public void close();

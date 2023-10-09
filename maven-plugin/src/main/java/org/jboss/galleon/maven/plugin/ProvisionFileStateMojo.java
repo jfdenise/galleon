@@ -35,11 +35,10 @@ import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.api.APIVersion;
+import org.jboss.galleon.api.GalleonCoreProvider;
 import org.jboss.galleon.api.Provisioning;
-import org.jboss.galleon.api.ProvisioningBuilder;
 import org.jboss.galleon.maven.plugin.util.MavenArtifactRepositoryManager;
 import org.jboss.galleon.maven.plugin.util.MvnMessageWriter;
-import org.jboss.galleon.api.ProvisioningContext;
 import org.jboss.galleon.util.IoUtils;
 
 /**
@@ -137,16 +136,16 @@ public class ProvisionFileStateMojo extends AbstractMojo {
         if (!recordState) {
             IoUtils.recursiveDelete(home);
         }
-        try (Provisioning pm = ProvisioningBuilder.builder().addArtifactResolver(artifactResolver)
+        GalleonCoreProvider provider = new GalleonCoreProvider();
+        provider.addArtifactResolver(artifactResolver);
+
+        try (Provisioning pm = provider.newProvisioningBuilder(provisioningFile.toPath())
                 .setInstallationHome(home)
                 .setMessageWriter(new MvnMessageWriter(getLog()))
                 .setLogTime(logTime)
                 .setRecordState(recordState)
                 .build()) {
-            try (ProvisioningContext ctx = pm.buildProvisioningContext(provisioningFile.toPath())) {
-                System.out.println("Galleon core version " + ctx.getCoreVersion() + " API used to retrieve it " + APIVersion.getVersion());
-                ctx.provision(pluginOptions);
-            }
+            pm.provision(provisioningFile.toPath(), pluginOptions);
         }
     }
 }

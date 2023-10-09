@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
-import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.impl.ProvisioningUtil;
 import org.jboss.galleon.progresstracking.ProgressCallback;
 import org.jboss.galleon.progresstracking.ProgressTracker;
@@ -66,16 +65,15 @@ public interface Provisioning extends AutoCloseable {
         return ProvisioningUtil.getFeaturePackDescription(path);
     }
 
-    public ProvisioningContext buildProvisioningContext() throws ProvisioningException;
-
-    public ProvisioningContext buildProvisioningContext(Path provisioning) throws ProvisioningException;
-
-    public FeaturePackLocation addLocal(Path path, boolean installInUniverse) throws ProvisioningException;
-
-    public ProvisioningContext buildProvisioningContext(GalleonProvisioningConfig config) throws ProvisioningException;
-
-    public ProvisioningContext buildProvisioningContext(GalleonProvisioningConfig config, List<Path> customConfigs) throws ProvisioningException;
-
+//    public ProvisioningContext buildProvisioningContext() throws ProvisioningException;
+//
+//    public ProvisioningContext buildProvisioningContext(Path provisioning) throws ProvisioningException;
+//
+//    public FeaturePackLocation addLocal(Path path, boolean installInUniverse) throws ProvisioningException;
+//
+//    public ProvisioningContext buildProvisioningContext(GalleonProvisioningConfig config) throws ProvisioningException;
+//
+//    public ProvisioningContext buildProvisioningContext(GalleonProvisioningConfig config, List<Path> customConfigs) throws ProvisioningException;
     // Required by CLI
     /**
      * Add named universe spec to the provisioning configuration
@@ -130,8 +128,20 @@ public interface Provisioning extends AutoCloseable {
     public void storeProvisioningConfig(GalleonProvisioningConfig config, Path target) throws ProvisioningException;
 
     public default void provision(GalleonProvisioningConfig config) throws ProvisioningException {
+        provision(config, Collections.emptyList(), Collections.emptyMap());
+    }
+
+    public default void provision(GalleonProvisioningConfig config, Map<String, String> options) throws ProvisioningException {
+        provision(config, Collections.emptyList(), options);
+    }
+
+    public void provision(GalleonProvisioningConfig config, List<Path> customConfigs, Map<String, String> options) throws ProvisioningException;
+
+    public default void provision(Path config) throws ProvisioningException {
         provision(config, Collections.emptyMap());
     }
 
-    public void provision(GalleonProvisioningConfig config, Map<String, String> options) throws ProvisioningException;
+    public void provision(Path config, Map<String, String> options) throws ProvisioningException;
+
+    public List<GalleonFeaturePackLayout> getOrderedFeaturePackLayouts(GalleonProvisioningConfig config) throws ProvisioningException;
 }

@@ -100,6 +100,9 @@ public class ProvisioningConfig extends FeaturePackDepsConfig {
         return new Builder();
     }
 
+    public static ProvisioningConfig toConfig(GalleonProvisioningConfig gConfig) throws ProvisioningException, ProvisioningDescriptionException {
+        return toConfig(gConfig,Collections.emptyList());
+    }
     public static ProvisioningConfig toConfig(GalleonProvisioningConfig gConfig, List<Path> customConfigs) throws ProvisioningException, ProvisioningDescriptionException {
         Builder builder = ProvisioningConfig.builder();
         builder.addOptions(gConfig.getOptions());

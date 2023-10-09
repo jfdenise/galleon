@@ -31,6 +31,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.xml.stream.XMLStreamException;
 import org.jboss.galleon.CoreVersion;
+import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningManager;
@@ -38,7 +39,6 @@ import org.jboss.galleon.api.GalleonFeaturePackLayout;
 import org.jboss.galleon.api.GalleonProvisioningRuntime;
 import org.jboss.galleon.config.ConfigModel;
 import org.jboss.galleon.config.ProvisioningConfig;
-import org.jboss.galleon.api.ProvisioningContext;
 import org.jboss.galleon.api.config.ConfigId;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.layout.FeaturePackLayout;
@@ -49,12 +49,14 @@ import org.jboss.galleon.xml.ProvisioningXmlWriter;
 import org.jboss.galleon.api.config.GalleonConfigurationWithLayers;
 import org.jboss.galleon.api.config.GalleonConfigurationWithLayersBuilder;
 import org.jboss.galleon.api.config.GalleonConfigurationWithLayersBuilderItf;
+import org.jboss.galleon.core.builder.LocalFP;
+import org.jboss.galleon.core.builder.ProvisioningContext;
 import org.jboss.galleon.diff.FsDiff;
-import org.jboss.galleon.impl.GalleonClassLoaderHandler;
+import org.jboss.galleon.layout.ProvisioningLayoutFactory;
+import org.jboss.galleon.progresstracking.ProgressTracker;
 import org.jboss.galleon.spec.FeaturePackPlugin;
 import org.jboss.galleon.state.ProvisionedFeaturePack;
 import org.jboss.galleon.universe.FeaturePackLocation;
-import org.jboss.galleon.util.IoUtils;
 import org.jboss.galleon.util.LayoutUtils;
 import org.jboss.galleon.util.PathsUtils;
 import org.jboss.galleon.xml.ProvisionedStateXmlParser;
@@ -62,36 +64,62 @@ import org.jboss.galleon.xml.XmlParsers;
 
 public class ProvisioningContextImpl implements ProvisioningContext {
 
-    private final ProvisioningManager manager;
-    private final boolean noHome;
+    private ProvisioningManager provisionManager;
+    private ProvisioningLayoutFactory factory;
     private final URLClassLoader loader;
-    private final ProvisioningConfig config;
-    private final GalleonClassLoaderHandler handler;
+    private final Path home;
+    private final MessageWriter msgWriter;
+    private final boolean logTime;
+    private final boolean recordState;
+    private final UniverseResolver universeResolver;
+    private final Map<String, ProgressTracker<?>> progressTrackers;
+    private final Map<FeaturePackLocation.FPID, LocalFP> locals;
 
-    ProvisioningContextImpl(URLClassLoader loader,
-            boolean noHome,
-            ProvisioningManager manager, ProvisioningConfig config, GalleonClassLoaderHandler handler) throws ProvisioningException {
+    ProvisioningContextImpl(URLClassLoader loader, Path home,
+            MessageWriter msgWriter,
+            boolean logTime,
+            boolean recordState,
+            UniverseResolver universeResolver,
+            Map<String, ProgressTracker<?>> progressTrackers,
+            Map<FeaturePackLocation.FPID, LocalFP> locals) throws ProvisioningException {
         this.loader = loader;
-        this.noHome = noHome;
-        this.manager = manager;
-        this.config = config;
-        this.handler = handler;
+        this.home = home;
+        this.msgWriter = msgWriter;
+        this.logTime = logTime;
+        this.recordState = recordState;
+        this.universeResolver = universeResolver;
+        this.progressTrackers = progressTrackers;
+        this.locals = locals;
     }
 
     @Override
-    public GalleonProvisioningConfig getConfig() throws ProvisioningDescriptionException {
-        return ProvisioningConfig.toConfig(config);
+    public GalleonProvisioningConfig getConfig(GalleonProvisioningConfig config) throws ProvisioningException {
+        return ProvisioningConfig.toConfig(ProvisioningConfig.toConfig(config));
     }
 
     @Override
-    public void provision(Map<String, String> options) throws ProvisioningException {
-        if (noHome) {
-            throw new ProvisioningException("No installation set, can't provision.");
-        }
+    public void provision(GalleonProvisioningConfig config, List<Path> customConfigs, Map<String, String> options) throws ProvisioningException {
+//        if (noHome) {
+//            throw new ProvisioningException("No installation set, can't provision.");
+//        }
         ClassLoader originalLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(loader);
         try {
-            manager.provision(config, options);
+            getManager().provision(ProvisioningConfig.toConfig(config, customConfigs), options);
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalLoader);
+        }
+    }
+
+    @Override
+    public void provision(Path config, Map<String, String> options) throws ProvisioningException {
+//        if (noHome) {
+//            throw new ProvisioningException("No installation set, can't provision.");
+//        }
+        ClassLoader originalLoader = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(loader);
+        try {
+            getManager().provision(config, options);
         } finally {
             Thread.currentThread().setContextClassLoader(originalLoader);
         }
@@ -103,18 +131,18 @@ public class ProvisioningContextImpl implements ProvisioningContext {
     }
 
     @Override
-    public void storeProvisioningConfig(Path file) throws XMLStreamException, IOException, ProvisioningDescriptionException {
+    public void storeProvisioningConfig(GalleonProvisioningConfig config, Path file) throws XMLStreamException, IOException, ProvisioningException {
         try (FileWriter writer = new FileWriter(file.toFile())) {
-            ProvisioningXmlWriter.getInstance().write(config, writer);
+            ProvisioningXmlWriter.getInstance().write(ProvisioningConfig.toConfig(config), writer);
         }
     }
 
     @Override
-    public GalleonProvisioningRuntime getProvisioningRuntime() throws ProvisioningException {
+    public GalleonProvisioningRuntime getProvisioningRuntime(GalleonProvisioningConfig config) throws ProvisioningException {
         ClassLoader originalLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(loader);
         try {
-            return manager.getRuntime(config);
+            return getManager().getRuntime(ProvisioningConfig.toConfig(config));
         } finally {
             Thread.currentThread().setContextClassLoader(originalLoader);
         }
@@ -122,20 +150,14 @@ public class ProvisioningContextImpl implements ProvisioningContext {
 
     @Override
     public UniverseResolver getUniverseResolver() {
-        return manager.getLayoutFactory().getUniverseResolver();
+        return universeResolver;
     }
 
     @Override
     public void close() {
-        try {
-            handler.release(CoreVersion.getVersion());
-        } catch (ProvisioningException ex) {
-            System.err.println("Error releasing core classloader" + ex);
+        if (provisionManager != null) {
+            provisionManager.close();
         }
-        if(noHome) {
-            IoUtils.recursiveDelete(manager.getInstallationHome());
-        }
-        manager.close();
     }
 
     @Override
@@ -145,18 +167,18 @@ public class ProvisioningContextImpl implements ProvisioningContext {
     }
 
     @Override
-    public List<GalleonFeaturePackLayout> getOrderedFeaturePackLayouts() throws ProvisioningException {
+    public List<GalleonFeaturePackLayout> getOrderedFeaturePackLayouts(GalleonProvisioningConfig config) throws ProvisioningException {
         List<GalleonFeaturePackLayout> lst = new ArrayList<>();
-        try (ProvisioningLayout<FeaturePackLayout> layout = manager.getLayoutFactory().newConfigLayout(config)) {
+        try (ProvisioningLayout<FeaturePackLayout> layout = getLayoutFactory().newConfigLayout(ProvisioningConfig.toConfig(config))) {
             lst.addAll(layout.getOrderedFeaturePacks());
             return lst;
         }
     }
 
     @Override
-    public Set<String> getOrderedFeaturePackPluginLocations() throws ProvisioningException {
+    public Set<String> getOrderedFeaturePackPluginLocations(GalleonProvisioningConfig config) throws ProvisioningException {
         Set<String> lst = new HashSet<>();
-        try (ProvisioningLayout<FeaturePackLayout> layout = manager.getLayoutFactory().newConfigLayout(config)) {
+        try (ProvisioningLayout<FeaturePackLayout> layout = getLayoutFactory().newConfigLayout(ProvisioningConfig.toConfig(config))) {
             for (FeaturePackLayout fp : layout.getOrderedFeaturePacks()) {
                 for (FeaturePackPlugin plugin : fp.getSpec().getPlugins().values()) {
                     lst.add(plugin.getLocation());
@@ -194,17 +216,17 @@ public class ProvisioningContextImpl implements ProvisioningContext {
 
     @Override
     public FsDiff getFsDiff() throws ProvisioningException {
-        return manager.getFsDiff();
+        return getManager().getFsDiff();
     }
 
     @Override
     public void install(FeaturePackLocation loc) throws ProvisioningException {
-        manager.install(loc);
+        getManager().install(loc);
     }
 
     @Override
-    public boolean hasOrderedFeaturePacksConfig(ConfigId cfg) throws ProvisioningException {
-        try (ProvisioningLayout<FeaturePackLayout> layout = manager.getLayoutFactory().newConfigLayout(config)) {
+    public boolean hasOrderedFeaturePacksConfig(GalleonProvisioningConfig config, ConfigId cfg) throws ProvisioningException {
+        try (ProvisioningLayout<FeaturePackLayout> layout = getLayoutFactory().newConfigLayout(ProvisioningConfig.toConfig(config))) {
             for (FeaturePackLayout fp : layout.getOrderedFeaturePacks()) {
                 try {
                     LayoutUtils.getConfigXml(fp.getDir(), cfg, true);
@@ -216,4 +238,34 @@ public class ProvisioningContextImpl implements ProvisioningContext {
         return false;
     }
 
+    private ProvisioningManager getManager() throws ProvisioningException {
+        if (provisionManager == null) {
+            ProvisioningManager.Builder builder = ProvisioningManager.builder()
+                    .setInstallationHome(home)
+                    .setMessageWriter(msgWriter)
+                    .setLogTime(logTime)
+                    .setRecordState(recordState);
+            if (universeResolver != null) {
+                builder.setUniverseResolver(universeResolver);
+            }
+            provisionManager = builder.build();
+            for (Map.Entry<String, ProgressTracker<?>> entry : progressTrackers.entrySet()) {
+                provisionManager.getLayoutFactory().setProgressTracker(entry.getKey(), entry.getValue());
+            }
+            for (LocalFP fp : locals.values()) {
+                provisionManager.getLayoutFactory().addLocal(fp.getPath(), fp.isInstallInUniverse());
+            }
+        }
+        return provisionManager;
+    }
+
+    private ProvisioningLayoutFactory getLayoutFactory() throws ProvisioningException {
+        if (factory == null) {
+            factory = ProvisioningLayoutFactory.getInstance();
+            for (LocalFP fp : locals.values()) {
+                factory.addLocal(fp.getPath(), fp.isInstallInUniverse());
+            }
+        }
+        return factory;
+    }
 }

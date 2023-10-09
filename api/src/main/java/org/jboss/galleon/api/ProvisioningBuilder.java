@@ -17,35 +17,31 @@
 package org.jboss.galleon.api;
 
 import java.nio.file.Path;
+import java.util.Map;
 import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.core.builder.LocalFP;
+import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.UniverseResolver;
-import org.jboss.galleon.universe.UniverseResolverBuilder;
 
-public class ProvisioningBuilder extends UniverseResolverBuilder<ProvisioningBuilder> {
+public class ProvisioningBuilder {
 
     private Path installationHome;
     private MessageWriter messageWriter;
-    private UniverseResolver resolver;
+    private final UniverseResolver resolver;
     private boolean logTime;
     private boolean recordState = true;
-    private boolean useDefaultCore;
+    private final String coreVersion;
+    private final Map<FeaturePackLocation.FPID, LocalFP> locals;
 
-    private ProvisioningBuilder() {
+    ProvisioningBuilder(UniverseResolver resolver, Map<FeaturePackLocation.FPID, LocalFP> locals, String coreVersion) throws ProvisioningException {
+        this.resolver = resolver;
+        this.locals = locals;
+        this.coreVersion = coreVersion;
     }
 
     public ProvisioningBuilder setInstallationHome(Path installationHome) {
         this.installationHome = installationHome;
-        return this;
-    }
-
-    public ProvisioningBuilder setUseDefaultCore(boolean useDefaultCore) {
-        this.useDefaultCore = useDefaultCore;
-        return this;
-    }
-
-    public ProvisioningBuilder setUniverseResolver(UniverseResolver resolver) throws ProvisioningException {
-        this.resolver = resolver;
         return this;
     }
 
@@ -65,6 +61,7 @@ public class ProvisioningBuilder extends UniverseResolverBuilder<ProvisioningBui
     }
 
     public Provisioning build() throws ProvisioningException {
+
         return new ProvisioningImpl(this);
     }
 
@@ -94,16 +91,16 @@ public class ProvisioningBuilder extends UniverseResolverBuilder<ProvisioningBui
         return recordState;
     }
 
-    protected UniverseResolver getUniverseResolver() throws ProvisioningException {
-        return resolver == null ? buildUniverseResolver() : resolver;
+    UniverseResolver getUniverseResolver() throws ProvisioningException {
+        return resolver;
     }
 
-    public boolean isUseDefaultCore() {
-        return useDefaultCore;
+    Map<FeaturePackLocation.FPID, LocalFP> getLocals() {
+        return locals;
     }
 
-    public static ProvisioningBuilder builder() {
-        return new ProvisioningBuilder();
+    public String getGalleonCoreVersion() {
+        return coreVersion;
     }
 
 }
