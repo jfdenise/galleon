@@ -45,7 +45,7 @@ import org.jboss.galleon.api.APIVersion;
 import org.jboss.galleon.api.Configuration;
 import org.jboss.galleon.api.ConfigurationId;
 import org.jboss.galleon.api.GalleonArtifactCoordinate;
-import org.jboss.galleon.api.GalleonCoreProvider;
+import org.jboss.galleon.api.GalleonBuilder;
 import org.jboss.galleon.api.GalleonFeaturePack;
 import org.jboss.galleon.api.Provisioning;
 import org.jboss.galleon.maven.plugin.util.MavenArtifactRepositoryManager;
@@ -194,7 +194,7 @@ public class ProvisionStateMojo extends AbstractMojo {
         if (!recordState) {
             IoUtils.recursiveDelete(home);
         }
-        GalleonCoreProvider provider = new GalleonCoreProvider();
+        GalleonBuilder provider = new GalleonBuilder();
         provider.addArtifactResolver(artifactResolver);
         GalleonProvisioningConfig.Builder state = GalleonProvisioningConfig.builder();
         for (GalleonFeaturePack fp : featurePacks) {

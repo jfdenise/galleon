@@ -44,7 +44,7 @@ import org.jboss.galleon.util.IoUtils;
  *
  * @author jdenise
  */
-public class GalleonCoreProvider extends UniverseResolverBuilder<GalleonCoreProvider> {
+public class GalleonBuilder extends UniverseResolverBuilder<GalleonBuilder> {
 
     private static class ClassLoaderUsage {
 

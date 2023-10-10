@@ -76,7 +76,7 @@ class ProvisioningImpl implements Provisioning {
         this.logTime = builder.isLogTime();
         this.locals = builder.getLocals();
         this.recordState = builder.isRecordState();
-        loader = GalleonCoreProvider.getCallerClassLoader(coreVersion, universeResolver);
+        loader = GalleonBuilder.getCallerClassLoader(coreVersion, universeResolver);
         try {
             tmp = Files.createTempDirectory("galleon-tmp");
         } catch (IOException ex) {
@@ -172,7 +172,7 @@ class ProvisioningImpl implements Provisioning {
             }
         } finally {
             try {
-                GalleonCoreProvider.releaseUsage(coreVersion);
+                GalleonBuilder.releaseUsage(coreVersion);
             } catch (ProvisioningException ex) {
                 System.err.println("Error releasing classloader " + ex.getLocalizedMessage());
             }

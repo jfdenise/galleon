@@ -35,7 +35,7 @@ import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.api.APIVersion;
-import org.jboss.galleon.api.GalleonCoreProvider;
+import org.jboss.galleon.api.GalleonBuilder;
 import org.jboss.galleon.api.Provisioning;
 import org.jboss.galleon.maven.plugin.util.MavenArtifactRepositoryManager;
 import org.jboss.galleon.maven.plugin.util.MvnMessageWriter;
@@ -136,10 +136,9 @@ public class ProvisionFileStateMojo extends AbstractMojo {
         if (!recordState) {
             IoUtils.recursiveDelete(home);
         }
-        GalleonCoreProvider provider = new GalleonCoreProvider();
-        provider.addArtifactResolver(artifactResolver);
 
-        try (Provisioning pm = provider.newProvisioningBuilder(provisioningFile.toPath())
+        try (Provisioning pm = new GalleonBuilder().addArtifactResolver(artifactResolver)
+                .newProvisioningBuilder(provisioningFile.toPath())
                 .setInstallationHome(home)
                 .setMessageWriter(new MvnMessageWriter(getLog()))
                 .setLogTime(logTime)

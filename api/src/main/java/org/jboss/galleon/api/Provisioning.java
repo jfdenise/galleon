@@ -72,15 +72,6 @@ public interface Provisioning extends AutoCloseable {
         return ProvisioningUtil.getFeaturePackDescription(path);
     }
 
-//    public ProvisioningContext buildProvisioningContext() throws ProvisioningException;
-//
-//    public ProvisioningContext buildProvisioningContext(Path provisioning) throws ProvisioningException;
-//
-//    public FeaturePackLocation addLocal(Path path, boolean installInUniverse) throws ProvisioningException;
-//
-//    public ProvisioningContext buildProvisioningContext(GalleonProvisioningConfig config) throws ProvisioningException;
-//
-//    public ProvisioningContext buildProvisioningContext(GalleonProvisioningConfig config, List<Path> customConfigs) throws ProvisioningException;
     // Required by CLI
     /**
      * Add named universe spec to the provisioning configuration
@@ -151,15 +142,21 @@ public interface Provisioning extends AutoCloseable {
     public void provision(Path config, Map<String, String> options) throws ProvisioningException;
 
     public List<GalleonFeaturePackLayout> getOrderedFeaturePackLayouts(GalleonProvisioningConfig config) throws ProvisioningException;
+
     public GalleonProvisioningRuntime getProvisioningRuntime(GalleonProvisioningConfig config) throws ProvisioningException;
+
     public UniverseResolver getUniverseResolver();
 
     /**
      * When dealing with parsed configuration that we want to update.
      */
     public GalleonConfigurationWithLayersBuilderItf buildConfigurationBuilder(GalleonConfigurationWithLayers config) throws ProvisioningException;
+
     public boolean hasOrderedFeaturePacksConfig(GalleonProvisioningConfig config, ConfigId cfg) throws ProvisioningException;
+
     public Set<String> getOrderedFeaturePackPluginLocations(GalleonProvisioningConfig config) throws ProvisioningException;
+
     public FsDiff getFsDiff() throws ProvisioningException;
+
     public void install(FeaturePackLocation loc) throws ProvisioningException;
 }
