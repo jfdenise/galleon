@@ -69,8 +69,7 @@ public class ProvisioningUtil {
                 currentVersion = fpVersion;
             }
         }
-        GalleonFeaturePackDescription deps = FeaturePackLightXmlParser.parseDescription(spec);
-        return getCoreVersion(deps.getDependencies(), currentVersion, universeResolver, tmp);
+        return currentVersion;
     }
 
     public static String getMavenCoords(GalleonFeaturePack fp) {
@@ -108,8 +107,6 @@ public class ProvisioningUtil {
                         version = fpVersion;
                     }
                 }
-                GalleonFeaturePackDescription deps = FeaturePackLightXmlParser.parseDescription(spec);
-                version = getCoreVersion(deps.getDependencies(), version, universeResolver, tmp);
             }
             return version;
         } catch (Exception ex) {
