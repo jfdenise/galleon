@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.config.ProvisioningConfig;
 
 import org.jboss.galleon.runtime.ResolvedSpecId;

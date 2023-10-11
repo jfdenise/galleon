@@ -20,7 +20,7 @@ import java.nio.file.Path;
 
 import org.jboss.galleon.Constants;
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.diff.FsDiff;
 import org.jboss.galleon.plugin.InstallPlugin;
 import org.jboss.galleon.runtime.ProvisioningRuntime;

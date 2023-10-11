@@ -25,7 +25,6 @@ import java.util.Set;
 import org.jboss.galleon.BaseErrors;
 
 import org.jboss.galleon.ProvisioningDescriptionException;
-import org.jboss.galleon.api.config.ConfigId;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.util.CollectionUtils;

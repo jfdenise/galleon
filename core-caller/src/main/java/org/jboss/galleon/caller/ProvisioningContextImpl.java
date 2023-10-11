@@ -39,7 +39,7 @@ import org.jboss.galleon.api.GalleonFeaturePackLayout;
 import org.jboss.galleon.api.GalleonProvisioningRuntime;
 import org.jboss.galleon.config.ConfigModel;
 import org.jboss.galleon.config.ProvisioningConfig;
-import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.layout.FeaturePackLayout;
 import org.jboss.galleon.layout.ProvisioningLayout;

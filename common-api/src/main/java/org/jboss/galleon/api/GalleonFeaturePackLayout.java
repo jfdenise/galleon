@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Set;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.api.config.GalleonConfigurationWithLayers;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;

@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.config.FeatureConfig;
 import org.jboss.galleon.runtime.ResolvedFeature;
 import org.jboss.galleon.runtime.ResolvedFeatureId;

@@ -18,6 +18,7 @@ package org.jboss.galleon.api.config;
 
 import java.util.Map;
 import java.util.Set;
+import org.jboss.galleon.config.ConfigId;
 
 /**
  * @author Alexey Loubyansky

@@ -33,7 +33,7 @@ import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningOption;
 import org.jboss.galleon.api.GalleonLayerDependency;
-import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.config.ConfigModel;
 import org.jboss.galleon.config.FeatureGroupSupport;
 import org.jboss.galleon.spec.FeatureDependencySpec;

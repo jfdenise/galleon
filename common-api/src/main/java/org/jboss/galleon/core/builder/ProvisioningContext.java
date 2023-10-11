@@ -27,7 +27,7 @@ import javax.xml.stream.XMLStreamException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.api.GalleonFeaturePackLayout;
 import org.jboss.galleon.api.GalleonProvisioningRuntime;
-import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.api.config.GalleonConfigurationWithLayers;
 import org.jboss.galleon.api.config.GalleonConfigurationWithLayersBuilderItf;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;

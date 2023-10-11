@@ -16,7 +16,7 @@
  */
 package org.jboss.galleon.api;
 
-import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.config.ConfigId;
 
 /**
  * Simple wrapper for configuration ids.

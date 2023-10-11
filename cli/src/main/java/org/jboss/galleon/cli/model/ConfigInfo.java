@@ -18,7 +18,7 @@ package org.jboss.galleon.cli.model;
 
 import java.util.Collection;
 import java.util.Objects;
-import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.config.ConfigId;
 
 /**
  *

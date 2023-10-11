@@ -17,7 +17,7 @@
 package org.jboss.galleon.xml;
 
 import java.util.Map;
-import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.config.ConfigId;
 
 import org.jboss.galleon.config.ConfigModel;
 import org.jboss.galleon.xml.ConfigXml.Attribute;

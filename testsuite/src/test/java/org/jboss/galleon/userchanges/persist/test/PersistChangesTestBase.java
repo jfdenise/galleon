@@ -27,7 +27,7 @@ import javax.xml.stream.XMLStreamException;
 import org.jboss.galleon.Constants;
 import org.jboss.galleon.BaseErrors;
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.state.ProvisionedConfig;
 import org.jboss.galleon.state.ProvisionedFeaturePack;
 import org.jboss.galleon.state.ProvisionedState;

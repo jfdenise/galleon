@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.jboss.galleon.ProvisioningDescriptionException;
-import org.jboss.galleon.api.config.ConfigId;
 import org.jboss.galleon.util.CollectionUtils;
 
 /**

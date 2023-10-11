@@ -19,7 +19,7 @@ package org.jboss.galleon.cli.cmd;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Set;
-import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.config.ConfigId;
 
 /**
  *

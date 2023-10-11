@@ -17,7 +17,7 @@
 package org.jboss.galleon.xml.test;
 
 import java.nio.file.Paths;
-import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.config.ConfigId;
 
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.config.ConfigModel;

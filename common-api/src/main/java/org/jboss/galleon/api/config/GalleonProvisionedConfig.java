@@ -18,6 +18,7 @@ package org.jboss.galleon.api.config;
 
 import java.util.Collection;
 import java.util.Map;
+import org.jboss.galleon.config.ConfigId;
 
 
 /**

@@ -21,7 +21,7 @@ import java.util.Arrays;
 import org.aesh.command.CommandException;
 import org.jboss.galleon.Constants;
 import org.jboss.galleon.ProvisioningManager;
-import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.config.ConfigId;
 import static org.jboss.galleon.cli.CliTestUtils.PRODUCER1;
 import static org.jboss.galleon.cli.CliTestUtils.PRODUCER2;
 import static org.jboss.galleon.cli.CliTestUtils.UNIVERSE_NAME;

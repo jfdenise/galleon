@@ -18,7 +18,7 @@ package org.jboss.galleon.cli.cmd.state.layers;
 
 import org.aesh.command.option.Argument;
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.cli.HelpDescriptions;
 import org.jboss.galleon.cli.cmd.CommandDomain;
 import org.jboss.galleon.cli.cmd.state.AbstractStateCommand;

@@ -16,7 +16,7 @@
  */
 package org.jboss.galleon.maven.plugin.util;
 
-import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.config.ConfigId;
 
 /**
  * Simple wrapper for configuration ids.

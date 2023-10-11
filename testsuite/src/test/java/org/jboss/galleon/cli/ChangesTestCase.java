@@ -30,7 +30,7 @@ import static org.jboss.galleon.cli.CliTestUtils.UNIVERSE_NAME;
 
 import org.jboss.galleon.Constants;
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.runtime.ResolvedFeatureId;
 import org.jboss.galleon.state.ProvisionedConfig;
 import org.jboss.galleon.universe.FeaturePackLocation;

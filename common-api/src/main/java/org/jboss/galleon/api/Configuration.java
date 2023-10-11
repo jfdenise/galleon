@@ -19,7 +19,7 @@ package org.jboss.galleon.api;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.config.ConfigId;
 
 /**
  *

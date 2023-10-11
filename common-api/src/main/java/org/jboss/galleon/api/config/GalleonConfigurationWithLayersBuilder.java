@@ -22,6 +22,7 @@ import java.util.Set;
 
 import org.jboss.galleon.BaseErrors;
 import org.jboss.galleon.ProvisioningDescriptionException;
+import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.util.CollectionUtils;
 import org.jboss.galleon.util.StringUtils;
 

@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.config.ConfigId;
 
 import org.jboss.galleon.config.ConfigCustomizations;
 import org.jboss.galleon.config.FeaturePackConfig;

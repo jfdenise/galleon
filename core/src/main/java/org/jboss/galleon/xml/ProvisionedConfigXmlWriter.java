@@ -21,7 +21,7 @@ import java.util.Map;
 import javax.xml.stream.XMLStreamException;
 
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.plugin.ProvisionedConfigHandler;
 import org.jboss.galleon.runtime.ResolvedFeatureSpec;
 import org.jboss.galleon.state.ProvisionedConfig;

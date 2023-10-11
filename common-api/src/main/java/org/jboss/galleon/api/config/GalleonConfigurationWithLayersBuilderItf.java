@@ -17,6 +17,7 @@
 package org.jboss.galleon.api.config;
 
 import org.jboss.galleon.ProvisioningDescriptionException;
+import org.jboss.galleon.config.ConfigId;
 
 /**
  * @author Alexey Loubyansky

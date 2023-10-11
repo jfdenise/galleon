@@ -19,7 +19,7 @@ package org.jboss.galleon.cli.model.state;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
-import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.config.ConfigId;
 
 import org.jboss.galleon.config.FeaturePackConfig;
 import org.jboss.galleon.config.ProvisioningConfig;

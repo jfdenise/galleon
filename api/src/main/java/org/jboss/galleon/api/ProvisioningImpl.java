@@ -31,7 +31,7 @@ import org.jboss.galleon.BaseErrors;
 import org.jboss.galleon.DefaultMessageWriter;
 import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.api.config.ConfigId;
+import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.api.config.GalleonConfigurationWithLayers;
 import org.jboss.galleon.api.config.GalleonConfigurationWithLayersBuilderItf;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
