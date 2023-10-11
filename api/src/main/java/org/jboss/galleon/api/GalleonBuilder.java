@@ -66,8 +66,9 @@ public class GalleonBuilder extends UniverseResolverBuilder<GalleonBuilder> {
         return fpid.getLocation();
     }
 
-    public void setUniverseResolver(UniverseResolver resolver) {
+    public GalleonBuilder setUniverseResolver(UniverseResolver resolver) {
         this.resolver = resolver;
+        return this;
     }
 
     private UniverseResolver getUniverseResolver() throws ProvisioningException {
@@ -94,6 +95,10 @@ public class GalleonBuilder extends UniverseResolverBuilder<GalleonBuilder> {
     }
 
     public ProvisioningBuilder newProvisioningBuilder(GalleonProvisioningConfig config) throws ProvisioningException {
+        return new ProvisioningBuilder(getUniverseResolver(), locals, getCoreVersion(config));
+    }
+
+    private String getCoreVersion(GalleonProvisioningConfig config) throws ProvisioningException {
         Path tmp = getTmpDirectory();
         try {
             String coreVersion = APIVersion.getVersion();
@@ -112,7 +117,7 @@ public class GalleonBuilder extends UniverseResolverBuilder<GalleonBuilder> {
                 }
             }
             checkArtifactResolver(coreVersion, getUniverseResolver());
-            return new ProvisioningBuilder(getUniverseResolver(), locals, coreVersion);
+            return coreVersion;
         } finally {
             IoUtils.recursiveDelete(tmp);
         }

@@ -17,6 +17,7 @@
 package org.jboss.galleon.cli.cmd.featurepack;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -25,6 +26,13 @@ import java.util.Map;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.option.Option;
 import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.api.GalleonFeaturePackLayout;
+import org.jboss.galleon.api.GalleonProvisioningLayout;
+import org.jboss.galleon.api.GalleonProvisioningRuntime;
+import org.jboss.galleon.api.Provisioning;
+import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
+import org.jboss.galleon.api.config.GalleonProvisionedConfig;
+import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.cli.AbstractCompleter;
 import org.jboss.galleon.cli.CommandExecutionException;
 import org.jboss.galleon.cli.HelpDescriptions;
@@ -43,13 +51,6 @@ import static org.jboss.galleon.cli.path.FeatureContainerPathConsumer.CONFIGS;
 import static org.jboss.galleon.cli.path.FeatureContainerPathConsumer.DEPENDENCIES;
 import static org.jboss.galleon.cli.path.FeatureContainerPathConsumer.OPTIONS;
 import org.jboss.galleon.cli.resolver.PluginResolver;
-import org.jboss.galleon.config.FeaturePackConfig;
-import org.jboss.galleon.config.ProvisioningConfig;
-import org.jboss.galleon.layout.FeaturePackLayout;
-import org.jboss.galleon.layout.ProvisioningLayout;
-import org.jboss.galleon.runtime.ProvisioningRuntime;
-import org.jboss.galleon.runtime.ProvisioningRuntimeBuilder;
-import org.jboss.galleon.state.ProvisionedConfig;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 
@@ -83,27 +84,30 @@ public class GetInfoCommand extends AbstractFeaturePackCommand {
             throw new CommandExecutionException("File or location must be set");
         }
         PmSession session = commandInvocation.getPmSession();
-        FeaturePackLayout product = null;
+        GalleonFeaturePackLayout product = null;
         List<FeaturePackLocation> dependencies = new ArrayList<>();
-        ProvisioningConfig provisioning;
-        ProvisioningLayout<FeaturePackLayout> layout = null;
+        GalleonProvisioningConfig provisioning;
+        GalleonProvisioningLayout layout = null;
+        Provisioning prov = null;
         try {
             try {
                 if (fpl != null) {
                     FeaturePackLocation loc;
                     loc = session.getResolvedLocation(null, fpl);
-                    FeaturePackConfig config = FeaturePackConfig.forLocation(loc);
-                    provisioning = ProvisioningConfig.builder().addFeaturePackDep(config).build();
-                    layout = session.getLayoutFactory().newConfigLayout(provisioning);
+                    GalleonFeaturePackConfig config = GalleonFeaturePackConfig.forLocation(loc);
+                    provisioning = GalleonProvisioningConfig.builder().addFeaturePackDep(config).build();
+                    prov = session.newProvisioning(provisioning, false);
+                    layout = prov.newProvisioningLayout(provisioning);
                 } else {
-                    layout = session.getLayoutFactory().newConfigLayout(file.toPath(), true);
+                    prov = session.newProvisioning((Path)null, false);
+                    layout = prov.newProvisioningLayout(file.toPath(), true);
                 }
 
-                for (FeaturePackLayout fpLayout : layout.getOrderedFeaturePacks()) {
+                for (GalleonFeaturePackLayout fpLayout : layout.getOrderedFeaturePacks()) {
                     boolean isProduct = true;
-                    for (FeaturePackLayout fpLayout2 : layout.getOrderedFeaturePacks()) {
-                        if (fpLayout2.getSpec().hasTransitiveDep(fpLayout.getFPID().getProducer())
-                                || fpLayout2.getSpec().getFeaturePackDep(fpLayout.getFPID().getProducer()) != null) {
+                    for (GalleonFeaturePackLayout fpLayout2 : layout.getOrderedFeaturePacks()) {
+                        if (fpLayout2.hasTransitiveDep(fpLayout.getFPID().getProducer())
+                                || fpLayout2.hasFeaturePackDep(fpLayout.getFPID().getProducer())) {
                             isProduct = false;
                             break;
                         }
@@ -126,7 +130,7 @@ public class GetInfoCommand extends AbstractFeaturePackCommand {
                     session.getExposedLocation(null, product.getFPID().getLocation()));
 
             try {
-                final FPID patchFor = product.getSpec().getPatchFor();
+                final FPID patchFor = product.getPatchFor();
                 if (patchFor != null) {
                     commandInvocation.println("");
                     commandInvocation.println(PATCH_FOR + patchFor);
@@ -143,20 +147,20 @@ public class GetInfoCommand extends AbstractFeaturePackCommand {
                             if (displayDependencies(commandInvocation, dependencies)) {
                                 commandInvocation.println("");
                             }
-                            if (displayConfigs(commandInvocation, layout)) {
+                            if (displayConfigs(commandInvocation, layout, prov)) {
                                 commandInvocation.println("");
                             }
                             if (displayLayers(commandInvocation, layout)) {
                                 commandInvocation.println("");
                             }
-                            if (displayOptionalPackages(commandInvocation, layout)) {
+                            if (displayOptionalPackages(commandInvocation, layout, prov)) {
                                 commandInvocation.println("");
                             }
                             displayOptions(commandInvocation, layout);
                             break;
                         }
                         case CONFIGS: {
-                            if (!displayConfigs(commandInvocation, layout)) {
+                            if (!displayConfigs(commandInvocation, layout, prov)) {
                                 commandInvocation.println(StateInfoUtil.NO_CONFIGURATIONS);
                             }
                             break;
@@ -180,7 +184,7 @@ public class GetInfoCommand extends AbstractFeaturePackCommand {
                             break;
                         }
                         case OPTIONAL_PACKAGES: {
-                            if (!displayOptionalPackages(commandInvocation, layout)) {
+                            if (!displayOptionalPackages(commandInvocation, layout, prov)) {
                                 commandInvocation.println(StateInfoUtil.NO_OPTIONAL_PACKAGES);
                             }
                             break;
@@ -197,6 +201,9 @@ public class GetInfoCommand extends AbstractFeaturePackCommand {
             if (layout != null) {
                 layout.close();
             }
+            if (prov != null) {
+                prov.close();
+            }
         }
     }
 
@@ -209,13 +216,11 @@ public class GetInfoCommand extends AbstractFeaturePackCommand {
     }
 
     private boolean displayConfigs(PmCommandInvocation commandInvocation,
-            ProvisioningLayout<FeaturePackLayout> pLayout) throws ProvisioningException, IOException {
+            GalleonProvisioningLayout pLayout,
+            Provisioning prov) throws ProvisioningException, IOException {
         Map<String, List<ConfigInfo>> configs = new HashMap<>();
-        try (ProvisioningRuntime rt = ProvisioningRuntimeBuilder.
-                newInstance(commandInvocation.getPmSession().getMessageWriter(false))
-                .initRtLayout(pLayout.transform(ProvisioningRuntimeBuilder.FP_RT_FACTORY))
-                .build()) {
-            for (ProvisionedConfig m : rt.getConfigs()) {
+        try (GalleonProvisioningRuntime rt = prov.toRuntime(pLayout, commandInvocation.getPmSession().getMessageWriter(false))) {
+            for (GalleonProvisionedConfig m : rt.getGalleonConfigs()) {
                 String model = m.getModel();
                 List<ConfigInfo> names = configs.get(model);
                 if (names == null) {
@@ -235,7 +240,7 @@ public class GetInfoCommand extends AbstractFeaturePackCommand {
     }
 
     private boolean displayLayers(PmCommandInvocation commandInvocation,
-            ProvisioningLayout<FeaturePackLayout> pLayout) throws ProvisioningException, IOException {
+            GalleonProvisioningLayout pLayout) throws ProvisioningException, IOException {
         String str = StateInfoUtil.buildLayers(pLayout);
         if (str != null) {
             commandInvocation.print(str);
@@ -244,7 +249,7 @@ public class GetInfoCommand extends AbstractFeaturePackCommand {
     }
 
     private boolean displayOptions(PmCommandInvocation commandInvocation,
-            ProvisioningLayout<FeaturePackLayout> layout) throws ProvisioningException {
+            GalleonProvisioningLayout layout) throws ProvisioningException {
         String str = StateInfoUtil.buildOptions(PluginResolver.resolvePlugins(layout));
         if (str != null) {
             commandInvocation.print(str);
@@ -253,11 +258,8 @@ public class GetInfoCommand extends AbstractFeaturePackCommand {
     }
 
     private boolean displayOptionalPackages(PmCommandInvocation commandInvocation,
-            ProvisioningLayout<FeaturePackLayout> pLayout) throws ProvisioningException, IOException {
-        try (ProvisioningRuntime rt = ProvisioningRuntimeBuilder.
-                newInstance(commandInvocation.getPmSession().getMessageWriter(false))
-                .initRtLayout(pLayout.transform(ProvisioningRuntimeBuilder.FP_RT_FACTORY))
-                .build()) {
+            GalleonProvisioningLayout pLayout, Provisioning prov) throws ProvisioningException, IOException {
+        try (GalleonProvisioningRuntime rt = prov.toRuntime(pLayout, commandInvocation.getPmSession().getMessageWriter(false))) {
             FeatureContainer container = FeatureContainers.
                     fromProvisioningRuntime(commandInvocation.getPmSession(), rt);
             String str = StateInfoUtil.buildOptionalPackages(commandInvocation.getPmSession(),

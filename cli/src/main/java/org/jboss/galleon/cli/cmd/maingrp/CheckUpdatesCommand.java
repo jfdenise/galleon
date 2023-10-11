@@ -24,6 +24,9 @@ import org.aesh.command.impl.internal.ParsedOption;
 import org.aesh.command.option.Option;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningManager;
+import org.jboss.galleon.api.GalleonFeaturePackLayout;
+import org.jboss.galleon.api.GalleonProvisioningLayout;
+import org.jboss.galleon.api.Provisioning;
 import org.jboss.galleon.cli.CommandExecutionException;
 import org.jboss.galleon.cli.HelpDescriptions;
 import org.jboss.galleon.cli.cmd.InstalledProducerCompleter;
@@ -95,14 +98,15 @@ public class CheckUpdatesCommand extends AbstractInstallationCommand {
     @Override
     protected void runCommand(PmCommandInvocation session) throws CommandExecutionException {
         try {
-            ProvisioningManager mgr = getManager(session.getPmSession());
+            try (Provisioning mgr = getManager(session.getPmSession())) {
 
-            Updates updates = getUpdatesTable(mgr, session, includeAll, fp);
-            if (updates.plan.isEmpty()) {
-                session.println(UP_TO_DATE);
-            } else {
-                session.println(UPDATES_AVAILABLE);
-                session.println(updates.t.build());
+                Updates updates = getUpdatesTable(mgr, session, includeAll, fp);
+                if (updates.plan.isEmpty()) {
+                    session.println(UP_TO_DATE);
+                } else {
+                    session.println(UPDATES_AVAILABLE);
+                    session.println(updates.t.build());
+                }
             }
         } catch (ProvisioningException ex) {
             throw new CommandExecutionException(session.getPmSession(),
@@ -111,7 +115,7 @@ public class CheckUpdatesCommand extends AbstractInstallationCommand {
 
     }
 
-    static Updates getUpdatesTable(ProvisioningManager mgr, PmCommandInvocation session,
+    static Updates getUpdatesTable(Provisioning mgr, PmCommandInvocation session,
             boolean includeAll, String fp) throws ProvisioningException, CommandExecutionException {
         if (includeAll && fp != null) {
             throw new CommandExecutionException(CliErrors.onlyOneOptionOf(FP_OPTION_NAME,
@@ -202,10 +206,10 @@ public class CheckUpdatesCommand extends AbstractInstallationCommand {
         return updates;
     }
 
-    private static void addCustomUpdates(ProvisioningPlan plan, List<FeaturePackLocation> custom, ProvisioningManager mgr) throws ProvisioningException {
-        try (ProvisioningLayout<?> layout = mgr.getLayoutFactory().newConfigLayout(mgr.getProvisioningConfig())) {
+    private static void addCustomUpdates(ProvisioningPlan plan, List<FeaturePackLocation> custom, Provisioning mgr) throws ProvisioningException {
+        try (GalleonProvisioningLayout layout = mgr.newProvisioningLayout(mgr.getProvisioningConfig())) {
             for (FeaturePackLocation loc : custom) {
-                FeaturePackLayout fpl = layout.getFeaturePack(loc.getProducer());
+                GalleonFeaturePackLayout fpl = layout.getFeaturePack(loc.getProducer());
                 FeaturePackLocation current = fpl.getFPID().getLocation();
                 FeaturePackUpdatePlan fpPlan = FeaturePackUpdatePlan.request(current, fpl.isTransitiveDep()).setNewLocation(loc).buildPlan();
                 if (fpPlan.hasNewLocation()) {

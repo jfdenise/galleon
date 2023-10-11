@@ -51,6 +51,7 @@ import org.jboss.galleon.layout.SystemPaths;
 import org.jboss.galleon.api.GalleonFeaturePackRuntime;
 import org.jboss.galleon.api.GalleonPackageRuntime;
 import org.jboss.galleon.api.GalleonProvisioningRuntime;
+import org.jboss.galleon.api.config.GalleonProvisionedConfig;
 import org.jboss.galleon.xml.ProvisionedStateXmlWriter;
 import org.jboss.galleon.xml.ProvisioningXmlWriter;
 
@@ -159,6 +160,15 @@ public class ProvisioningRuntime implements FeaturePackSet<FeaturePackRuntime>, 
         List<GalleonFeaturePackRuntime> lst = new ArrayList<>();
         for (FeaturePackRuntime rt : layout.getOrderedFeaturePacks()) {
             lst.add((GalleonFeaturePackRuntime) rt);
+        }
+        return lst;
+    }
+    
+    @Override
+    public Collection<GalleonProvisionedConfig> getGalleonConfigs() {
+        List<GalleonProvisionedConfig> lst = new ArrayList<>();
+        for (ProvisionedConfig config : getConfigs()) {
+            lst.add(config);
         }
         return lst;
     }

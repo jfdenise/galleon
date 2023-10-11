@@ -41,6 +41,7 @@ import org.jboss.galleon.config.FeaturePackConfig;
 import org.jboss.galleon.spec.ConfigLayerSpec;
 import org.jboss.galleon.spec.FeaturePackSpec;
 import org.jboss.galleon.spec.FeatureSpec;
+import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.xml.FeaturePackXmlParser;
 import org.jboss.galleon.xml.ConfigLayerSpecXmlParser;
@@ -91,22 +92,27 @@ public abstract class FeaturePackLayout implements GalleonFeaturePackLayout {
         return spec;
     }
 
+    @Override
     public Path getDir() {
         return dir;
     }
 
+    @Override
     public int getType() {
         return type;
     }
 
+    @Override
     public boolean isDirectDep() {
         return type == DIRECT_DEP;
     }
 
+    @Override
     public boolean isTransitiveDep() {
         return type == TRANSITIVE_DEP;
     }
 
+    @Override
     public boolean isPatch() {
         return type == PATCH;
     }
@@ -160,6 +166,21 @@ public abstract class FeaturePackLayout implements GalleonFeaturePackLayout {
             lst.add(c.getLocation().getFPID());
         }
         return lst;
+    }
+    
+    @Override
+    public boolean hasTransitiveDep(FeaturePackLocation.ProducerSpec spec) throws ProvisioningException {
+        return getSpec().hasTransitiveDep(spec);
+    }
+
+    @Override
+    public boolean hasFeaturePackDep(FeaturePackLocation.ProducerSpec spec) throws ProvisioningException {
+        return getSpec().getFeaturePackDep(spec) != null;
+    }
+
+    @Override
+    public FPID getPatchFor() throws ProvisioningException {
+        return getSpec().getPatchFor();
     }
 
     public ConfigLayerSpec loadConfigLayerSpec(String model, String name) throws ProvisioningException {

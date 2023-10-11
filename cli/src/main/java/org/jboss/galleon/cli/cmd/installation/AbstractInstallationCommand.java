@@ -18,11 +18,15 @@ package org.jboss.galleon.cli.cmd.installation;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import org.aesh.command.option.Option;
 import org.aesh.readline.AeshContext;
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.ProvisioningManager;
+import org.jboss.galleon.api.GalleonProvisioningLayout;
+import org.jboss.galleon.api.GalleonProvisioningRuntime;
+import org.jboss.galleon.api.Provisioning;
+import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.cli.CommandExecutionException;
 import org.jboss.galleon.cli.HelpDescriptions;
 import org.jboss.galleon.cli.PmSession;
@@ -32,10 +36,7 @@ import org.jboss.galleon.cli.cmd.CommandWithInstallationDirectory;
 import static org.jboss.galleon.cli.cmd.plugin.AbstractProvisionWithPlugins.DIR_OPTION_NAME;
 import org.jboss.galleon.cli.model.FeatureContainer;
 import org.jboss.galleon.cli.model.FeatureContainers;
-import org.jboss.galleon.config.ProvisioningConfig;
-import org.jboss.galleon.layout.FeaturePackLayout;
-import org.jboss.galleon.layout.ProvisioningLayout;
-import org.jboss.galleon.runtime.ProvisioningRuntime;
+import org.jboss.galleon.util.PathsUtils;
 
 /**
  *
@@ -47,8 +48,8 @@ public abstract class AbstractInstallationCommand extends PmSessionCommand imple
             description = HelpDescriptions.INSTALLATION_DIRECTORY)
     protected File targetDirArg;
 
-    protected ProvisioningManager getManager(PmSession session) throws ProvisioningException {
-        return session.newProvisioningManager(Util.lookupInstallationDir(session.getAeshContext(),
+    protected Provisioning getManager(PmSession session) throws ProvisioningException {
+        return session.newProvisioning(Util.lookupInstallationDir(session.getAeshContext(),
                 targetDirArg == null ? null : targetDirArg.toPath()), false);
     }
 
@@ -61,21 +62,21 @@ public abstract class AbstractInstallationCommand extends PmSessionCommand imple
         }
     }
 
-    public FeatureContainer getFeatureContainer(PmSession session, ProvisioningLayout<FeaturePackLayout> layout) throws ProvisioningException,
+    public FeatureContainer getFeatureContainer(PmSession session, GalleonProvisioningLayout layout) throws ProvisioningException,
             CommandExecutionException, IOException {
         FeatureContainer container;
-        ProvisioningManager manager = getManager(session);
+        Provisioning manager = getManager(session);
 
-        if (manager.getProvisionedState() == null) {
+        if (Files.exists(PathsUtils.getProvisionedStateXml(manager.getInstallationHome()))) {
             throw new CommandExecutionException("Specified directory doesn't contain an installation");
         }
         if (layout == null) {
-            ProvisioningConfig config = manager.getProvisioningConfig();
-            try (ProvisioningRuntime runtime = manager.getRuntime(config)) {
+            GalleonProvisioningConfig config = manager.getProvisioningConfig();
+            try (GalleonProvisioningRuntime runtime = manager.getProvisioningRuntime(config)) {
                 container = FeatureContainers.fromProvisioningRuntime(session, runtime);
             }
         } else {
-            try (ProvisioningRuntime runtime = manager.getRuntime(layout)) {
+            try (GalleonProvisioningRuntime runtime = manager.getProvisioningRuntime(layout)) {
                 container = FeatureContainers.fromProvisioningRuntime(session, runtime);
             }
         }

@@ -18,6 +18,7 @@ package org.jboss.galleon.api;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -284,16 +285,6 @@ class ProvisioningImpl implements Provisioning {
     }
 
     @Override
-    public List<GalleonFeaturePackLayout> getOrderedFeaturePackLayouts(GalleonProvisioningConfig config) throws ProvisioningException {
-        try {
-            ProvisioningContext ctx = buildProvisioningContext();
-            return ctx.getOrderedFeaturePackLayouts(config);
-        } catch (Exception ex) {
-            throw new ProvisioningException(ex);
-        }
-    }
-
-    @Override
     public GalleonProvisioningRuntime getProvisioningRuntime(GalleonProvisioningConfig config) throws ProvisioningException {
         try {
             ProvisioningContext ctx = buildProvisioningContext();
@@ -331,6 +322,60 @@ class ProvisioningImpl implements Provisioning {
     public void install(FeaturePackLocation loc) throws ProvisioningException {
         ProvisioningContext ctx = buildProvisioningContext();
         ctx.install(loc);
+    }
+
+    @Override
+    public GalleonProvisioningLayout newProvisioningLayout(GalleonProvisioningConfig config) throws ProvisioningException {
+        ProvisioningContext ctx = buildProvisioningContext();
+        return ctx.newProvisioningLayout(config);
+    }
+
+    @Override
+    public GalleonProvisioningLayout newProvisioningLayout(Path file, boolean install) throws ProvisioningException {
+        ProvisioningContext ctx = buildProvisioningContext();
+        return ctx.newProvisioningLayout(file, install);
+    }
+
+    @Override
+    public GalleonProvisioningRuntime toRuntime(GalleonProvisioningLayout layout, MessageWriter msgWriter) throws ProvisioningException {
+        ProvisioningContext ctx = buildProvisioningContext();
+        return ctx.toRuntime(layout, msgWriter);
+    }
+
+    @Override
+    public GalleonProvisioningRuntime getProvisioningRuntime(GalleonProvisioningLayout layout) throws ProvisioningException {
+        ProvisioningContext ctx = buildProvisioningContext();
+        return ctx.getProvisioningRuntime(layout);
+    }
+
+    @Override
+    public void clearStateHistory() throws ProvisioningException {
+        ProvisioningContext ctx = buildProvisioningContext();
+        ctx.clearStateHistory();
+    }
+
+    @Override
+    public void exportProvisioningConfig(Path location) throws ProvisioningException, IOException {
+        ProvisioningContext ctx = buildProvisioningContext();
+        ctx.exportProvisioningConfig(location);
+    }
+
+    @Override
+    public void writeProvisioningConfig(PrintWriter writer) throws IOException, ProvisioningException {
+        ProvisioningContext ctx = buildProvisioningContext();
+        ctx.writeProvisioningConfig(writer);
+    }
+
+    @Override
+    public int getStateHistoryLimit() throws ProvisioningException {
+        ProvisioningContext ctx = buildProvisioningContext();
+        return ctx.getStateHistoryLimit();
+    }
+    
+    @Override
+    public void setStateHistoryLimit(int limit) throws ProvisioningException {
+        ProvisioningContext ctx = buildProvisioningContext();
+        ctx.setStateHistoryLimit(limit);
     }
 
     @Override

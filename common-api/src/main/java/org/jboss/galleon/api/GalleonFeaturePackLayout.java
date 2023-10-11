@@ -26,8 +26,25 @@ import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.api.config.GalleonConfigurationWithLayers;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
+import org.jboss.galleon.universe.FeaturePackLocation.ProducerSpec;
 
 public interface GalleonFeaturePackLayout {
+
+    public Path getDir();
+
+    public int getType();
+
+    public boolean isDirectDep();
+
+    public boolean isTransitiveDep();
+
+    public boolean isPatch();
+
+    public boolean hasTransitiveDep(ProducerSpec spec) throws ProvisioningException;
+
+    public boolean hasFeaturePackDep(ProducerSpec spec) throws ProvisioningException;
+
+    public FPID getPatchFor() throws ProvisioningException;
 
     public FeaturePackLocation.FPID getFPID();
 

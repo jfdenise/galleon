@@ -18,9 +18,13 @@ package org.jboss.galleon.cli;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import org.aesh.command.activator.CommandActivator;
 import org.aesh.command.activator.CommandActivatorProvider;
 import org.aesh.command.activator.OptionActivator;
@@ -39,20 +43,25 @@ import org.eclipse.aether.transfer.ArtifactNotFoundException;
 import org.jboss.galleon.DefaultMessageWriter;
 import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.ProvisioningManager;
+import org.jboss.galleon.api.GalleonBuilder;
+import org.jboss.galleon.api.Provisioning;
+import org.jboss.galleon.api.ProvisioningBuilder;
+import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.cli.config.Configuration;
 import org.jboss.galleon.cli.model.FeatureContainer;
 import org.jboss.galleon.cli.model.state.State;
 import org.jboss.galleon.cli.resolver.ResourceResolver;
 import org.jboss.galleon.cli.tracking.ProgressTrackers;
-import org.jboss.galleon.layout.ProvisioningLayoutFactory;
 import org.jboss.galleon.cli.cmd.CliErrors;
+import org.jboss.galleon.progresstracking.DefaultProgressTracker;
+import org.jboss.galleon.progresstracking.ProgressCallback;
+import org.jboss.galleon.progresstracking.ProgressTracker;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.UniverseSpec;
-import org.jboss.galleon.universe.galleon1.LegacyGalleon1UniverseFactory;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
+import org.jboss.galleon.util.PathsUtils;
 
 /**
  *
@@ -207,7 +216,6 @@ public class PmSession implements CompleterInvocationProvider<PmCompleterInvocat
     private final MavenListener mavenListener;
     private final UniverseManager universe;
     private final ResourceResolver resolver;
-    private final ProvisioningLayoutFactory layoutFactory;
     private AeshContext ctx;
     private boolean rethrow = false;
     private boolean enableTrackers = true;
@@ -217,6 +225,8 @@ public class PmSession implements CompleterInvocationProvider<PmCompleterInvocat
     private Path previousDir;
     private boolean commandRunning;
     private Connection connection;
+    private GalleonBuilder galleonBuilder;
+    private final Map<String, ProgressCallback<?>> progressTrackers = new HashMap<>();
     public PmSession(Configuration config) throws Exception {
         this(config, true);
     }
@@ -237,7 +247,7 @@ public class PmSession implements CompleterInvocationProvider<PmCompleterInvocat
         UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(maven).build();
         universe = new UniverseManager(this, config, maven, universeResolver, builtin);
         this.interactive = interactive;
-        layoutFactory = ProvisioningLayoutFactory.getInstance(universeResolver);
+        galleonBuilder = new GalleonBuilder().setUniverseResolver(universeResolver);
         resolver = new ResourceResolver(this);
         // Abort running universe resolution if any.
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -292,11 +302,11 @@ public class PmSession implements CompleterInvocationProvider<PmCompleterInvocat
             try {
                 universe.close();
             } finally {
-                if (interactive) {
-                    layoutFactory.checkOpenLayouts();
-                } else {
-                    layoutFactory.close();
-                }
+//                if (interactive) {
+//                    layoutFactory.checkOpenLayouts();
+//                } else {
+//                    layoutFactory.close();
+//                }
             }
         }
     }
@@ -316,14 +326,43 @@ public class PmSession implements CompleterInvocationProvider<PmCompleterInvocat
     // That is the method to call in order to build a ProvisioningManager.
     // It has a side effect on progress tracking.
     // Progress tracking is disabled when verbose is enabled.
-    public ProvisioningManager newProvisioningManager(Path installation, boolean verbose) throws ProvisioningException {
-        ProvisioningManager.Builder builder = ProvisioningManager.builder();
-        builder.setLayoutFactory(getLayoutFactory());
+    public Provisioning newProvisioning(Path installation, boolean verbose) throws ProvisioningException {
+        ProvisioningBuilder builder;
+        if(installation == null) {
+            throw new ProvisioningException("Installation can't be null, use other method to build provisioning");
+        }
+        Path provisioning = PathsUtils.getProvisioningXml(installation);
+        if (Files.exists(provisioning)) {
+            builder = galleonBuilder.newProvisioningBuilder(provisioning);
+        } else {
+            throw new ProvisioningException("Installation file doesn't exist");
+        }
         if (installation != null) {
             builder.setInstallationHome(installation);
         }
         builder.setMessageWriter(getMessageWriter(verbose));
-        return builder.build();
+        Provisioning prov = builder.build();
+        for(Entry<String, ProgressCallback<?>> entry : progressTrackers.entrySet()) {
+            prov.setProgressCallback(entry.getKey(), entry.getValue());
+        }
+        return prov;
+    }
+    
+    public Provisioning newProvisioning(GalleonProvisioningConfig config, boolean verbose) throws ProvisioningException {
+        ProvisioningBuilder builder = galleonBuilder.newProvisioningBuilder(config);
+        builder.setMessageWriter(getMessageWriter(verbose));
+        Provisioning prov = builder.build();
+        for(Entry<String, ProgressCallback<?>> entry : progressTrackers.entrySet()) {
+            prov.setProgressCallback(entry.getKey(), entry.getValue());
+        }
+        return prov;
+    }
+    
+    public void setProgressCallback(String id, ProgressCallback<?> callback) {
+        if (callback == null) {
+            progressTrackers.remove(id);
+        }
+        progressTrackers.put(id, callback);
     }
 
     public MessageWriter getMessageWriter(boolean verbose) {
@@ -336,8 +375,8 @@ public class PmSession implements CompleterInvocationProvider<PmCompleterInvocat
         return new DefaultMessageWriter(out, err, verbose);
     }
 
-    public ProvisioningLayoutFactory getLayoutFactory() {
-        return layoutFactory;
+    public GalleonBuilder getGalleonBuilder() {
+        return galleonBuilder;
     }
 
     public ResourceResolver getResolver() {
@@ -518,7 +557,7 @@ public class PmSession implements CompleterInvocationProvider<PmCompleterInvocat
     private FeaturePackLocation getResolvedLocation(Path installation, FeaturePackLocation fplocation) throws ProvisioningException {
         UniverseSpec spec = fplocation.getUniverse();
         if (spec != null) {
-            if (fplocation.isMavenCoordinates() || LegacyGalleon1UniverseFactory.ID.equals(spec.getFactory())) {
+            if (fplocation.isMavenCoordinates()) {
                 return fplocation;
             }
             if (spec.getLocation() == null) {

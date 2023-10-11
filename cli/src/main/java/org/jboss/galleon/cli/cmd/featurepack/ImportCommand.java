@@ -44,7 +44,7 @@ public class ImportCommand extends PmSessionCommand {
     @Override
     protected void runCommand(PmCommandInvocation commandInvocation) throws CommandExecutionException {
         try {
-            FeaturePackLocation fpl = commandInvocation.getPmSession().getLayoutFactory().addLocal(path.toPath(), install == null ? true : install);
+            FeaturePackLocation fpl = commandInvocation.getPmSession().getGalleonBuilder().addLocal(path.toPath(), install == null ? true : install);
             commandInvocation.println(fpl + " imported.");
         } catch (ProvisioningException ex) {
             throw new CommandExecutionException(commandInvocation.getPmSession(), CliErrors.importFeaturePackFailed(), ex);

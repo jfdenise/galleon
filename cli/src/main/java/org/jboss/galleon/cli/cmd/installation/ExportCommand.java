@@ -27,12 +27,11 @@ import java.nio.file.Path;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.option.Argument;
 import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.api.Provisioning;
 import org.jboss.galleon.cli.CommandExecutionException;
 import org.jboss.galleon.cli.HelpDescriptions;
 import org.jboss.galleon.cli.PmCommandInvocation;
 import org.jboss.galleon.cli.cmd.CliErrors;
-import org.jboss.galleon.config.ProvisioningConfig;
-import org.jboss.galleon.xml.ProvisioningXmlWriter;
 
 /**
  *
@@ -50,7 +49,9 @@ public class ExportCommand extends AbstractInstallationCommand {
         if (file != null) {
             final Path targetFile = file.toPath();
             try {
-                getManager(invoc.getPmSession()).exportProvisioningConfig(targetFile);
+                try(Provisioning prov = getManager(invoc.getPmSession())) {
+                    prov.exportProvisioningConfig(targetFile);
+                }
             } catch (ProvisioningException | IOException e) {
                 throw new CommandExecutionException(invoc.getPmSession(), CliErrors.exportProvisionedFailed(), e);
             }
@@ -58,11 +59,12 @@ public class ExportCommand extends AbstractInstallationCommand {
         } else {
             ByteArrayOutputStream output = null;
             try {
-                ProvisioningConfig config = getManager(invoc.getPmSession()).getProvisioningConfig();
-                output = new ByteArrayOutputStream();
-                PrintWriter writer = new PrintWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8));
-                ProvisioningXmlWriter.getInstance().write(config, writer);
-            } catch (Exception e) {
+                try (Provisioning prov = getManager(invoc.getPmSession())) {
+                    output = new ByteArrayOutputStream();
+                    PrintWriter writer = new PrintWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8));
+                    prov.writeProvisioningConfig(writer);
+                }
+            } catch (IOException | ProvisioningException e) {
                 throw new CommandExecutionException(invoc.getPmSession(), CliErrors.exportProvisionedFailed(), e);
             }
             try {

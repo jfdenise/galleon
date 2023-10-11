@@ -18,7 +18,7 @@ package org.jboss.galleon.cli.cmd.installation;
 
 import org.aesh.command.CommandDefinition;
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.ProvisioningManager;
+import org.jboss.galleon.api.Provisioning;
 import org.jboss.galleon.cli.CommandExecutionException;
 import org.jboss.galleon.cli.HelpDescriptions;
 import org.jboss.galleon.cli.PmCommandInvocation;
@@ -34,8 +34,9 @@ public class ClearHistoryCommand extends AbstractInstallationCommand {
     @Override
     protected void runCommand(PmCommandInvocation invoc) throws CommandExecutionException {
         try {
-            ProvisioningManager mgr = getManager(invoc.getPmSession());
-            mgr.clearStateHistory();
+            try (Provisioning mgr = getManager(invoc.getPmSession())) {
+                mgr.clearStateHistory();
+            }
         } catch (ProvisioningException ex) {
             throw new CommandExecutionException(invoc.getPmSession(), CliErrors.clearHistoryFailed(), ex);
         }

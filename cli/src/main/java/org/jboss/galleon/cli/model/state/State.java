@@ -30,6 +30,10 @@ import java.util.Set;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.util.PathsUtils;
 import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.api.GalleonProvisioningRuntime;
+import org.jboss.galleon.api.ProvisioningBuilder;
+import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
+import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.cli.PmSession;
 import org.jboss.galleon.cli.model.ConfigInfo;
@@ -56,21 +60,21 @@ public class State {
 
     interface Action {
 
-        void doAction(ProvisioningConfig current, ProvisioningConfig.Builder builder) throws ProvisioningException;
+        void doAction(GalleonProvisioningConfig current, GalleonProvisioningConfig.Builder builder) throws ProvisioningException;
 
-        void undoAction(ProvisioningConfig.Builder builder) throws ProvisioningException;
+        void undoAction(GalleonProvisioningConfig.Builder builder) throws ProvisioningException;
     }
 
-    private ProvisioningConfig config;
+    private GalleonProvisioningConfig config;
     private FeatureContainer container;
 
     private String path;
-    private ProvisioningConfig.Builder builder;
+    private GalleonProvisioningConfig.Builder builder;
     private final FeaturePackProvisioning fpProvisioning = new FeaturePackProvisioning();
     private final Provisioning provisioning = new Provisioning();
     private final ConfigProvisioning configProvisioning = new ConfigProvisioning();
     private final Deque<Action> stack = new ArrayDeque<>();
-    private ProvisioningRuntime runtime;
+    private GalleonProvisioningRuntime runtime;
     private String name;
 
     public State(PmSession pmSession) throws ProvisioningException, IOException {
@@ -82,19 +86,23 @@ public class State {
     }
 
     public State(PmSession pmSession, Path installation) throws ProvisioningException, IOException {
-        ProvisioningConfig conf;
+        GalleonProvisioningConfig conf;
+        Path provisioningPath;
         if (Files.isRegularFile(installation)) {
-            conf = ProvisioningXmlParser.parse(installation);
+            provisioningPath = installation;
         } else {
             PathsUtils.assertInstallationDir(installation);
-            conf = ProvisioningXmlParser.parse(PathsUtils.getProvisioningXml(installation));
+            provisioningPath = PathsUtils.getProvisioningXml(installation);
         }
-
+        ProvisioningBuilder pbuilder = pmSession.getGalleonBuilder().newProvisioningBuilder(provisioningPath);
+        try(org.jboss.galleon.api.Provisioning p = pbuilder.build()) {
+            conf = p.loadProvisioningConfig(provisioningPath);
+        }
         Set<FeaturePackLocation.FPID> dependencies = new HashSet<>();
-        for (FeaturePackConfig cf : conf.getFeaturePackDeps()) {
+        for (GalleonFeaturePackConfig cf : conf.getFeaturePackDeps()) {
             dependencies.add(cf.getLocation().getFPID());
         }
-        builder = ProvisioningConfig.builder(conf);
+        builder = GalleonProvisioningConfig.builder(conf);
         config = buildNewConfig(pmSession);
         path = "" + PathParser.PATH_SEPARATOR;
         name = installation.getFileName().toString();
@@ -104,12 +112,12 @@ public class State {
         return name;
     }
 
-    public ProvisioningRuntime getRuntime() {
+    public GalleonProvisioningRuntime getRuntime() {
         return runtime;
     }
 
     private void init(PmSession pmSession) throws ProvisioningException, IOException {
-        builder = ProvisioningConfig.builder();
+        builder = GalleonProvisioningConfig.builder();
         config = builder.build();
         runtime = ProvisioningRuntimeBuilder.newInstance(pmSession.getMessageWriter(false))
                 .initLayout(pmSession.getLayoutFactory(), config)
@@ -131,7 +139,7 @@ public class State {
         return !stack.isEmpty();
     }
 
-    public ProvisioningConfig getConfig() {
+    public GalleonProvisioningConfig getConfig() {
         return config;
     }
 
@@ -150,7 +158,7 @@ public class State {
         config = pushState(action, pmSession);
     }
 
-    public void includeConfiguration(PmSession pmSession, Map<FeaturePackConfig, ConfigId> cf) throws ProvisioningException, IOException {
+    public void includeConfiguration(PmSession pmSession, Map<GalleonFeaturePackConfig, ConfigId> cf) throws ProvisioningException, IOException {
         Action action = fpProvisioning.includeConfiguration(cf);
         config = pushState(action, pmSession);
     }

@@ -21,12 +21,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.jboss.galleon.ProvisioningManager;
+import org.jboss.galleon.api.GalleonFeaturePackLayout;
+import org.jboss.galleon.api.GalleonProvisioningLayout;
+import org.jboss.galleon.api.Provisioning;
 import org.jboss.galleon.cli.CliLogging;
 import org.jboss.galleon.cli.PmCompleterInvocation;
 import org.jboss.galleon.cli.PmSession;
-import org.jboss.galleon.layout.FeaturePackLayout;
-import org.jboss.galleon.layout.ProvisioningLayout;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.util.PathsUtils;
 
@@ -83,17 +83,17 @@ public class InstalledProducerCompleter extends AbstractCommaSeparatedCompleter 
         List<FeaturePackLocation> items = new ArrayList<>();
         try {
             PathsUtils.assertInstallationDir(installation);
-            ProvisioningManager mgr = session.
-                    newProvisioningManager(installation, false);
-            try (ProvisioningLayout<FeaturePackLayout> layout = mgr.getLayoutFactory().newConfigLayout(mgr.getProvisioningConfig())) {
-                for (FeaturePackLayout fp : layout.getOrderedFeaturePacks()) {
-                    if (fp.isDirectDep() || (fp.isTransitiveDep() && transitive)) {
-                        items.add(fp.getFPID().getLocation());
-                    }
-                    if (patches) {
-                        List<FeaturePackLayout> appliedPatches = layout.getPatches(fp.getFPID());
-                        for (FeaturePackLayout patch : appliedPatches) {
-                            items.add(patch.getFPID().getLocation());
+            try (Provisioning mgr = session.newProvisioning(installation, false)) {
+                try (GalleonProvisioningLayout layout = mgr.newProvisioningLayout(mgr.getProvisioningConfig())) {
+                    for (GalleonFeaturePackLayout fp : layout.getOrderedFeaturePacks()) {
+                        if (fp.isDirectDep() || (fp.isTransitiveDep() && transitive)) {
+                            items.add(fp.getFPID().getLocation());
+                        }
+                        if (patches) {
+                            List<GalleonFeaturePackLayout> appliedPatches = layout.getPatches(fp.getFPID());
+                            for (GalleonFeaturePackLayout patch : appliedPatches) {
+                                items.add(patch.getFPID().getLocation());
+                            }
                         }
                     }
                 }

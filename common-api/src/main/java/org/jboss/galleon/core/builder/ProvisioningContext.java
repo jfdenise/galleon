@@ -18,14 +18,17 @@ package org.jboss.galleon.core.builder;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.xml.stream.XMLStreamException;
+import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.api.GalleonFeaturePackLayout;
+import org.jboss.galleon.api.GalleonProvisioningLayout;
 import org.jboss.galleon.api.GalleonProvisioningRuntime;
 import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.api.config.GalleonConfigurationWithLayers;
@@ -76,6 +79,21 @@ public interface ProvisioningContext extends AutoCloseable {
 
     public boolean hasOrderedFeaturePacksConfig(GalleonProvisioningConfig config, ConfigId cfg) throws ProvisioningException;
 
+    public GalleonProvisioningLayout newProvisioningLayout(GalleonProvisioningConfig config) throws ProvisioningException;
+
+    public GalleonProvisioningLayout newProvisioningLayout(Path file, boolean install) throws ProvisioningException;
+
+    public GalleonProvisioningRuntime toRuntime(GalleonProvisioningLayout layout, MessageWriter msgWriter) throws ProvisioningException;
+
+    public GalleonProvisioningRuntime getProvisioningRuntime(GalleonProvisioningLayout layout) throws ProvisioningException;
+
+    public void clearStateHistory() throws ProvisioningException;
+
+    public void exportProvisioningConfig(Path location) throws ProvisioningException, IOException;
+
+    public void writeProvisioningConfig(PrintWriter writer) throws IOException, ProvisioningException;
+    public int getStateHistoryLimit() throws ProvisioningException;
+public void setStateHistoryLimit(int limit) throws ProvisioningException;
     @Override
     public void close();
 }

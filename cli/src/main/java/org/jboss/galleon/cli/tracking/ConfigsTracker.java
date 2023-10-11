@@ -16,15 +16,15 @@
  */
 package org.jboss.galleon.cli.tracking;
 
+import org.jboss.galleon.api.config.GalleonProvisionedConfig;
 import org.jboss.galleon.cli.PmSession;
 import org.jboss.galleon.progresstracking.ProgressTracker;
-import org.jboss.galleon.state.ProvisionedConfig;
 
 /**
  *
  * @author jdenise@redhat.com
  */
-public class ConfigsTracker extends CliProgressTracker<ProvisionedConfig> {
+public class ConfigsTracker extends CliProgressTracker<GalleonProvisionedConfig> {
 
     static final String DELAYED_EXECUTION_MSG = "Delayed generation, waiting...";
 
@@ -33,7 +33,7 @@ public class ConfigsTracker extends CliProgressTracker<ProvisionedConfig> {
     }
 
     @Override
-    protected String processingContent(ProgressTracker<ProvisionedConfig> tracker) {
+    protected String processingContent(ProgressTracker<GalleonProvisionedConfig> tracker) {
         if(tracker.getItem() == null) {
             // Delayed use case
             return DELAYED_EXECUTION_MSG;
@@ -42,7 +42,7 @@ public class ConfigsTracker extends CliProgressTracker<ProvisionedConfig> {
     }
 
     @Override
-    protected String completeContent(ProgressTracker<ProvisionedConfig> tracker) {
+    protected String completeContent(ProgressTracker<GalleonProvisionedConfig> tracker) {
         return "";
     }
 

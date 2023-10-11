@@ -31,7 +31,6 @@ import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.Producer;
 import org.jboss.galleon.universe.Universe;
 import org.jboss.galleon.universe.UniverseSpec;
-import org.jboss.galleon.universe.galleon1.LegacyGalleon1UniverseFactory;
 
 /**
  *
@@ -73,9 +72,6 @@ public class FPLocationCompleter implements OptionCompleter<PmCompleterInvocatio
                 }
                 for (String name : aliases) {
                     UniverseSpec u = pmSession.getUniverse().getUniverseSpec(installation, name);
-                    if (u.getFactory().equals(LegacyGalleon1UniverseFactory.ID)) {
-                        continue;
-                    }
                     if (!u.equals(defaultUniverse)) {
                         getAllProducers(u.toString(), u, resolver.getUniverse(u), candidates);
                     }
@@ -116,7 +112,7 @@ public class FPLocationCompleter implements OptionCompleter<PmCompleterInvocatio
                     public void completeUniverseLocation(FPLocationParser.ParsedFPLocation parsedLocation, String universeLocation) throws FPLocationParserException, ProvisioningException {
                         for (String name : aliases) {
                             UniverseSpec spec = pmSession.getUniverse().getUniverseSpec(installation, name);
-                            if (spec == null || spec.getFactory().equals(LegacyGalleon1UniverseFactory.ID)) {
+                            if (spec == null) {
                                 continue;
                             }
                             if (!candidates.contains(spec.getLocation())) {

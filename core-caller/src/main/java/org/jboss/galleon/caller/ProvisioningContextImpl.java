@@ -20,6 +20,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningManager;
 import org.jboss.galleon.api.GalleonFeaturePackLayout;
+import org.jboss.galleon.api.GalleonProvisioningLayout;
 import org.jboss.galleon.api.GalleonProvisioningRuntime;
 import org.jboss.galleon.config.ConfigModel;
 import org.jboss.galleon.config.ProvisioningConfig;
@@ -54,6 +56,8 @@ import org.jboss.galleon.core.builder.ProvisioningContext;
 import org.jboss.galleon.diff.FsDiff;
 import org.jboss.galleon.layout.ProvisioningLayoutFactory;
 import org.jboss.galleon.progresstracking.ProgressTracker;
+import org.jboss.galleon.runtime.ProvisioningRuntime;
+import org.jboss.galleon.runtime.ProvisioningRuntimeBuilder;
 import org.jboss.galleon.spec.FeaturePackPlugin;
 import org.jboss.galleon.state.ProvisionedFeaturePack;
 import org.jboss.galleon.universe.FeaturePackLocation;
@@ -239,6 +243,63 @@ public class ProvisioningContextImpl implements ProvisioningContext {
             }
         }
         return false;
+    }
+
+    @Override
+    public GalleonProvisioningLayout newProvisioningLayout(GalleonProvisioningConfig config) throws ProvisioningException {
+        ProvisioningLayout<FeaturePackLayout> layout = getLayoutFactory().newConfigLayout(ProvisioningConfig.toConfig(config));
+        return new GalleonProvisioningLayoutImpl(layout);
+    }
+
+    @Override
+    public GalleonProvisioningLayout newProvisioningLayout(Path file, boolean install) throws ProvisioningException {
+        ProvisioningLayout<FeaturePackLayout> layout = getLayoutFactory().newConfigLayout(file, install);
+        return new GalleonProvisioningLayoutImpl(layout);
+    }
+
+    @Override
+    public GalleonProvisioningRuntime toRuntime(GalleonProvisioningLayout layout, MessageWriter msgWriter) throws ProvisioningException {
+        GalleonProvisioningLayoutImpl impl = (GalleonProvisioningLayoutImpl) layout;
+        ProvisioningLayout<FeaturePackLayout> pLayout = impl.getLayout();
+        return ProvisioningRuntimeBuilder.
+                newInstance(msgWriter)
+                .initRtLayout(pLayout.transform(ProvisioningRuntimeBuilder.FP_RT_FACTORY))
+                .build();
+    }
+
+    @Override
+    public GalleonProvisioningRuntime getProvisioningRuntime(GalleonProvisioningLayout layout) throws ProvisioningException {
+        GalleonProvisioningLayoutImpl impl = (GalleonProvisioningLayoutImpl) layout;
+        return getManager().getRuntime(impl.getLayout());
+    }
+
+    @Override
+    public void clearStateHistory() throws ProvisioningException {
+        getManager().clearStateHistory();
+    }
+
+    @Override
+    public void exportProvisioningConfig(Path location) throws ProvisioningException, IOException {
+        getManager().exportProvisioningConfig(location);
+    }
+
+    @Override
+    public void writeProvisioningConfig(PrintWriter writer) throws IOException, ProvisioningException {
+        try {
+            ProvisioningXmlWriter.getInstance().write(getManager().getProvisioningConfig(), writer);
+        } catch (XMLStreamException ex) {
+            throw new ProvisioningException(ex);
+        }
+    }
+    
+    @Override
+    public int getStateHistoryLimit() throws ProvisioningException {
+        return getManager().getStateHistoryLimit();
+    }
+
+    @Override
+    public void setStateHistoryLimit(int limit) throws ProvisioningException {
+        getManager().setStateHistoryLimit(limit);
     }
 
     private ProvisioningManager getManager() throws ProvisioningException {

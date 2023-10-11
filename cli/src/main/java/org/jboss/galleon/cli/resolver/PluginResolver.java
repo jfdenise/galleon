@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,14 +23,13 @@ import java.util.Set;
 import org.jboss.galleon.ProvisioningDescriptionException;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.ProvisioningOption;
+import org.jboss.galleon.api.GalleonProvisioningLayout;
+import org.jboss.galleon.api.Provisioning;
+import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.cli.PmSession;
 import org.jboss.galleon.cli.resolver.ResourceResolver.Resolver;
-import org.jboss.galleon.config.ProvisioningConfig;
-import org.jboss.galleon.layout.FeaturePackLayout;
 import org.jboss.galleon.layout.FeaturePackPluginVisitor;
-import org.jboss.galleon.layout.ProvisioningLayout;
-import org.jboss.galleon.plugin.InstallPlugin;
-import org.jboss.galleon.plugin.StateDiffPlugin;
+import org.jboss.galleon.plugin.ProvisioningPlugin;
 import org.jboss.galleon.universe.FeaturePackLocation;
 
 /**
@@ -39,12 +38,12 @@ import org.jboss.galleon.universe.FeaturePackLocation;
  */
 public class PluginResolver implements Resolver<ResolvedPlugins> {
 
-    private ProvisioningConfig config;
+    private GalleonProvisioningConfig config;
     private Path file;
     private final PmSession session;
-    private ProvisioningLayout<FeaturePackLayout> layout;
+    private GalleonProvisioningLayout layout;
 
-    private PluginResolver(PmSession session, ProvisioningConfig config) {
+    private PluginResolver(PmSession session, GalleonProvisioningConfig config) {
         Objects.requireNonNull(session);
         Objects.requireNonNull(config);
         this.session = session;
@@ -58,7 +57,7 @@ public class PluginResolver implements Resolver<ResolvedPlugins> {
         this.file = file;
     }
 
-    private PluginResolver(PmSession session, ProvisioningLayout<FeaturePackLayout> layout) {
+    private PluginResolver(PmSession session, GalleonProvisioningLayout layout) {
         Objects.requireNonNull(session);
         Objects.requireNonNull(layout);
         this.session = session;
@@ -66,11 +65,11 @@ public class PluginResolver implements Resolver<ResolvedPlugins> {
     }
 
     public static PluginResolver newResolver(PmSession session,
-            ProvisioningLayout<FeaturePackLayout> layout) {
+            GalleonProvisioningLayout layout) {
         return new PluginResolver(session, layout);
     }
 
-    public static PluginResolver newResolver(PmSession session, ProvisioningConfig config) {
+    public static PluginResolver newResolver(PmSession session, GalleonProvisioningConfig config) {
         return new PluginResolver(session, config);
     }
 
@@ -79,24 +78,28 @@ public class PluginResolver implements Resolver<ResolvedPlugins> {
     }
 
     public static PluginResolver newResolver(PmSession session, FeaturePackLocation loc) throws ProvisioningDescriptionException {
-        ProvisioningConfig config = ProvisioningConfig.builder().addFeaturePackDep(loc).build();
+        GalleonProvisioningConfig config = GalleonProvisioningConfig.builder().addFeaturePackDep(loc).build();
         return new PluginResolver(session, config);
     }
 
     @Override
     public ResolvedPlugins resolve() throws ResolutionException {
         boolean closeLayout = layout == null;
-        ProvisioningLayout<FeaturePackLayout> pLayout = layout;
+        GalleonProvisioningLayout pLayout = layout;
         // Silent resolution.
         session.unregisterTrackers();
+        Provisioning provisioning = null;
         try {
             try {
+                
                 if (pLayout == null) {
                     if (config != null) {
-                        pLayout = session.getLayoutFactory().newConfigLayout(config);
+                        provisioning = session.newProvisioning(config, false);
+                        pLayout = provisioning.newProvisioningLayout(config);
                     } else {
                         // No registration in universe during completion
-                        pLayout = session.getLayoutFactory().newConfigLayout(file, false);
+                        provisioning = session.newProvisioning(file, false);
+                        pLayout = provisioning.newProvisioningLayout(file, false);
                     }
                 }
                 return resolvePlugins(pLayout);
@@ -107,30 +110,33 @@ public class PluginResolver implements Resolver<ResolvedPlugins> {
                 if (closeLayout && pLayout != null) {
                     pLayout.close();
                 }
+                if(provisioning != null) {
+                    provisioning.close();
+                }
             }
         } finally {
             session.registerTrackers();
         }
     }
 
-    public static ResolvedPlugins resolvePlugins(ProvisioningLayout<FeaturePackLayout> layout) throws ProvisioningException {
+    public static ResolvedPlugins resolvePlugins(GalleonProvisioningLayout layout) throws ProvisioningException {
         final Set<ProvisioningOption> installOptions = new HashSet<>(ProvisioningOption.getStandardList());
         final Set<ProvisioningOption> diffOptions = new HashSet<>(ProvisioningOption.getStandardList());
         if (layout.hasPlugins()) {
-            FeaturePackPluginVisitor<InstallPlugin> visitor = new FeaturePackPluginVisitor<InstallPlugin>() {
+            FeaturePackPluginVisitor<ProvisioningPlugin> visitor = new FeaturePackPluginVisitor<>() {
                 @Override
-                public void visitPlugin(InstallPlugin plugin) throws ProvisioningException {
+                public void visitPlugin(ProvisioningPlugin plugin) throws ProvisioningException {
                     installOptions.addAll(plugin.getOptions().values());
                 }
             };
-            layout.visitPlugins(visitor, InstallPlugin.class);
-            FeaturePackPluginVisitor<StateDiffPlugin> diffVisitor = new FeaturePackPluginVisitor<StateDiffPlugin>() {
+            layout.visitPlugins(visitor, "org.jboss.galleon.plugin.InstallPlugin");
+            FeaturePackPluginVisitor<ProvisioningPlugin> diffVisitor = new FeaturePackPluginVisitor<>() {
                 @Override
-                public void visitPlugin(StateDiffPlugin plugin) throws ProvisioningException {
+                public void visitPlugin(ProvisioningPlugin plugin) throws ProvisioningException {
                     diffOptions.addAll(plugin.getOptions().values());
                 }
             };
-            layout.visitPlugins(diffVisitor, StateDiffPlugin.class);
+            layout.visitPlugins(diffVisitor, "org.jboss.galleon.plugin.StateDiffPlugin");
         }
         return new ResolvedPlugins(installOptions, diffOptions);
     }

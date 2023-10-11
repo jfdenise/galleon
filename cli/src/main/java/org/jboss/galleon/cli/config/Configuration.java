@@ -31,12 +31,12 @@ import java.util.Map;
 import java.util.Properties;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
-import org.jboss.galleon.Errors;
+import org.jboss.galleon.BaseErrors;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.cli.cmd.CliErrors;
 import org.jboss.galleon.cli.config.mvn.MavenConfig.MavenChangeListener;
 import org.jboss.galleon.util.IoUtils;
-import org.jboss.galleon.xml.XmlParsers;
+import org.jboss.galleon.xml.XmlBaseParsers;
 import org.jboss.galleon.xml.util.FormattingXmlStreamWriter;
 
 /**
@@ -46,7 +46,7 @@ import org.jboss.galleon.xml.util.FormattingXmlStreamWriter;
 public class Configuration implements MavenChangeListener {
 
     static {
-        new ConfigXmlParser10().plugin(XmlParsers.getInstance());
+        new ConfigXmlParser10().plugin(XmlBaseParsers.getInstance());
     }
 
     // Monthly cleanup, could be made configurable.
@@ -146,9 +146,9 @@ public class Configuration implements MavenChangeListener {
         Path configFile = getConfigFile();
         if (Files.exists(configFile)) {
             try (BufferedReader reader = Files.newBufferedReader(configFile)) {
-                XmlParsers.parse(reader, config);
+                XmlBaseParsers.parse(reader, config);
             } catch (IOException | XMLStreamException e) {
-                throw new ProvisioningException(Errors.parseXml(configFile), e);
+                throw new ProvisioningException(BaseErrors.parseXml(configFile), e);
             }
         }
         return config;

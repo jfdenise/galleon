@@ -31,12 +31,12 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import javax.xml.stream.XMLStreamException;
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.ProvisioningManager;
+import org.jboss.galleon.api.Provisioning;
+import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.cli.cmd.CliErrors;
 import org.jboss.galleon.cli.config.Configuration;
 import org.jboss.galleon.cli.config.mvn.MavenConfig;
 import org.jboss.galleon.cli.config.mvn.MavenConfig.MavenChangeListener;
-import org.jboss.galleon.config.ProvisioningConfig;
 import org.jboss.galleon.universe.Channel;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.Producer;
@@ -191,14 +191,14 @@ public class UniverseManager implements MavenChangeListener {
         return universeResolver.resolveLatestBuild(fpl);
     }
 
-    private ProvisioningManager getProvisioningManager(Path installation) throws ProvisioningException {
+    private Provisioning getProvisioning(Path installation) throws ProvisioningException {
         if (installation == null) {
             throw new ProvisioningException(CliErrors.noDirectoryProvided());
         }
         if (!Files.exists(PathsUtils.getProvisioningXml(installation))) {
             throw new ProvisioningException(CliErrors.notValidInstallation(installation));
         }
-        ProvisioningManager mgr = pmSession.newProvisioningManager(installation, false);
+        Provisioning mgr = pmSession.newProvisioning(installation, false);
         return mgr;
     }
 
@@ -210,7 +210,7 @@ public class UniverseManager implements MavenChangeListener {
 
     public void addUniverse(Path installation, String name, String factory, String location) throws ProvisioningException, IOException {
         UniverseSpec u = new UniverseSpec(factory, location);
-        ProvisioningManager mgr = getProvisioningManager(installation);
+        Provisioning mgr = getProvisioning(installation);
 
         if (name != null) {
             mgr.addUniverse(name, u);
@@ -234,7 +234,7 @@ public class UniverseManager implements MavenChangeListener {
     }
 
     public void removeUniverse(Path installation, String name) throws ProvisioningException, IOException {
-        ProvisioningManager mgr = getProvisioningManager(installation);
+        Provisioning mgr = getProvisioning(installation);
         // Remove default if name is null
         mgr.removeUniverse(name);
     }
@@ -244,7 +244,7 @@ public class UniverseManager implements MavenChangeListener {
             return pmSession.getState().getConfig().getUniverseNamedSpecs().keySet();
         }
         try {
-            ProvisioningManager mgr = getProvisioningManager(installation);
+            Provisioning mgr = getProvisioning(installation);
             return mgr.getProvisioningConfig().getUniverseNamedSpecs().keySet();
         } catch (ProvisioningException ex) {
             return Collections.emptySet();
@@ -257,7 +257,7 @@ public class UniverseManager implements MavenChangeListener {
             defaultUniverse = pmSession.getState().getConfig().getDefaultUniverse();
         } else {
             try {
-                ProvisioningManager mgr = getProvisioningManager(installation);
+                Provisioning mgr = getProvisioning(installation);
                 defaultUniverse = mgr.getProvisioningConfig().getDefaultUniverse();
             } catch (ProvisioningException ex) {
                 // OK, not an installation
@@ -267,12 +267,12 @@ public class UniverseManager implements MavenChangeListener {
     }
 
     public String getUniverseName(Path installation, UniverseSpec u) {
-        ProvisioningConfig config = null;
+        GalleonProvisioningConfig config = null;
         if (pmSession.getState() != null) {
             config = pmSession.getState().getConfig();
         } else {
             try {
-                config = getProvisioningManager(installation).getProvisioningConfig();
+                config = getProvisioning(installation).getProvisioningConfig();
             } catch (ProvisioningException ex) {
                 return null;
             }
@@ -286,12 +286,12 @@ public class UniverseManager implements MavenChangeListener {
     }
 
     public UniverseSpec getUniverseSpec(Path installation, String name) {
-        ProvisioningConfig config;
+        GalleonProvisioningConfig config;
         if (pmSession.getState() != null) {
             config = pmSession.getState().getConfig();
         } else {
             try {
-                config = getProvisioningManager(installation).getProvisioningConfig();
+                config = getProvisioning(installation).getProvisioningConfig();
             } catch (ProvisioningException ex) {
                 return null;
             }
