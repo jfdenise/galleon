@@ -102,8 +102,8 @@ public class ProvisioningUtil {
                 Path spec = getFeaturePackSpec(resolvedFP, tmp);
                 String fpVersion = FeaturePackLightXmlParser.parseVersion(spec);
                 //System.out.println("Found a version in FP " + fpid + " version is " + fpVersion);
-                if (fpVersion != null) {
-                    if (fpVersion.compareTo(version) > 0) {
+                if (fpVersion != null && !fpVersion.isEmpty()) {
+                    if (VersionMatcher.COMPARATOR.compare(fpVersion, version) > 0) {
                         version = fpVersion;
                     }
                 }
