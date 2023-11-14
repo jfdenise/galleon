@@ -57,12 +57,12 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: echo "galleon-version=$(mvn -B help:evaluate -Dexpression=project.version -DforceStdout -q)" >> $GITHUB_OUTPUT
       - name: Archive the repository
-        if: matrix.java == '11' && if: matrix.os == 'ubuntu-latest'
+        if: matrix.java == '11' && matrix.os == 'ubuntu-latest'
         run:  |
           cd ~
           find ./.m2/repository -type d -name "*SNAPSHOT" -print0 | xargs -0 tar -czf ~/galleon-maven-repository.tar.gz  
       - uses: actions/upload-artifact@v3
-        if: matrix.java == '11' && if: matrix.os == 'ubuntu-latest'
+        if: matrix.java == '11' && matrix.os == 'ubuntu-latest'
         with:
           name: galleon-maven-repository
           path: ~/galleon-maven-repository.tar.gz
