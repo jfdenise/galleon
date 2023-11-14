@@ -26,9 +26,11 @@ on:
 
 
 jobs:
-  build:
+  galleon-build:
     name: ${{ matrix.os }}-jdk${{ matrix.java }}
     runs-on: ${{ matrix.os }}
+    outputs:
+      galleon-version: ${{ steps.version.outputs.galleon-version }}
     strategy:
       fail-fast: false
       matrix:
@@ -50,10 +52,35 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
       - name: Build and Test on ${{ matrix.java }}
-        run: mvn clean install
+        run: mvn clean install -Drelease
+      - id: version
+        run: echo "galleon-version=$(mvn -B help:evaluate -Dexpression=project.version -DforceStdout -q)" >> $GITHUB_OUTPUT
+      - name: Archive the repository
+        if: matrix.java == '11'
+        run:  |
+          cd ~
+          find ./.m2/repository -type d -name "*SNAPSHOT" -print0 | xargs -0 tar -czf ~/galleon-maven-repository.tar.gz  
+      - uses: actions/upload-artifact@v3
+        if: matrix.java == '11'
+        with:
+          name: galleon-maven-repository
+          path: ~/galleon-maven-repository.tar.gz
+          retention-days: 5
       - uses: actions/upload-artifact@v2
         if: failure()
         with:
           name: surefire-reports-${{ matrix.os }}-${{ matrix.java }}
           path: | 
            **/surefire-reports/*.txt
+ 
+  wildfly-build-and-test-galleon-layers:
+    name: Galleon Linux - JDK11
+    uses: jfdenise/wildfly/.github/workflows/shared-wildfly-build-and-test.yml@shared_build
+    with:
+      test-arguments: '-Dts.layers -Dts.galleon'
+      build-arguments: '-Dversion.org.wildfly.galleon=${{needs.galleon-build.outputs.galleon-version}}'
+      os: "['ubuntu-latest']"
+      java-versions: "['11']"
+      maven-repo-name: galleon-maven-repository
+      maven-repo-path: galleon-maven-repository.tar.gz
+    needs: galleon-build
