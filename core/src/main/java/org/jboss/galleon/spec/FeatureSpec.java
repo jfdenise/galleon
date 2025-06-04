@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2025 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,6 +38,7 @@ public class FeatureSpec extends PackageDepsSpec {
 
         private String name;
         private Stability stability;
+        private String description;
         private Map<String, FeatureAnnotation> annotations = Collections.emptyMap();
         private Map<FeatureId, FeatureDependencySpec> featureDeps = Collections.emptyMap();
         private Map<String, FeatureReferenceSpec> refs = Collections.emptyMap();
@@ -55,6 +56,11 @@ public class FeatureSpec extends PackageDepsSpec {
 
         public Builder setName(String name) {
             this.name = name;
+            return this;
+        }
+
+        public Builder setDescription(String description) {
+            this.description = description;
             return this;
         }
 
@@ -147,6 +153,7 @@ public class FeatureSpec extends PackageDepsSpec {
 
     final String name;
     final Stability stability;
+    final String description;
     final Map<String, FeatureAnnotation> annotations;
     final Map<FeatureId, FeatureDependencySpec> featureDeps;
     final Map<String, FeatureReferenceSpec> featureRefs;
@@ -158,6 +165,7 @@ public class FeatureSpec extends PackageDepsSpec {
     private FeatureSpec(Builder builder) {
         super(builder);
         this.name = builder.name;
+        this.description = builder.description;
         this.stability = builder.stability;
         this.annotations = CollectionUtils.unmodifiable(builder.annotations);
         this.featureDeps = CollectionUtils.unmodifiable(builder.featureDeps);
@@ -170,6 +178,10 @@ public class FeatureSpec extends PackageDepsSpec {
 
     public String getName() {
         return name;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     public Stability getStability() {

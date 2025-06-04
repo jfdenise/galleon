@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2025 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -132,6 +132,7 @@ class FeatureSpecXmlParser20 implements PlugableXmlParser<FeatureSpec.Builder> {
 
         DEFAULT("default"),
         DEPENDENCY("dependency"),
+        DESCRIPTION("description"),
         FEATURE("feature"),
         FEATURE_ID("feature-id"),
         INCLUDE("include"),
@@ -152,6 +153,7 @@ class FeatureSpecXmlParser20 implements PlugableXmlParser<FeatureSpec.Builder> {
             attributes = new HashMap<>(12);
             attributes.put(new QName(DEFAULT.name), DEFAULT);
             attributes.put(new QName(DEPENDENCY.name), DEPENDENCY);
+            attributes.put(new QName(DESCRIPTION.name), DESCRIPTION);
             attributes.put(new QName(FEATURE.name), FEATURE);
             attributes.put(new QName(FEATURE_ID.name), FEATURE_ID);
             attributes.put(new QName(INCLUDE.name), INCLUDE);
@@ -208,6 +210,7 @@ class FeatureSpecXmlParser20 implements PlugableXmlParser<FeatureSpec.Builder> {
         final int count = reader.getAttributeCount();
         String specName = null;
         String specStability = null;
+        String specDescription = null;
         for (int i = 0; i < count; i++) {
             final Attribute attribute = Attribute.of(reader.getAttributeName(i));
             switch (attribute) {
@@ -216,6 +219,9 @@ class FeatureSpecXmlParser20 implements PlugableXmlParser<FeatureSpec.Builder> {
                     break;
                 case STABILITY:
                     specStability = reader.getAttributeValue(i);
+                    break;
+                case DESCRIPTION:
+                    specDescription = reader.getAttributeValue(i);
                     break;
                 default:
                     throw ParsingUtils.unexpectedAttribute(reader, i);
@@ -226,7 +232,7 @@ class FeatureSpecXmlParser20 implements PlugableXmlParser<FeatureSpec.Builder> {
         }
         featureBuilder.setName(specName);
         featureBuilder.setStability(specStability);
-
+        featureBuilder.setDescription(specDescription);
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
@@ -558,6 +564,9 @@ class FeatureSpecXmlParser20 implements PlugableXmlParser<FeatureSpec.Builder> {
             switch (attribute) {
                 case NAME:
                     builder.setName(reader.getAttributeValue(i));
+                    break;
+                case DESCRIPTION:
+                    builder.setDescription(reader.getAttributeValue(i));
                     break;
                 case FEATURE_ID:
                     if(Boolean.parseBoolean(reader.getAttributeValue(i))) {

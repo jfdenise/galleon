@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2025 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,6 +34,7 @@ public class FeatureParameterSpec {
         private String defaultValue;
         private String type = Constants.BUILT_IN_TYPE_STRING;
         private Stability stability;
+        private String description;
 
         private Builder() {
         }
@@ -87,6 +88,11 @@ public class FeatureParameterSpec {
             return this;
         }
 
+        public Builder setDescription(String description) {
+            this.description = description;
+            return this;
+        }
+
         public FeatureParameterSpec build() throws ProvisioningDescriptionException {
             return new FeatureParameterSpec(this);
         }
@@ -114,27 +120,31 @@ public class FeatureParameterSpec {
     }
 
     public static FeatureParameterSpec create(String name) throws ProvisioningDescriptionException {
-        return new FeatureParameterSpec(name, false, false, null, null);
+        return new FeatureParameterSpec(name, false, false, null, null, null);
     }
 
     public static FeatureParameterSpec create(String name, String value) throws ProvisioningDescriptionException {
-        return new FeatureParameterSpec(name, false, false, value, null);
+        return new FeatureParameterSpec(name, false, false, value, null, null);
     }
 
     public static FeatureParameterSpec create(String name, boolean nillable) throws ProvisioningDescriptionException {
-        return new FeatureParameterSpec(name, false, nillable, null, null);
+        return new FeatureParameterSpec(name, false, nillable, null, null, null);
     }
 
     public static FeatureParameterSpec createId(String name) throws ProvisioningDescriptionException {
-        return new FeatureParameterSpec(name, true, false, null, null);
+        return new FeatureParameterSpec(name, true, false, null, null, null);
     }
 
     public static FeatureParameterSpec create(String name, boolean featureId, boolean nillable, String defaultValue) throws ProvisioningDescriptionException {
-        return new FeatureParameterSpec(name, featureId, nillable, defaultValue, null);
+        return new FeatureParameterSpec(name, featureId, nillable, defaultValue, null, null);
     }
 
     public static FeatureParameterSpec create(String name, boolean featureId, boolean nillable, String defaultValue, Stability stability) throws ProvisioningDescriptionException {
-        return new FeatureParameterSpec(name, featureId, nillable, defaultValue, stability);
+        return new FeatureParameterSpec(name, featureId, nillable, defaultValue, stability, null);
+    }
+
+    public static FeatureParameterSpec create(String name, boolean featureId, boolean nillable, String defaultValue, Stability stability, String description) throws ProvisioningDescriptionException {
+        return new FeatureParameterSpec(name, featureId, nillable, defaultValue, stability, description);
     }
 
     final String name;
@@ -143,8 +153,9 @@ public class FeatureParameterSpec {
     final String defaultValue;
     final String type;
     final Stability stability;
+    final String description;
 
-    private FeatureParameterSpec(String name, boolean featureId, boolean nillable, String defaultValue, Stability stability) throws ProvisioningDescriptionException {
+    private FeatureParameterSpec(String name, boolean featureId, boolean nillable, String defaultValue, Stability stability, String description) throws ProvisioningDescriptionException {
         if (featureId && nillable) {
             throw new ProvisioningDescriptionException("ID parameter " + name + " cannot be nillable.");
         }
@@ -154,6 +165,7 @@ public class FeatureParameterSpec {
         this.defaultValue = defaultValue;
         this.type = Constants.BUILT_IN_TYPE_STRING;
         this.stability = stability;
+        this.description = description;
     }
 
     private FeatureParameterSpec(Builder builder) throws ProvisioningDescriptionException {
@@ -166,6 +178,7 @@ public class FeatureParameterSpec {
         this.defaultValue = builder.defaultValue;
         this.type = builder.type;
         this.stability = builder.getStability();
+        this.description = builder.description;
     }
 
     public String getName() {
@@ -194,6 +207,10 @@ public class FeatureParameterSpec {
 
     public String getType() {
         return type;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     @Override

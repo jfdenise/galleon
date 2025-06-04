@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2025 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,6 +54,9 @@ public class FeatureSpecXmlWriter extends BaseXmlWriter<FeatureSpec> {
         addAttribute(specE, Attribute.NAME, featureSpec.getName());
         if (featureSpec.getStability() != null) {
             addAttribute(specE, Attribute.STABILITY, featureSpec.getStability().toString());
+        }
+        if (featureSpec.getDescription()!= null) {
+            addAttribute(specE, Attribute.DESCRIPTION, featureSpec.getDescription());
         }
         if(featureSpec.hasAnnotations()) {
             for (FeatureAnnotation fa : featureSpec.getAnnotations()) {
@@ -136,6 +139,9 @@ public class FeatureSpecXmlWriter extends BaseXmlWriter<FeatureSpec> {
                 }
                 if(paramSpec.getStability()!= null) {
                     addAttribute(paramE, Attribute.STABILITY, paramSpec.getStability().toString());
+                }
+                if(paramSpec.getDescription()!= null) {
+                    addAttribute(paramE, Attribute.DESCRIPTION, paramSpec.getDescription());
                 }
             }
         }
