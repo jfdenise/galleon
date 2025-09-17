@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2025 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,6 +50,8 @@ import org.jboss.galleon.CoreVersion;
 import org.jboss.galleon.config.FeaturePackConfig;
 import org.jboss.galleon.config.FeaturePackDepsConfig;
 import org.jboss.galleon.config.ProvisioningConfig;
+import org.jboss.galleon.layout.FeaturePackFamily.FamilyResolutionResult;
+import org.jboss.galleon.layout.FeaturePackFamily.FeaturePackFamilyResolution;
 import org.jboss.galleon.plugin.InstallPlugin;
 import org.jboss.galleon.plugin.ProvisioningPlugin;
 import org.jboss.galleon.progresstracking.ProgressTracker;
@@ -344,6 +346,7 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
 
     private ProgressTracker<ProducerSpec> updatesTracker;
     private ProgressTracker<FPID> buildTracker;
+    private final FeaturePackFamily featurePackFamily = new FeaturePackFamily();
 
     ProvisioningLayout(ProvisioningLayoutFactory layoutFactory, ProvisioningConfig config, FeaturePackLayoutFactory<F> fpFactory, boolean initPluginOptions)
             throws ProvisioningException {
@@ -1082,13 +1085,14 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
                 }
                 final FPID branchId = branch.get(fpl.getProducer());
                 if (branchId != null) {
-                    if (!branchId.getChannel().getName().equals(fpl.getChannel().getName())) {
+                    if (branchId.getChannel().getName() != null && fpl.getChannel().getName() != null &&
+                            !branchId.getChannel().getName().equals(fpl.getChannel().getName())) {
                         addConflict(fpl.getFPID(), branchId);
                     }
                     continue;
                 }
                 if(fpl.isMavenCoordinates()) {
-                    final F f = resolveFeaturePack(fpl, FeaturePackLayout.TRANSITIVE_DEP, true);
+                    final F f = resolveFeaturePack(fpl, FeaturePackLayout.TRANSITIVE_DEP);
                     fpl = f.getSpec().getFPID().getLocation();
                     registerResolvedVersion(transitiveConfig.getLocation().getProducer(), fpl);
                     registerMavenProducer(transitiveConfig.getLocation().getProducer(), f);
@@ -1117,7 +1121,7 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
                     continue;
                 }
             }
-            fp = resolveFeaturePack(fpl, type, true);
+            fp = resolveFeaturePack(fpl, type);
             if(fpl.isMavenCoordinates()) {
                 if(branchId == null) {
                     branchId = branch.get(fp.getFPID().getProducer());
@@ -1133,7 +1137,7 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
                 }
                 if (!fpl.equals(resolvedFpl)) {
                     if (branchId != null) {
-                        fp = resolveFeaturePack(resolvedFpl, type, true);
+                        fp = resolveFeaturePack(resolvedFpl, type);
                     } else {
                         registerResolvedVersion(fpl.getProducer(), resolvedFpl);
                     }
@@ -1206,23 +1210,31 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
         mavenProducers.put(producer, f);
     }
 
-    private F resolveFeaturePack(FeaturePackLocation fpl, int type, boolean translateSpecFpl) throws ProvisioningException {
+    private F resolveFeaturePack(FeaturePackLocation fpl, int type) throws ProvisioningException {
         buildTracker.processing(fpl.getFPID());
         F fp = layoutFactory.resolveFeaturePack(fpl, type, fpFactory);
         buildTracker.processed(fpl.getFPID());
-        if(!translateSpecFpl) {
-            return fp;
-        }
         FeaturePackSpec.Builder rebuilder = null;
         FeaturePackSpec fpSpec = fp.getSpec();
+        FeaturePackFamilyResolution resolution = featurePackFamily.newResolution(fp.getSpec(), fpl, (FeaturePackLocation loc) -> {
+            return layoutFactory.resolveFeaturePack(loc, type, fpFactory).getSpec();
+        });
         if(fpSpec.hasTransitiveDeps()) {
             int i = 0;
             for(FeaturePackConfig dep : fpSpec.getTransitiveDeps()) {
+                FamilyResolutionResult result = resolution.resolveDependency(dep);
+                dep = result.getResolvedDependency();
+                if (result.isDifferentMember()) {
+                    if (rebuilder == null) {
+                        rebuilder = getSpecRebuilder(fp.fpid, fpSpec);
+                    }
+                }
+
                 if(dep.getLocation().isMavenCoordinates()) {
-                    final F fpDep = resolveFeaturePack(dep.getLocation(), type, false);
+                    final F fpDep = resolveFeaturePack(dep.getLocation(), type);
                     if (fpDep.getFPID().getLocation().isMavenCoordinates()) {
                         if (rebuilder != null) {
-                            rebuilder.addFeaturePackDep(fpSpec.originOf(dep.getLocation().getProducer()), dep);
+                            rebuilder.addFeaturePackDep(fpSpec.originOf(result.getOriginalDependency().getLocation().getProducer()), dep);
                         }
                     } else {
                         if (rebuilder == null) {
@@ -1237,8 +1249,13 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
                                 }
                             }
                         }
-                        rebuilder.addFeaturePackDep(fpSpec.originOf(dep.getLocation().getProducer()),
+                        if(result.isDifferentMember()) {
+                            rebuilder.addFeaturePackDep(fpSpec.originOf(result.getOriginalDependency().getLocation().getProducer()),
+                                FeaturePackConfig.transitiveBuilder(dep.getLocation()).init(dep).build());
+                        } else {
+                            rebuilder.addFeaturePackDep(fpSpec.originOf(result.getOriginalDependency().getLocation().getProducer()),
                                 FeaturePackConfig.transitiveBuilder(fpDep.getFPID().getLocation()).init(dep).build());
+                        }
                     }
                 } else if(rebuilder != null) {
                     rebuilder.addFeaturePackDep(fpSpec.originOf(dep.getLocation().getProducer()), dep);
@@ -1249,11 +1266,18 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
         if(fpSpec.hasFeaturePackDeps()) {
             int i = 0;
             for(FeaturePackConfig dep : fpSpec.getFeaturePackDeps()) {
+                FamilyResolutionResult result = resolution.resolveDependency(dep);
+                dep = result.getResolvedDependency();
+                if (result.isDifferentMember()) {
+                    if (rebuilder == null) {
+                        rebuilder = getSpecRebuilder(fp.fpid, fpSpec);
+                    }
+                }
                 if(dep.getLocation().isMavenCoordinates()) {
-                    final F fpDep = resolveFeaturePack(dep.getLocation(), type, false);
+                    final F fpDep = resolveFeaturePack(dep.getLocation(), type);
                     if(fpDep.getFPID().getLocation().isMavenCoordinates()) {
                         if(rebuilder != null) {
-                            rebuilder.addFeaturePackDep(fpSpec.originOf(dep.getLocation().getProducer()), dep);
+                            rebuilder.addFeaturePackDep(fpSpec.originOf(result.getOriginalDependency().getLocation().getProducer()), dep);
                         }
                     } else {
                         if (rebuilder == null) {
@@ -1273,8 +1297,14 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
                                 }
                             }
                         }
-                        rebuilder.addFeaturePackDep(fpSpec.originOf(dep.getLocation().getProducer()),
+
+                        if(result.isDifferentMember()) {
+                            rebuilder.addFeaturePackDep(fpSpec.originOf(result.getOriginalDependency().getLocation().getProducer()),
+                                FeaturePackConfig.builder(dep.getLocation()).init(dep).build());
+                        } else {
+                          rebuilder.addFeaturePackDep(fpSpec.originOf(result.getOriginalDependency().getLocation().getProducer()),
                                 FeaturePackConfig.builder(fpDep.getFPID().getLocation()).init(dep).build());
+                        }
                     }
                 } else if(rebuilder != null) {
                     rebuilder.addFeaturePackDep(fpSpec.originOf(dep.getLocation().getProducer()), dep);
@@ -1286,6 +1316,7 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
             rebuilder.setGalleonMinVersion(fpSpec.getGalleonMinVersion());
             rebuilder.setConfigStability(fpSpec.getConfigStability());
             rebuilder.setPackageStability(fpSpec.getPackageStability());
+            rebuilder.setFamily(fpSpec.getFamily());
             final FeaturePackSpec spec = rebuilder.build();
             fp = fpFactory.newFeaturePack(spec.getFPID().getLocation(), spec, fp.getDir(), fp.getType());
         }

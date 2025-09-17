@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2025 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -81,6 +81,10 @@ public abstract class FeaturePackDepsConfigBuilder<B extends FeaturePackDepsConf
 
     public B addTransitiveDep(FeaturePackLocation fpl) throws ProvisioningDescriptionException {
         return addFeaturePackDepResolved(null, FeaturePackConfig.forTransitiveDep(resolveUniverseSpec(fpl)), false);
+    }
+
+    public B addTransitiveDep(FeaturePackLocation fpl, boolean familyMemberAllowed) throws ProvisioningDescriptionException {
+        return addFeaturePackDepResolved(null, FeaturePackConfig.forTransitiveDep(resolveUniverseSpec(fpl), familyMemberAllowed), false);
     }
 
     public B updateTransitiveDep(FeaturePackLocation fpl) throws ProvisioningDescriptionException {

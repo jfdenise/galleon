@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2025 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -73,6 +73,7 @@ public class FeaturePackBuilder {
     private Map<ConfigId, ConfigModel> configs = Collections.emptyMap();
     private Map<ConfigId, ConfigLayerSpec> layers = Collections.emptyMap();
     private FsTaskList tasks;
+    private String family;
 
     FeaturePackBuilder(FeaturePackCreator creator) {
         this.creator = creator;
@@ -125,6 +126,11 @@ public class FeaturePackBuilder {
 
     public FeaturePackBuilder addTransitiveDependency(FeaturePackLocation fpl) throws ProvisioningDescriptionException {
         fpBuilder.addTransitiveDep(fpl);
+        return this;
+    }
+
+    public FeaturePackBuilder addTransitiveDependency(FeaturePackLocation fpl, boolean familyMemberAllowed) throws ProvisioningDescriptionException {
+        fpBuilder.addTransitiveDep(fpl, familyMemberAllowed);
         return this;
     }
 
@@ -260,6 +266,11 @@ public class FeaturePackBuilder {
             tasks = FsTaskList.newList();
         }
         tasks.write(content, relativePath, false);
+        return this;
+    }
+
+    public FeaturePackBuilder setFamily(String family) {
+        fpBuilder.setFamily(family);
         return this;
     }
 

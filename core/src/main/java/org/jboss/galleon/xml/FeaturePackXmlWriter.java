@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2025 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,8 +22,8 @@ import org.jboss.galleon.CoreVersion;
 import org.jboss.galleon.config.FeaturePackConfig;
 import org.jboss.galleon.spec.FeaturePackPlugin;
 import org.jboss.galleon.spec.FeaturePackSpec;
-import org.jboss.galleon.xml.FeaturePackXmlParser30.Attribute;
-import org.jboss.galleon.xml.FeaturePackXmlParser30.Element;
+import org.jboss.galleon.xml.FeaturePackXmlParser40.Attribute;
+import org.jboss.galleon.xml.FeaturePackXmlParser40.Element;
 import org.jboss.galleon.xml.util.ElementNode;
 
 /**
@@ -45,6 +45,9 @@ public class FeaturePackXmlWriter extends BaseXmlWriter<FeaturePackSpec> {
         final ElementNode fp = addElement(null, Element.FEATURE_PACK);
         addAttribute(fp, Attribute.LOCATION, fpSpec.getFPID().toString());
         addAttribute(fp, Attribute.GALLEON_MIN_VERSION, CoreVersion.getVersion());
+        if (fpSpec.getFamily() != null) {
+            addAttribute(fp, Attribute.FAMILY, fpSpec.getFamily());
+        }
         if (fpSpec.getConfigStability() != null) {
             addAttribute(fp, Attribute.CONFIG_STABILITY_LEVEL, fpSpec.getConfigStability().toString());
         }

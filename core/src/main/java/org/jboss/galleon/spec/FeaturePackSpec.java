@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Red Hat, Inc. and/or its affiliates
+ * Copyright 2016-2025 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,6 +46,7 @@ public class FeaturePackSpec extends FeaturePackDepsConfig {
         private String galleonMinVersion;
         private Stability configStability;
         private Stability packageStability;
+        private String family;
 
         protected Builder() {
         }
@@ -57,6 +58,11 @@ public class FeaturePackSpec extends FeaturePackDepsConfig {
 
         public Builder setGalleonMinVersion(String version) {
             this.galleonMinVersion = version;
+            return this;
+        }
+
+        public Builder setFamily(String family) {
+            this.family = family;
             return this;
         }
 
@@ -171,6 +177,7 @@ public class FeaturePackSpec extends FeaturePackDepsConfig {
     private final String galleonMinVersion;
     private final Stability configStability;
     private final Stability packageStability;
+    private final String family;
 
     protected FeaturePackSpec(Builder builder) throws ProvisioningDescriptionException {
         super(builder);
@@ -182,6 +189,11 @@ public class FeaturePackSpec extends FeaturePackDepsConfig {
         this.galleonMinVersion = builder.galleonMinVersion;
         this.configStability = builder.configStability == null ? null : builder.configStability;
         this.packageStability = builder.packageStability == null ? null : builder.packageStability;
+        this.family = builder.family;
+    }
+
+    public String getFamily() {
+        return family;
     }
 
     public String getGalleonMinVersion() {
