@@ -1325,12 +1325,12 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
                             }
                         }
                         if(result.isDifferentMember()) {
-                            if(rebuilder.hasTransitiveFeaturePackDep(dep.getLocation().getProducer())) {
+                            if(rebuilder.hasTransitiveFeaturePackDep(fpDep.getFPID().getLocation().getProducer())) {
                                 rebuilder.addFeaturePackDepAllowMultiple(fpSpec.originOf(result.getOriginalDependency().getLocation().getProducer()),
-                                FeaturePackConfig.transitiveBuilder(dep.getLocation()).init(dep).build());
+                                FeaturePackConfig.transitiveBuilder(fpDep.getFPID().getLocation()).init(dep).build());
                             } else {
                                 rebuilder.addFeaturePackDep(fpSpec.originOf(result.getOriginalDependency().getLocation().getProducer()),
-                                FeaturePackConfig.transitiveBuilder(dep.getLocation()).init(dep).build());
+                                FeaturePackConfig.transitiveBuilder(fpDep.getFPID().getLocation()).init(dep).build());
                             }
                         } else {
                             rebuilder.addFeaturePackDep(fpSpec.originOf(result.getOriginalDependency().getLocation().getProducer()),
@@ -1402,15 +1402,15 @@ public class ProvisioningLayout<F extends FeaturePackLayout> implements AutoClos
                         }
 
                         if(result.isDifferentMember()) {
-                            if (rebuilder.hasFeaturePackDep(dep.getLocation().getProducer()) || rebuilder.hasTransitiveFeaturePackDep(dep.getLocation().getProducer())) {
+                            if (rebuilder.hasFeaturePackDep(fpDep.getFPID().getLocation().getProducer()) || rebuilder.hasTransitiveFeaturePackDep(fpDep.getFPID().getLocation().getProducer())) {
                                 rebuilder.addFeaturePackDepAllowMultiple(fpSpec.originOf(result.getOriginalDependency().getLocation().getProducer()),
-                                    FeaturePackConfig.builder(dep.getLocation()).init(dep).build());
+                                    FeaturePackConfig.builder(fpDep.getFPID().getLocation()).init(dep).build());
                                 if (rebuilder.hasTransitiveFeaturePackDep(dep.getLocation().getProducer())) {
                                     transitiveToIgnore.add(fpDep.getFPID().getLocation().getProducer());
                                 }
                             } else {
                                 rebuilder.addFeaturePackDep(fpSpec.originOf(result.getOriginalDependency().getLocation().getProducer()),
-                                    FeaturePackConfig.builder(dep.getLocation()).init(dep).build());
+                                    FeaturePackConfig.builder(fpDep.getFPID().getLocation()).init(dep).build());
                             }
                         } else {
                           rebuilder.addFeaturePackDep(fpSpec.originOf(result.getOriginalDependency().getLocation().getProducer()),
