@@ -85,7 +85,7 @@
     <version.org.apache.maven>3.8.1</version.org.apache.maven>
     <version.org.apache.maven.maven-artifact>3.5.2</version.org.apache.maven.maven-artifact>
     <version.org.apache.maven.plugin-tools>${version.plugin.plugin}</version.org.apache.maven.plugin-tools>
-    <version.org.apache.maven.plugins.maven-shade-plugin>3.1.0</version.org.apache.maven.plugins.maven-shade-plugin>
+    <version.org.apache.maven.plugins.maven-shade-plugin>3.6.2</version.org.apache.maven.plugins.maven-shade-plugin>
     <version.org.apache.maven.shared>0.9.1</version.org.apache.maven.shared>
     <version.org.codehaus.mojo.xml-maven-plugin>1.0.1</version.org.codehaus.mojo.xml-maven-plugin>
     <version.org.eclipse.aether>1.1.0</version.org.eclipse.aether>
@@ -290,12 +290,6 @@
         <version>${version.org.codehaus.plexus.plexus-utils}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>${version.org.apache.maven.plugins.maven-shade-plugin}</version>
-      </dependency>
-
-      <dependency>
         <groupId>org.eclipse.aether</groupId>
         <artifactId>aether-api</artifactId>
         <version>${version.org.eclipse.aether}</version>
@@ -390,7 +384,11 @@
           <artifactId>license-maven-plugin</artifactId>
           <version>${version.com.mycila.license-maven-plugin}</version>
         </plugin>
-
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>${version.org.apache.maven.plugins.maven-shade-plugin}</version>
+        </plugin>
         <!-- Checkstyle -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
